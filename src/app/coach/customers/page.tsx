@@ -6,7 +6,7 @@ import { CustomerCard } from "@/components/ui/CustomerCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { allCustomers } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
-import { useAllInventory, useAllCheckIns, useActiveAlerts } from "@/lib/inventory/hooks";
+import { useInventoryForCustomers, useCheckInsForCustomers, useActiveAlerts } from "@/lib/inventory/hooks";
 import {
   PRODUCT_LABELS,
   INVENTORY_ALERT_STATUS_LABELS,
@@ -26,9 +26,10 @@ export default function CustomerListPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
 
-  const inventoryMap = useAllInventory();
-  const checkInMap = useAllCheckIns();
-  const activeAlerts = useActiveAlerts();
+  const customerIds = useMemo(() => allCustomers.map((c) => c.id), []);
+  const { data: inventoryMap } = useInventoryForCustomers(customerIds);
+  const { data: checkInMap } = useCheckInsForCustomers(customerIds);
+  const { data: activeAlerts } = useActiveAlerts();
 
   const customers = useMemo(() => {
     return allCustomers.filter((c) => {

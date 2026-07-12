@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { useAddedMeals } from "./added-meals";
+import { useTodayMeals } from "./inventory/hooks";
 import type { CustomerProfile, DailyTask } from "./types";
 
 const WATER_KEY = "misu-water-intake";
@@ -57,8 +57,8 @@ export function useCheckinDone(): boolean {
  * Every task's `done` state is derived entirely from real recorded actions —
  * there is no manual tick. Add a new signal here as new actions become trackable.
  */
-export function useTodayTasks(customer: CustomerProfile): DailyTask[] {
-  const addedMeals = useAddedMeals();
+export function useTodayTasks(customer: CustomerProfile, customerId: string): DailyTask[] {
+  const { data: addedMeals } = useTodayMeals(customerId);
   const water = useWaterIntake(customer.nutritionToday.water, customer.nutritionToday.waterTarget);
   const checkinDone = useCheckinDone();
 

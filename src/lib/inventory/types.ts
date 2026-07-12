@@ -33,7 +33,7 @@ export interface InventoryTransaction {
   balanceAfter: number;
   /** Id of the record that caused this change — a DailyCheckIn id for
    * CHECK_IN_* types, or a meal id for MEAL_USAGE. Used for idempotency. */
-  relatedCheckInId?: string;
+  relatedRecordId?: string;
   note?: string;
   createdBy: string;
   createdAt: string;

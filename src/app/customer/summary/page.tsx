@@ -7,15 +7,18 @@ import { ScoreCircle } from "@/components/ui/ScoreCircle";
 import { StatCard } from "@/components/ui/StatCard";
 import { TaskCard } from "@/components/ui/TaskCard";
 import { currentCustomer } from "@/lib/mock-data";
-import { useAddedMeals } from "@/lib/added-meals";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useTodayMeals } from "@/lib/inventory/hooks";
 import { useTodayTasks } from "@/lib/daily-progress";
 
 export default function DailySummaryPage() {
   const c = currentCustomer;
+  const { user } = useAuthUser();
+  const customerId = user?.id ?? "";
   const [reflection, setReflection] = useState("");
   const [done, setDone] = useState(false);
-  const addedMeals = useAddedMeals();
-  const tasks = useTodayTasks(c);
+  const { data: addedMeals } = useTodayMeals(customerId);
+  const tasks = useTodayTasks(c, customerId);
   const doneTasks = tasks.filter((t) => t.done).length;
   const completionRate = Math.round((doneTasks / tasks.length) * 100);
   const mealTypesLogged = new Set([...c.meals.map((m) => m.type), ...addedMeals.map((m) => m.type)]).size;

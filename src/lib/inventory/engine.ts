@@ -1,18 +1,8 @@
 "use client";
 
-import { UNITS_PER_BOX, PRODUCT_LABELS, getInventoryAlertStatus } from "./constants";
-import {
-  getInventoryMap,
-  setInventoryMap,
-  getTransactionMap,
-  setTransactionMap,
-  getCheckInMap,
-  setCheckInMap,
-  getAlerts,
-  setAlerts,
-  notifyInventoryChange,
-  type TransactionMap,
-} from "./storage";
+import { createClient } from "@/lib/supabase/client";
+import type { Database } from "@/lib/supabase/database.types";
+import type { MealEntry, MealMisuItem, MealFoodItem } from "@/lib/types";
 import type {
   CustomerInventory,
   DailyCheckIn,
@@ -20,131 +10,250 @@ import type {
   InventoryTransaction,
   PoopCount,
   ProductCode,
-  ProductUsageEntry,
   RepurchaseAlert,
-  RepurchaseAlertLevel,
 } from "./types";
 
-function genId(prefix: string): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return `${prefix}_${crypto.randomUUID()}`;
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+const CHANGE_EVENT = "misu-inventory-change";
+
+/** Fired after any successful write so hooks.ts can refetch affected data. */
+export function notifyInventoryChange() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-function nowISO(): string {
-  return new Date().toISOString();
+export function subscribeInventory(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener(CHANGE_EVENT, callback);
+  return () => window.removeEventListener(CHANGE_EVENT, callback);
 }
 
 export function todayDateStr(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function pushTransaction(txMap: TransactionMap, customerId: string, tx: InventoryTransaction) {
-  const list = txMap[customerId] ?? [];
-  list.push(tx);
-  txMap[customerId] = list;
+// ---------- Row <-> domain type mappers ----------
+
+type InventoryRow = Database["public"]["Tables"]["customer_inventory"]["Row"];
+type TransactionRow = Database["public"]["Tables"]["inventory_transactions"]["Row"];
+type CheckInRow = Database["public"]["Tables"]["daily_checkins"]["Row"];
+type AlertRow = Database["public"]["Tables"]["repurchase_alerts"]["Row"];
+type MealRow = Database["public"]["Tables"]["meals"]["Row"];
+
+function mapInventoryRow(row: InventoryRow): CustomerInventory {
+  return {
+    id: row.id,
+    customerId: row.customer_id,
+    productCode: row.product_code,
+    boxesPurchased: row.boxes_purchased,
+    unitsPerBox: row.units_per_box,
+    initialUnits: row.initial_units,
+    totalAddedUnits: row.total_added_units,
+    totalUsedUnits: row.total_used_units,
+    remainingUnits: row.remaining_units,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
-function findOrCreateRow(rows: CustomerInventory[], customerId: string, productCode: ProductCode): CustomerInventory {
-  let row = rows.find((r) => r.productCode === productCode);
-  if (!row) {
-    row = {
-      id: genId("inv"),
-      customerId,
-      productCode,
-      boxesPurchased: 0,
-      unitsPerBox: UNITS_PER_BOX,
-      initialUnits: 0,
-      totalAddedUnits: 0,
-      totalUsedUnits: 0,
-      remainingUnits: 0,
-      createdAt: nowISO(),
-      updatedAt: nowISO(),
-    };
-    rows.push(row);
-  }
-  return row;
+function mapTransactionRow(row: TransactionRow): InventoryTransaction {
+  return {
+    id: row.id,
+    customerId: row.customer_id,
+    productCode: row.product_code,
+    type: row.type,
+    quantityChange: row.quantity_change,
+    balanceAfter: row.balance_after,
+    relatedRecordId: row.related_record_id ?? undefined,
+    note: row.note ?? undefined,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+  };
 }
 
-/** Creates a new OPEN alert, upgrades/downgrades an existing OPEN/FOLLOWED_UP alert's level in
- * place, or auto-completes it once stock recovers to SUFFICIENT. Never creates a duplicate. */
-function checkAndUpdateAlerts(alerts: RepurchaseAlert[], customerId: string, productCode: ProductCode, remainingUnits: number) {
-  const status = getInventoryAlertStatus(productCode, remainingUnits);
-  const activeIdx = alerts.findIndex(
-    (a) => a.customerId === customerId && a.productCode === productCode && (a.status === "OPEN" || a.status === "FOLLOWED_UP"),
-  );
-
-  if (status === "SUFFICIENT") {
-    if (activeIdx >= 0) {
-      alerts[activeIdx] = { ...alerts[activeIdx], status: "COMPLETED", completedAt: nowISO() };
-    }
-    return;
-  }
-
-  const alertLevel = status as RepurchaseAlertLevel;
-  if (activeIdx >= 0) {
-    alerts[activeIdx] = { ...alerts[activeIdx], alertLevel, remainingUnitsWhenTriggered: remainingUnits };
-    return;
-  }
-
-  alerts.push({
-    id: genId("alert"),
-    customerId,
-    productCode,
-    status: "OPEN",
-    alertLevel,
-    remainingUnitsWhenTriggered: remainingUnits,
-    triggeredAt: nowISO(),
-  });
+function mapCheckInRow(row: CheckInRow): DailyCheckIn {
+  return {
+    id: row.id,
+    customerId: row.customer_id,
+    date: row.checkin_date,
+    weight: Number(row.weight),
+    poopCount: row.poop_count,
+    bedtime: row.bedtime,
+    wakeTime: row.wake_time,
+    productUsage: [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
-/** A repurchase is an explicit resolving action: any open alert for this product is closed,
- * regardless of exact resulting level. It will re-trigger fresh from future usage if needed. */
-function completeAlertsForRepurchase(alerts: RepurchaseAlert[], customerId: string, productCode: ProductCode) {
-  for (let i = 0; i < alerts.length; i++) {
-    const a = alerts[i];
-    if (a.customerId === customerId && a.productCode === productCode && (a.status === "OPEN" || a.status === "FOLLOWED_UP")) {
-      alerts[i] = { ...a, status: "COMPLETED", completedAt: nowISO() };
-    }
-  }
+function mapAlertRow(row: AlertRow): RepurchaseAlert {
+  return {
+    id: row.id,
+    customerId: row.customer_id,
+    productCode: row.product_code,
+    status: row.status,
+    alertLevel: row.alert_level,
+    remainingUnitsWhenTriggered: row.remaining_units_when_triggered,
+    triggeredAt: row.triggered_at,
+    followedUpAt: row.followed_up_at ?? undefined,
+    followedUpBy: row.followed_up_by ?? undefined,
+    completedAt: row.completed_at ?? undefined,
+    note: row.note ?? undefined,
+  };
+}
+
+function mapMealRow(row: MealRow): MealEntry {
+  return {
+    id: row.id,
+    type: row.meal_type as MealEntry["type"],
+    misuItems: (row.misu_items as unknown as MealMisuItem[]) ?? [],
+    foodItems: (row.food_items as unknown as MealFoodItem[]) ?? [],
+    name: row.name,
+    time: row.meal_time,
+    photoEmoji: row.photo_emoji ?? "",
+    portion: row.portion ?? "",
+    calories: Number(row.calories),
+    protein: Number(row.protein),
+    carbs: Number(row.carbs),
+    fat: Number(row.fat),
+    fiber: Number(row.fiber),
+    misuScore: Number(row.misu_score),
+    goodPoints: row.good_points,
+    improvePoints: row.improve_points,
+  };
+}
+
+function rpcErrorMessage(error: { message: string }): string {
+  return error.message;
 }
 
 // ---------- Read accessors ----------
 
-export function hasInventoryRecords(customerId: string): boolean {
-  const map = getInventoryMap();
-  return Boolean(map[customerId] && map[customerId].length > 0);
+export async function getCustomerInventoryList(customerId: string): Promise<CustomerInventory[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("customer_inventory").select("*").eq("customer_id", customerId);
+  if (error) throw error;
+  return (data ?? []).map(mapInventoryRow);
 }
 
-export function getCustomerInventoryList(customerId: string): CustomerInventory[] {
-  return getInventoryMap()[customerId] ?? [];
+export async function hasInventoryRecords(customerId: string): Promise<boolean> {
+  const rows = await getCustomerInventoryList(customerId);
+  return rows.length > 0;
 }
 
-export function getTransactionsForCustomer(customerId: string): InventoryTransaction[] {
-  return getTransactionMap()[customerId] ?? [];
+export async function getTransactionsForCustomer(customerId: string): Promise<InventoryTransaction[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("inventory_transactions")
+    .select("*")
+    .eq("customer_id", customerId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapTransactionRow);
 }
 
-export function getCheckInsForCustomer(customerId: string): DailyCheckIn[] {
-  return getCheckInMap()[customerId] ?? [];
+export async function getCheckInsForCustomer(customerId: string): Promise<DailyCheckIn[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("daily_checkins")
+    .select("*")
+    .eq("customer_id", customerId)
+    .order("checkin_date", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapCheckInRow);
 }
 
-export function getTodayCheckIn(customerId: string): DailyCheckIn | undefined {
-  const today = todayDateStr();
-  return getCheckInsForCustomer(customerId).find((c) => c.date === today);
+/** Batched lookup for a Coach's customer roster (one query instead of N),
+ * grouped by customer id — the async replacement for the old
+ * useAllInventory()/useAllCheckIns() localStorage-map hooks. */
+export async function getInventoryForCustomers(customerIds: string[]): Promise<Record<string, CustomerInventory[]>> {
+  if (customerIds.length === 0) return {};
+  const supabase = createClient();
+  const { data, error } = await supabase.from("customer_inventory").select("*").in("customer_id", customerIds);
+  if (error) throw error;
+  const map: Record<string, CustomerInventory[]> = {};
+  for (const row of (data ?? []).map(mapInventoryRow)) {
+    (map[row.customerId] ??= []).push(row);
+  }
+  return map;
 }
 
-export function getAlertsForCustomer(customerId: string): RepurchaseAlert[] {
-  return getAlerts().filter((a) => a.customerId === customerId);
+export async function getCheckInsForCustomers(customerIds: string[]): Promise<Record<string, DailyCheckIn[]>> {
+  if (customerIds.length === 0) return {};
+  const supabase = createClient();
+  const { data, error } = await supabase.from("daily_checkins").select("*").in("customer_id", customerIds);
+  if (error) throw error;
+  const map: Record<string, DailyCheckIn[]> = {};
+  for (const row of (data ?? []).map(mapCheckInRow)) {
+    (map[row.customerId] ??= []).push(row);
+  }
+  return map;
 }
 
-export function getActiveAlerts(): RepurchaseAlert[] {
-  return getAlerts().filter((a) => a.status === "OPEN" || a.status === "FOLLOWED_UP");
+export async function getTransactionsForCustomers(customerIds: string[]): Promise<Record<string, InventoryTransaction[]>> {
+  if (customerIds.length === 0) return {};
+  const supabase = createClient();
+  const { data, error } = await supabase.from("inventory_transactions").select("*").in("customer_id", customerIds);
+  if (error) throw error;
+  const map: Record<string, InventoryTransaction[]> = {};
+  for (const row of (data ?? []).map(mapTransactionRow)) {
+    (map[row.customerId] ??= []).push(row);
+  }
+  return map;
 }
 
-export function calcAverageDailyUsage(customerId: string, productCode: ProductCode, daysWindow = 7): number | null {
-  const list = getTransactionsForCustomer(customerId);
+async function getCheckInForDate(customerId: string, date: string): Promise<DailyCheckIn | undefined> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("daily_checkins")
+    .select("*")
+    .eq("customer_id", customerId)
+    .eq("checkin_date", date)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapCheckInRow(data) : undefined;
+}
+
+export async function getTodayCheckIn(customerId: string): Promise<DailyCheckIn | undefined> {
+  return getCheckInForDate(customerId, todayDateStr());
+}
+
+export async function getAlertsForCustomer(customerId: string): Promise<RepurchaseAlert[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("repurchase_alerts").select("*").eq("customer_id", customerId);
+  if (error) throw error;
+  return (data ?? []).map(mapAlertRow);
+}
+
+export async function getActiveAlerts(): Promise<RepurchaseAlert[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("repurchase_alerts").select("*").in("status", ["OPEN", "FOLLOWED_UP"]);
+  if (error) throw error;
+  return (data ?? []).map(mapAlertRow);
+}
+
+export async function getTodayMeals(customerId: string): Promise<MealEntry[]> {
+  const supabase = createClient();
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const { data, error } = await supabase
+    .from("meals")
+    .select("*")
+    .eq("customer_id", customerId)
+    .gte("created_at", startOfDay.toISOString())
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapMealRow);
+}
+
+/** Usage-driven daily average across the last N days, from an already-fetched
+ * transaction list (callers load transactions once and share them). */
+export function calcAverageDailyUsage(transactions: InventoryTransaction[], productCode: ProductCode, daysWindow = 7): number | null {
   const cutoff = Date.now() - daysWindow * 24 * 60 * 60 * 1000;
-  const usageTx = list.filter(
-    (t) => t.productCode === productCode && t.type === "CHECK_IN_USAGE" && new Date(t.createdAt).getTime() >= cutoff,
+  const usageTx = transactions.filter(
+    (t) =>
+      t.productCode === productCode &&
+      (t.type === "CHECK_IN_USAGE" || t.type === "MEAL_USAGE") &&
+      new Date(t.createdAt).getTime() >= cutoff,
   );
   if (usageTx.length === 0) return null;
   const totalUsed = usageTx.reduce((sum, t) => sum + Math.abs(t.quantityChange), 0);
@@ -159,111 +268,51 @@ export function calcEstimatedDaysRemaining(remainingUnits: number, avgDailyUsage
 }
 
 // ---------- Write operations ----------
+// All inventory-mutating writes go through SECURITY DEFINER Postgres RPCs so
+// idempotency, insufficient-stock guards, and alert transitions are enforced
+// atomically in the database (see supabase/migrations), not the client.
 
-export function initializeInventoryFromRegistration(
+export async function initializeInventoryFromRegistration(
   customerId: string,
   boxesPurchased: Partial<Record<ProductCode, number>>,
-  createdBy: string,
-): EngineResult {
-  const entries = (Object.entries(boxesPurchased) as [ProductCode, number][]).filter(([, boxes]) => boxes !== undefined);
-
-  for (const [, boxes] of entries) {
-    if (!Number.isInteger(boxes) || boxes < 0) {
-      return { ok: false, error: "购买盒数只能是 0 或正整数" };
-    }
+): Promise<EngineResult> {
+  const boxesN = boxesPurchased.MISU_N_PLUS ?? 0;
+  const boxesDX = boxesPurchased.MISU_DX_PLUS ?? 0;
+  if (!Number.isInteger(boxesN) || boxesN < 0 || !Number.isInteger(boxesDX) || boxesDX < 0) {
+    return { ok: false, error: "购买盒数只能是 0 或正整数" };
   }
-  if (entries.every(([, boxes]) => boxes <= 0)) {
+  if (boxesN <= 0 && boxesDX <= 0) {
     return { ok: false, error: "至少一项产品的购买盒数必须大于 0" };
   }
 
-  const inventoryMap = getInventoryMap();
-  const txMap = getTransactionMap();
-
-  const rows: CustomerInventory[] = [];
-  for (const [productCode, boxes] of entries) {
-    if (boxes <= 0) continue;
-    const units = boxes * UNITS_PER_BOX;
-    rows.push({
-      id: genId("inv"),
-      customerId,
-      productCode,
-      boxesPurchased: boxes,
-      unitsPerBox: UNITS_PER_BOX,
-      initialUnits: units,
-      totalAddedUnits: units,
-      totalUsedUnits: 0,
-      remainingUnits: units,
-      createdAt: nowISO(),
-      updatedAt: nowISO(),
-    });
-    pushTransaction(txMap, customerId, {
-      id: genId("tx"),
-      customerId,
-      productCode,
-      type: "INITIAL_PURCHASE",
-      quantityChange: units,
-      balanceAfter: units,
-      createdBy,
-      createdAt: nowISO(),
-    });
-  }
-
-  inventoryMap[customerId] = rows;
-  setInventoryMap(inventoryMap);
-  setTransactionMap(txMap);
+  const supabase = createClient();
+  const { error } = await supabase.rpc("init_customer_inventory", {
+    p_customer_id: customerId,
+    p_boxes_n_plus: boxesN,
+    p_boxes_dx_plus: boxesDX,
+  });
+  if (error) return { ok: false, error: rpcErrorMessage(error) };
   notifyInventoryChange();
   return { ok: true };
 }
 
-export function initializeLegacyBalance(
+export async function initializeLegacyBalance(
   customerId: string,
   remaining: Partial<Record<ProductCode, number>>,
-  createdBy: string,
-): EngineResult {
-  const entries = (Object.entries(remaining) as [ProductCode, number][]).filter(([, units]) => units !== undefined);
-  for (const [, units] of entries) {
-    if (!Number.isInteger(units) || units < 0) {
-      return { ok: false, error: "剩余包数只能是 0 或正整数" };
-    }
+): Promise<EngineResult> {
+  const n = remaining.MISU_N_PLUS ?? 0;
+  const dx = remaining.MISU_DX_PLUS ?? 0;
+  if (!Number.isInteger(n) || n < 0 || !Number.isInteger(dx) || dx < 0) {
+    return { ok: false, error: "剩余包数只能是 0 或正整数" };
   }
 
-  const inventoryMap = getInventoryMap();
-  const txMap = getTransactionMap();
-  const alerts = getAlerts();
-
-  const rows: CustomerInventory[] = [];
-  for (const [productCode, units] of entries) {
-    rows.push({
-      id: genId("inv"),
-      customerId,
-      productCode,
-      boxesPurchased: 0,
-      unitsPerBox: UNITS_PER_BOX,
-      initialUnits: units,
-      totalAddedUnits: units,
-      totalUsedUnits: 0,
-      remainingUnits: units,
-      createdAt: nowISO(),
-      updatedAt: nowISO(),
-    });
-    pushTransaction(txMap, customerId, {
-      id: genId("tx"),
-      customerId,
-      productCode,
-      type: "MANUAL_INITIAL_BALANCE",
-      quantityChange: units,
-      balanceAfter: units,
-      note: "旧顾客首次补登目前剩余库存",
-      createdBy,
-      createdAt: nowISO(),
-    });
-    checkAndUpdateAlerts(alerts, customerId, productCode, units);
-  }
-
-  inventoryMap[customerId] = rows;
-  setInventoryMap(inventoryMap);
-  setTransactionMap(txMap);
-  setAlerts(alerts);
+  const supabase = createClient();
+  const { error } = await supabase.rpc("init_legacy_balance", {
+    p_customer_id: customerId,
+    p_remaining_n_plus: n,
+    p_remaining_dx_plus: dx,
+  });
+  if (error) return { ok: false, error: rpcErrorMessage(error) };
   notifyInventoryChange();
   return { ok: true };
 }
@@ -276,162 +325,36 @@ export interface SubmitCheckInInput {
   poopCount: PoopCount;
   bedtime: string;
   wakeTime: string;
-  usage: ProductUsageEntry[];
-  createdBy: string;
 }
 
-export function submitCheckIn(input: SubmitCheckInInput): EngineResult<DailyCheckIn> {
-  const checkInMap = getCheckInMap();
-  const existingList = checkInMap[input.customerId] ?? [];
+/** Daily check-ins no longer carry MISU usage (see task #31) so this is a
+ * plain table write — no RPC needed, RLS already scopes it to the owner. */
+export async function submitCheckIn(input: SubmitCheckInInput): Promise<EngineResult<DailyCheckIn>> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("daily_checkins")
+    .insert({
+      id: input.id,
+      customer_id: input.customerId,
+      checkin_date: input.date,
+      weight: input.weight,
+      poop_count: input.poopCount,
+      bedtime: input.bedtime,
+      wake_time: input.wakeTime,
+    })
+    .select()
+    .single();
 
-  // Idempotency: the same checkInId can only ever be recorded once, even if
-  // this function is invoked again (double click, retried submit, etc).
-  const already = existingList.find((c) => c.id === input.id);
-  if (already) {
-    return { ok: true, data: already };
-  }
-
-  for (const u of input.usage) {
-    if (!Number.isInteger(u.quantity) || u.quantity < 0) {
-      return { ok: false, error: "使用数量只能是 0 或正整数" };
+  if (error) {
+    if (error.code === "23505") {
+      // unique (customer_id, checkin_date) — already checked in today.
+      const existing = await getCheckInForDate(input.customerId, input.date);
+      if (existing) return { ok: true, data: existing };
     }
+    return { ok: false, error: error.message };
   }
-
-  const inventoryMap = getInventoryMap();
-  const rows = inventoryMap[input.customerId] ?? [];
-
-  for (const u of input.usage) {
-    if (u.quantity <= 0) continue;
-    const remaining = rows.find((r) => r.productCode === u.productCode)?.remainingUnits ?? 0;
-    if (u.quantity > remaining) {
-      return {
-        ok: false,
-        error: `你的${PRODUCT_LABELS[u.productCode]}目前只剩${remaining}包，无法记录使用${u.quantity}包，请检查数量或先更新回购库存。`,
-      };
-    }
-  }
-
-  const txMap = getTransactionMap();
-  const alerts = getAlerts();
-
-  for (const u of input.usage) {
-    if (u.quantity <= 0) continue;
-    const row = findOrCreateRow(rows, input.customerId, u.productCode);
-    row.totalUsedUnits += u.quantity;
-    row.remainingUnits -= u.quantity;
-    row.updatedAt = nowISO();
-
-    pushTransaction(txMap, input.customerId, {
-      id: genId("tx"),
-      customerId: input.customerId,
-      productCode: u.productCode,
-      type: "CHECK_IN_USAGE",
-      quantityChange: -u.quantity,
-      balanceAfter: row.remainingUnits,
-      relatedCheckInId: input.id,
-      createdBy: input.createdBy,
-      createdAt: nowISO(),
-    });
-
-    checkAndUpdateAlerts(alerts, input.customerId, u.productCode, row.remainingUnits);
-  }
-
-  inventoryMap[input.customerId] = rows;
-  setInventoryMap(inventoryMap);
-  setTransactionMap(txMap);
-  setAlerts(alerts);
-
-  const checkIn: DailyCheckIn = {
-    id: input.id,
-    customerId: input.customerId,
-    date: input.date,
-    weight: input.weight,
-    poopCount: input.poopCount,
-    bedtime: input.bedtime,
-    wakeTime: input.wakeTime,
-    productUsage: input.usage.filter((u) => u.quantity > 0),
-    createdAt: nowISO(),
-    updatedAt: nowISO(),
-  };
-  checkInMap[input.customerId] = [...existingList, checkIn];
-  setCheckInMap(checkInMap);
-
   notifyInventoryChange();
-  return { ok: true, data: checkIn };
-}
-
-export interface MealMisuUsageInput {
-  mealId: string;
-  customerId: string;
-  misuItems: { productCode: ProductCode; quantity: number }[];
-  createdBy: string;
-}
-
-/** Deducts MISU stock for a confirmed Smart Meal Check record. Idempotent by
- * mealId, same pattern as submitCheckIn — a repeat call (double-click on
- * "完成记录", retried request) is a safe no-op. */
-export function recordMealMisuUsage(input: MealMisuUsageInput): EngineResult {
-  const txMap = getTransactionMap();
-  const existingList = txMap[input.customerId] ?? [];
-  const alreadyRecorded = existingList.some((t) => t.relatedCheckInId === input.mealId && t.type === "MEAL_USAGE");
-  if (alreadyRecorded) {
-    return { ok: true };
-  }
-
-  const items = input.misuItems.filter((m) => m.quantity > 0);
-  if (items.length === 0) {
-    return { ok: true };
-  }
-
-  for (const u of items) {
-    if (!Number.isInteger(u.quantity) || u.quantity < 0) {
-      return { ok: false, error: "使用数量只能是 0 或正整数" };
-    }
-  }
-
-  const inventoryMap = getInventoryMap();
-  const rows = inventoryMap[input.customerId] ?? [];
-
-  for (const item of items) {
-    const remaining = rows.find((r) => r.productCode === item.productCode)?.remainingUnits ?? 0;
-    if (item.quantity > remaining) {
-      return {
-        ok: false,
-        error: `你的${PRODUCT_LABELS[item.productCode]}目前只剩${remaining}包，无法记录使用${item.quantity}包，请检查数量或先更新回购库存。`,
-      };
-    }
-  }
-
-  const alerts = getAlerts();
-
-  for (const item of items) {
-    const row = findOrCreateRow(rows, input.customerId, item.productCode);
-    row.totalUsedUnits += item.quantity;
-    row.remainingUnits -= item.quantity;
-    row.updatedAt = nowISO();
-
-    pushTransaction(txMap, input.customerId, {
-      id: genId("tx"),
-      customerId: input.customerId,
-      productCode: item.productCode,
-      type: "MEAL_USAGE",
-      quantityChange: -item.quantity,
-      balanceAfter: row.remainingUnits,
-      relatedCheckInId: input.mealId,
-      note: "Smart Meal Check 记录使用",
-      createdBy: input.createdBy,
-      createdAt: nowISO(),
-    });
-
-    checkAndUpdateAlerts(alerts, input.customerId, item.productCode, row.remainingUnits);
-  }
-
-  inventoryMap[input.customerId] = rows;
-  setInventoryMap(inventoryMap);
-  setTransactionMap(txMap);
-  setAlerts(alerts);
-  notifyInventoryChange();
-  return { ok: true };
+  return { ok: true, data: mapCheckInRow(data) };
 }
 
 export interface EditCheckInInput {
@@ -439,197 +362,107 @@ export interface EditCheckInInput {
   poopCount: PoopCount;
   bedtime: string;
   wakeTime: string;
-  usage: ProductUsageEntry[];
 }
 
-export function editCheckIn(customerId: string, checkInId: string, updates: EditCheckInInput, editedBy: string): EngineResult {
-  const checkInMap = getCheckInMap();
-  const list = checkInMap[customerId] ?? [];
-  const idx = list.findIndex((c) => c.id === checkInId);
-  if (idx === -1) return { ok: false, error: "找不到这笔打卡记录" };
-  const existing = list[idx];
-
-  for (const u of updates.usage) {
-    if (!Number.isInteger(u.quantity) || u.quantity < 0) {
-      return { ok: false, error: "使用数量只能是 0 或正整数" };
-    }
-  }
-
-  const inventoryMap = getInventoryMap();
-  const rows = inventoryMap[customerId] ?? [];
-
-  const productCodes = new Set<ProductCode>([
-    ...existing.productUsage.map((u) => u.productCode),
-    ...updates.usage.map((u) => u.productCode),
-  ]);
-
-  const diffs: { productCode: ProductCode; oldQty: number; newQty: number; diff: number }[] = [];
-  for (const productCode of productCodes) {
-    const oldQty = existing.productUsage.find((u) => u.productCode === productCode)?.quantity ?? 0;
-    const newQty = updates.usage.find((u) => u.productCode === productCode)?.quantity ?? 0;
-    const diff = newQty - oldQty;
-    if (diff !== 0) diffs.push({ productCode, oldQty, newQty, diff });
-  }
-
-  for (const d of diffs) {
-    if (d.diff > 0) {
-      const remaining = rows.find((r) => r.productCode === d.productCode)?.remainingUnits ?? 0;
-      if (d.diff > remaining) {
-        return {
-          ok: false,
-          error: `你的${PRODUCT_LABELS[d.productCode]}目前只剩${remaining}包，无法将使用数量调整为${d.newQty}包，请检查数量或先更新回购库存。`,
-        };
-      }
-    }
-  }
-
-  const txMap = getTransactionMap();
-  const alerts = getAlerts();
-
-  for (const d of diffs) {
-    const row = findOrCreateRow(rows, customerId, d.productCode);
-    row.totalUsedUnits += d.diff;
-    row.remainingUnits -= d.diff;
-    row.updatedAt = nowISO();
-
-    pushTransaction(txMap, customerId, {
-      id: genId("tx"),
-      customerId,
-      productCode: d.productCode,
-      type: "CHECK_IN_EDIT",
-      quantityChange: -d.diff,
-      balanceAfter: row.remainingUnits,
-      relatedCheckInId: checkInId,
-      note: `编辑打卡：使用数量由 ${d.oldQty} 包调整为 ${d.newQty} 包`,
-      createdBy: editedBy,
-      createdAt: nowISO(),
-    });
-
-    checkAndUpdateAlerts(alerts, customerId, d.productCode, row.remainingUnits);
-  }
-
-  inventoryMap[customerId] = rows;
-  setInventoryMap(inventoryMap);
-  setTransactionMap(txMap);
-  setAlerts(alerts);
-
-  list[idx] = {
-    ...existing,
-    weight: updates.weight,
-    poopCount: updates.poopCount,
-    bedtime: updates.bedtime,
-    wakeTime: updates.wakeTime,
-    productUsage: updates.usage.filter((u) => u.quantity > 0),
-    updatedAt: nowISO(),
-  };
-  checkInMap[customerId] = list;
-  setCheckInMap(checkInMap);
-
+export async function editCheckIn(customerId: string, checkInId: string, updates: EditCheckInInput): Promise<EngineResult> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("daily_checkins")
+    .update({
+      weight: updates.weight,
+      poop_count: updates.poopCount,
+      bedtime: updates.bedtime,
+      wake_time: updates.wakeTime,
+    })
+    .eq("id", checkInId)
+    .eq("customer_id", customerId);
+  if (error) return { ok: false, error: error.message };
   notifyInventoryChange();
   return { ok: true };
 }
 
-export function deleteCheckIn(customerId: string, checkInId: string, deletedBy: string): EngineResult {
-  const checkInMap = getCheckInMap();
-  const list = checkInMap[customerId] ?? [];
-  const idx = list.findIndex((c) => c.id === checkInId);
-  if (idx === -1) return { ok: false, error: "找不到这笔打卡记录" };
-  const existing = list[idx];
-
-  const inventoryMap = getInventoryMap();
-  const rows = inventoryMap[customerId] ?? [];
-  const txMap = getTransactionMap();
-  const alerts = getAlerts();
-
-  for (const u of existing.productUsage) {
-    if (u.quantity <= 0) continue;
-    const row = findOrCreateRow(rows, customerId, u.productCode);
-    row.totalUsedUnits -= u.quantity;
-    row.remainingUnits += u.quantity;
-    row.updatedAt = nowISO();
-
-    pushTransaction(txMap, customerId, {
-      id: genId("tx"),
-      customerId,
-      productCode: u.productCode,
-      type: "CHECK_IN_DELETE",
-      quantityChange: u.quantity,
-      balanceAfter: row.remainingUnits,
-      relatedCheckInId: checkInId,
-      note: "删除打卡，退回对应库存",
-      createdBy: deletedBy,
-      createdAt: nowISO(),
-    });
-
-    checkAndUpdateAlerts(alerts, customerId, u.productCode, row.remainingUnits);
-  }
-
-  inventoryMap[customerId] = rows;
-  setInventoryMap(inventoryMap);
-  setTransactionMap(txMap);
-  setAlerts(alerts);
-
-  checkInMap[customerId] = list.filter((c) => c.id !== checkInId);
-  setCheckInMap(checkInMap);
-
+export async function deleteCheckIn(customerId: string, checkInId: string): Promise<EngineResult> {
+  const supabase = createClient();
+  const { error } = await supabase.from("daily_checkins").delete().eq("id", checkInId).eq("customer_id", customerId);
+  if (error) return { ok: false, error: error.message };
   notifyInventoryChange();
   return { ok: true };
 }
 
-export function recordRepurchase(
+export interface RecordMealInput {
+  mealId: string;
+  customerId: string;
+  mealType: MealEntry["type"];
+  misuItems: MealMisuItem[];
+  foodItems: MealFoodItem[];
+  name: string;
+  mealTime: string;
+  photoEmoji?: string;
+  portion?: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  misuScore: number;
+  goodPoints: string[];
+  improvePoints: string[];
+}
+
+/** Deducts MISU stock (with a row-level lock + sufficiency check) and saves
+ * the meal record in one database transaction. Idempotent by mealId — a
+ * repeat call (double-click on "完成记录", retried request) is a safe no-op. */
+export async function recordMeal(input: RecordMealInput): Promise<EngineResult> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("record_meal", {
+    p_meal_id: input.mealId,
+    p_customer_id: input.customerId,
+    p_meal_type: input.mealType,
+    p_misu_items: input.misuItems as never,
+    p_food_items: input.foodItems as never,
+    p_name: input.name,
+    p_meal_time: input.mealTime,
+    p_photo_emoji: input.photoEmoji ?? "",
+    p_portion: input.portion ?? "",
+    p_calories: input.calories,
+    p_protein: input.protein,
+    p_carbs: input.carbs,
+    p_fat: input.fat,
+    p_fiber: input.fiber,
+    p_misu_score: input.misuScore,
+    p_good_points: input.goodPoints,
+    p_improve_points: input.improvePoints,
+  });
+  if (error) return { ok: false, error: rpcErrorMessage(error) };
+  notifyInventoryChange();
+  return { ok: true };
+}
+
+export async function recordRepurchase(
   customerId: string,
   productCode: ProductCode,
   boxes: number,
   date: string | undefined,
   note: string | undefined,
-  createdBy: string,
-): EngineResult {
+): Promise<EngineResult> {
   if (!Number.isInteger(boxes) || boxes <= 0) {
     return { ok: false, error: "回购盒数必须是大于 0 的整数" };
   }
-  const units = boxes * UNITS_PER_BOX;
 
-  const inventoryMap = getInventoryMap();
-  const rows = inventoryMap[customerId] ?? [];
-  const row = findOrCreateRow(rows, customerId, productCode);
-  row.boxesPurchased += boxes;
-  row.totalAddedUnits += units;
-  row.remainingUnits += units;
-  row.updatedAt = nowISO();
-
-  const createdAt = date ? new Date(date).toISOString() : nowISO();
-
-  const txMap = getTransactionMap();
-  pushTransaction(txMap, customerId, {
-    id: genId("tx"),
-    customerId,
-    productCode,
-    type: "REPURCHASE",
-    quantityChange: units,
-    balanceAfter: row.remainingUnits,
-    note,
-    createdBy,
-    createdAt,
+  const supabase = createClient();
+  const { error } = await supabase.rpc("record_repurchase", {
+    p_customer_id: customerId,
+    p_product_code: productCode,
+    p_boxes: boxes,
+    p_date: date ?? todayDateStr(),
+    p_note: note ?? "",
   });
-
-  const alerts = getAlerts();
-  completeAlertsForRepurchase(alerts, customerId, productCode);
-
-  inventoryMap[customerId] = rows;
-  setInventoryMap(inventoryMap);
-  setTransactionMap(txMap);
-  setAlerts(alerts);
+  if (error) return { ok: false, error: rpcErrorMessage(error) };
   notifyInventoryChange();
   return { ok: true };
 }
 
-export function manualAdjustment(
-  customerId: string,
-  productCode: ProductCode,
-  delta: number,
-  reason: string,
-  adjustedBy: string,
-): EngineResult {
+export async function manualAdjustment(customerId: string, productCode: ProductCode, delta: number, reason: string): Promise<EngineResult> {
   if (!reason || !reason.trim()) {
     return { ok: false, error: "调整原因为必填" };
   }
@@ -637,60 +470,22 @@ export function manualAdjustment(
     return { ok: false, error: "调整数量必须是不为 0 的整数" };
   }
 
-  const inventoryMap = getInventoryMap();
-  const rows = inventoryMap[customerId] ?? [];
-  const row = findOrCreateRow(rows, customerId, productCode);
-
-  const newRemaining = row.remainingUnits + delta;
-  if (newRemaining < 0) {
-    return { ok: false, error: `调整后库存不能小于 0（目前剩余 ${row.remainingUnits} 包）` };
-  }
-
-  if (delta > 0) row.totalAddedUnits += delta;
-  else row.totalUsedUnits += -delta;
-  row.remainingUnits = newRemaining;
-  row.updatedAt = nowISO();
-
-  const txMap = getTransactionMap();
-  pushTransaction(txMap, customerId, {
-    id: genId("tx"),
-    customerId,
-    productCode,
-    type: "MANUAL_ADJUSTMENT",
-    quantityChange: delta,
-    balanceAfter: row.remainingUnits,
-    note: reason,
-    createdBy: adjustedBy,
-    createdAt: nowISO(),
+  const supabase = createClient();
+  const { error } = await supabase.rpc("manual_adjustment", {
+    p_customer_id: customerId,
+    p_product_code: productCode,
+    p_delta: delta,
+    p_reason: reason,
   });
-
-  const alerts = getAlerts();
-  checkAndUpdateAlerts(alerts, customerId, productCode, row.remainingUnits);
-
-  inventoryMap[customerId] = rows;
-  setInventoryMap(inventoryMap);
-  setTransactionMap(txMap);
-  setAlerts(alerts);
+  if (error) return { ok: false, error: rpcErrorMessage(error) };
   notifyInventoryChange();
   return { ok: true };
 }
 
-export function markAlertFollowedUp(alertId: string, coachId: string): EngineResult {
-  const alerts = getAlerts();
-  const idx = alerts.findIndex((a) => a.id === alertId);
-  if (idx === -1) return { ok: false, error: "找不到这条提醒" };
-  alerts[idx] = { ...alerts[idx], status: "FOLLOWED_UP", followedUpAt: nowISO(), followedUpBy: coachId };
-  setAlerts(alerts);
-  notifyInventoryChange();
-  return { ok: true };
-}
-
-export function dismissAlert(alertId: string): EngineResult {
-  const alerts = getAlerts();
-  const idx = alerts.findIndex((a) => a.id === alertId);
-  if (idx === -1) return { ok: false, error: "找不到这条提醒" };
-  alerts[idx] = { ...alerts[idx], status: "DISMISSED" };
-  setAlerts(alerts);
+export async function markAlertFollowedUp(alertId: string): Promise<EngineResult> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("mark_alert_followed_up", { p_alert_id: alertId });
+  if (error) return { ok: false, error: rpcErrorMessage(error) };
   notifyInventoryChange();
   return { ok: true };
 }

@@ -27,8 +27,6 @@ const stockColor = { ok: "bg-emerald-50 text-emerald-600", low: "bg-amber-50 tex
 
 const productCodes: ProductCode[] = ["MISU_N_PLUS", "MISU_DX_PLUS"];
 
-const COACH_ID = "coach-001";
-
 export default function CustomerDetailPage() {
   const params = useParams<{ id: string }>();
   const customer = allCustomers.find((c) => c.id === params.id);
@@ -38,9 +36,9 @@ export default function CustomerDetailPage() {
   ]);
   const [draft, setDraft] = useState("");
 
-  const inventoryRows = useCustomerInventory(customer?.id ?? "");
-  const transactions = useCustomerTransactions(customer?.id ?? "");
-  const checkIns = useCustomerCheckIns(customer?.id ?? "");
+  const { data: inventoryRows } = useCustomerInventory(customer?.id ?? "");
+  const { data: transactions } = useCustomerTransactions(customer?.id ?? "");
+  const { data: checkIns } = useCustomerCheckIns(customer?.id ?? "");
 
   const [repurchaseOpen, setRepurchaseOpen] = useState(false);
   const [repurchaseProduct, setRepurchaseProduct] = useState<ProductCode>("MISU_N_PLUS");
@@ -70,7 +68,7 @@ export default function CustomerDetailPage() {
     customer.scoreTrend.reduce((sum, p) => sum + p.value, 0) / customer.scoreTrend.length,
   );
 
-  function handleRepurchaseSubmit(e: React.FormEvent) {
+  async function handleRepurchaseSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!customer) return;
     const boxes = parsePositiveInt(repurchaseBoxes);
@@ -78,7 +76,7 @@ export default function CustomerDetailPage() {
       setRepurchaseError("回购盒数必须是大于 0 的整数");
       return;
     }
-    const result = recordRepurchase(customer.id, repurchaseProduct, boxes, repurchaseDate || undefined, repurchaseNote.trim() || undefined, COACH_ID);
+    const result = await recordRepurchase(customer.id, repurchaseProduct, boxes, repurchaseDate || undefined, repurchaseNote.trim() || undefined);
     if (!result.ok) {
       setRepurchaseError(result.error ?? "回购记录失败，请重试");
       return;
@@ -89,7 +87,7 @@ export default function CustomerDetailPage() {
     setRepurchaseError(null);
   }
 
-  function handleAdjustSubmit(e: React.FormEvent) {
+  async function handleAdjustSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!customer) return;
     const qty = parsePositiveInt(adjustQuantity);
@@ -102,7 +100,7 @@ export default function CustomerDetailPage() {
       return;
     }
     const delta = adjustDirection === "add" ? qty : -qty;
-    const result = manualAdjustment(customer.id, adjustProduct, delta, adjustReason.trim(), COACH_ID);
+    const result = await manualAdjustment(customer.id, adjustProduct, delta, adjustReason.trim());
     if (!result.ok) {
       setAdjustError(result.error ?? "调整失败，请重试");
       return;
@@ -179,7 +177,7 @@ export default function CustomerDetailPage() {
               const row = inventoryRows.find((r) => r.productCode === code);
               if (!row) return null;
               const status = getInventoryAlertStatus(code, row.remainingUnits);
-              const avgDailyUsage = calcAverageDailyUsage(customer.id, code);
+              const avgDailyUsage = calcAverageDailyUsage(transactions, code);
               const estimatedDays = calcEstimatedDaysRemaining(row.remainingUnits, avgDailyUsage);
               return (
                 <div key={code} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">

@@ -5,13 +5,15 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { NutritionCard } from "@/components/ui/NutritionCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { currentCustomer } from "@/lib/mock-data";
-import { useAddedMeals } from "@/lib/added-meals";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useTodayMeals } from "@/lib/inventory/hooks";
 import { mealTypeOptions } from "@/lib/meal-types";
 import { PRODUCT_LABELS, PRODUCT_ICONS } from "@/lib/inventory/constants";
 
 export default function TodayMealsPage() {
   const c = currentCustomer;
-  const addedMeals = useAddedMeals();
+  const { user } = useAuthUser();
+  const { data: addedMeals } = useTodayMeals(user?.id ?? "");
 
   const addedTotals = addedMeals.reduce(
     (acc, m) => ({

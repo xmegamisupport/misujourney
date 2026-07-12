@@ -6,12 +6,10 @@ import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ScoreCircle } from "@/components/ui/ScoreCircle";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { currentCustomer } from "@/lib/mock-data";
-import { addMeal } from "@/lib/added-meals";
-import { recordMealMisuUsage } from "@/lib/inventory/engine";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { recordMeal } from "@/lib/inventory/engine";
 import { PRODUCT_LABELS, PRODUCT_ICONS } from "@/lib/inventory/constants";
 import type { MealScoredDraft } from "@/lib/meal-check/types";
-import type { MealEntry } from "@/lib/types";
 
 function subscribe() {
   return () => {};
@@ -48,7 +46,9 @@ export default function MealResultPage() {
 
 function MealResultView({ scored }: { scored: MealScoredDraft }) {
   const router = useRouter();
+  const { user } = useAuthUser();
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const nutrients = [
     { label: "热量", value: scored.totals.calories, unit: "kcal", icon: "🔥" },
@@ -58,34 +58,24 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
     { label: "纤维", value: scored.totals.fiber, unit: "g", icon: "🥦" },
   ];
 
-  function handleComplete() {
+  async function handleComplete() {
+    if (!user) return;
     setError(null);
-
-    if (scored.misuTags.length > 0) {
-      const result = recordMealMisuUsage({
-        mealId: scored.mealId,
-        customerId: currentCustomer.id,
-        misuItems: scored.misuTags,
-        createdBy: "customer",
-      });
-      if (!result.ok) {
-        setError(result.error ?? "库存扣除失败，请重试");
-        return;
-      }
-    }
+    setSubmitting(true);
 
     const misuLabels = scored.misuTags.map((t) => `${PRODUCT_LABELS[t.productCode]}×${t.quantity}`);
     const foodLabels = scored.foodItems.map((f) => `${f.name}×${f.quantity}`);
     const name = [...misuLabels, ...foodLabels].join("、") || "这一餐";
     const photoEmoji = scored.misuTags[0] ? PRODUCT_ICONS[scored.misuTags[0].productCode] : "🍽️";
 
-    const entry: MealEntry = {
-      id: scored.mealId,
-      type: scored.mealType as MealEntry["type"],
+    const result = await recordMeal({
+      mealId: scored.mealId,
+      customerId: user.id,
+      mealType: scored.mealType as never,
       misuItems: scored.misuTags,
       foodItems: scored.foodItems,
       name,
-      time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+      mealTime: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
       photoEmoji,
       portion: `共 ${scored.misuTags.length + scored.foodItems.length} 项`,
       calories: scored.totals.calories,
@@ -96,8 +86,14 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
       misuScore: scored.misuScore,
       goodPoints: scored.goodPoints,
       improvePoints: scored.improvePoints,
-    };
-    addMeal(entry);
+    });
+
+    if (!result.ok) {
+      setSubmitting(false);
+      setError(result.error ?? "记录失败，请重试");
+      return;
+    }
+
     sessionStorage.removeItem("misu-meal-scored");
     router.push("/customer/meals");
   }
@@ -183,10 +179,11 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
       <div className="flex flex-col gap-2">
         <button
           type="button"
+          disabled={submitting || !user}
           onClick={handleComplete}
-          className="rounded-xl bg-emerald-500 py-3.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600"
+          className="rounded-xl bg-emerald-500 py-3.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-60"
         >
-          完成记录
+          {submitting ? "记录中..." : "完成记录"}
         </button>
         <Link
           href="/customer/meals/add"

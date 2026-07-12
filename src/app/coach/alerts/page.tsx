@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { coachAlerts, allCustomers } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import type { AlertItem } from "@/lib/types";
-import { useActiveAlerts, useAllInventory, useAllCheckIns } from "@/lib/inventory/hooks";
+import { useActiveAlerts, useInventoryForCustomers, useCheckInsForCustomers, useTransactionsForCustomers } from "@/lib/inventory/hooks";
 import { markAlertFollowedUp, calcAverageDailyUsage, calcEstimatedDaysRemaining } from "@/lib/inventory/engine";
 import {
   PRODUCT_LABELS,
@@ -18,8 +18,7 @@ import {
   INVENTORY_ALERT_STATUS_STYLES,
   compareAlertStatusSeverity,
 } from "@/lib/inventory/constants";
-import type { InventoryMap, CheckInMap } from "@/lib/inventory/storage";
-import type { RepurchaseAlert, RepurchaseAlertLevel } from "@/lib/inventory/types";
+import type { CustomerInventory, DailyCheckIn, InventoryTransaction, RepurchaseAlert, RepurchaseAlertLevel } from "@/lib/inventory/types";
 
 const checkinFilters: { key: "all" | AlertItem["severity"]; label: string }[] = [
   { key: "all", label: "全部" },
@@ -27,8 +26,6 @@ const checkinFilters: { key: "all" | AlertItem["severity"]; label: string }[] = 
   { key: "medium", label: "关注" },
   { key: "low", label: "提示" },
 ];
-
-const COACH_ID = "coach-001";
 
 const levelOrder: RepurchaseAlertLevel[] = ["OUT_OF_STOCK", "URGENT", "REPURCHASE_SOON"];
 
@@ -46,9 +43,11 @@ function FollowUpAlertsContent() {
 
   const checkinAlerts = useMemo(() => coachAlerts.filter((a) => filter === "all" || a.severity === filter), [filter]);
 
-  const activeAlerts = useActiveAlerts();
-  const inventoryMap = useAllInventory();
-  const checkInMap = useAllCheckIns();
+  const customerIds = useMemo(() => allCustomers.map((c) => c.id), []);
+  const { data: activeAlerts } = useActiveAlerts();
+  const { data: inventoryMap } = useInventoryForCustomers(customerIds);
+  const { data: checkInMap } = useCheckInsForCustomers(customerIds);
+  const { data: transactionMap } = useTransactionsForCustomers(customerIds);
 
   const sortedRepurchaseAlerts = useMemo(() => {
     return [...activeAlerts].sort((a, b) => {
@@ -132,7 +131,13 @@ function FollowUpAlertsContent() {
                 </p>
                 <div className="flex flex-col gap-2">
                   {group.map((alert) => (
-                    <RepurchaseAlertCard key={alert.id} alert={alert} inventoryMap={inventoryMap} checkInMap={checkInMap} />
+                    <RepurchaseAlertCard
+                      key={alert.id}
+                      alert={alert}
+                      inventoryMap={inventoryMap}
+                      checkInMap={checkInMap}
+                      transactionMap={transactionMap}
+                    />
                   ))}
                 </div>
               </div>
@@ -148,14 +153,16 @@ function RepurchaseAlertCard({
   alert,
   inventoryMap,
   checkInMap,
+  transactionMap,
 }: {
   alert: RepurchaseAlert;
-  inventoryMap: InventoryMap;
-  checkInMap: CheckInMap;
+  inventoryMap: Record<string, CustomerInventory[]>;
+  checkInMap: Record<string, DailyCheckIn[]>;
+  transactionMap: Record<string, InventoryTransaction[]>;
 }) {
   const customer = allCustomers.find((c) => c.id === alert.customerId);
   const remaining = inventoryMap[alert.customerId]?.find((r) => r.productCode === alert.productCode)?.remainingUnits ?? 0;
-  const avgDailyUsage = calcAverageDailyUsage(alert.customerId, alert.productCode);
+  const avgDailyUsage = calcAverageDailyUsage(transactionMap[alert.customerId] ?? [], alert.productCode);
   const estimatedDays = calcEstimatedDaysRemaining(remaining, avgDailyUsage);
   const checkIns = checkInMap[alert.customerId] ?? [];
   const lastCheckInDate = checkIns.length > 0 ? [...checkIns].sort((a, b) => b.date.localeCompare(a.date))[0].date : "暂无记录";
@@ -192,7 +199,7 @@ function RepurchaseAlertCard({
         <button
           type="button"
           disabled={alert.status === "FOLLOWED_UP"}
-          onClick={() => markAlertFollowedUp(alert.id, COACH_ID)}
+          onClick={() => markAlertFollowedUp(alert.id)}
           className="rounded-xl border border-sky-200 py-2 text-center text-xs font-medium text-sky-600 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:border-slate-100 disabled:text-slate-300"
         >
           标记已跟进

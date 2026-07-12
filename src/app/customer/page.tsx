@@ -10,9 +10,9 @@ import { TaskCard } from "@/components/ui/TaskCard";
 import { ScoreCircle } from "@/components/ui/ScoreCircle";
 import { TrendChart } from "@/components/ui/TrendChart";
 import { currentCustomer, currentCoach } from "@/lib/mock-data";
-import { useAddedMeals } from "@/lib/added-meals";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { addWater, useWaterIntake, useTodayTasks } from "@/lib/daily-progress";
-import { useCustomerInventory, useHasInventoryRecords } from "@/lib/inventory/hooks";
+import { useCustomerInventory, useHasInventoryRecords, useCustomerTransactions, useTodayMeals } from "@/lib/inventory/hooks";
 import { calcAverageDailyUsage, calcEstimatedDaysRemaining } from "@/lib/inventory/engine";
 import { InventoryStatusCard } from "@/components/inventory/InventoryStatusCard";
 import type { ProductCode } from "@/lib/inventory/types";
@@ -22,8 +22,10 @@ const inventoryProducts: ProductCode[] = ["MISU_N_PLUS", "MISU_DX_PLUS"];
 
 export default function CustomerDashboardPage() {
   const c = currentCustomer;
+  const { user } = useAuthUser();
+  const customerId = user?.id ?? "";
   const toGoalWeight = Math.max(0, +(c.currentWeight - c.targetWeight).toFixed(1));
-  const addedMeals = useAddedMeals();
+  const { data: addedMeals } = useTodayMeals(customerId);
   const addedCalories = addedMeals.reduce((sum, m) => sum + m.calories, 0);
   const addedProtein = addedMeals.reduce((sum, m) => sum + m.protein, 0);
   const addedFiber = addedMeals.reduce((sum, m) => sum + m.fiber, 0);
@@ -31,11 +33,12 @@ export default function CustomerDashboardPage() {
   const water = useWaterIntake(c.nutritionToday.water, c.nutritionToday.waterTarget);
   const [customWater, setCustomWater] = useState("");
 
-  const tasks = useTodayTasks(c);
+  const tasks = useTodayTasks(c, customerId);
   const completionRate = Math.round((tasks.filter((t) => t.done).length / tasks.length) * 100);
 
-  const hasInventory = useHasInventoryRecords(c.id);
-  const inventoryRows = useCustomerInventory(c.id);
+  const { data: hasInventory } = useHasInventoryRecords(customerId);
+  const { data: inventoryRows } = useCustomerInventory(customerId);
+  const { data: transactions } = useCustomerTransactions(customerId);
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 md:px-8">
@@ -83,7 +86,7 @@ export default function CustomerDashboardPage() {
           <div className="grid grid-cols-2 gap-3">
             {inventoryProducts.map((productCode) => {
               const row = inventoryRows.find((r) => r.productCode === productCode);
-              const avgDailyUsage = calcAverageDailyUsage(c.id, productCode);
+              const avgDailyUsage = calcAverageDailyUsage(transactions, productCode);
               const estimatedDaysRemaining = calcEstimatedDaysRemaining(row?.remainingUnits ?? 0, avgDailyUsage);
               return (
                 <InventoryStatusCard

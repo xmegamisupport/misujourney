@@ -13,7 +13,7 @@ export default function CoachDashboardPage() {
   const noCheckin = coachAlerts.filter((a) => a.type === "no-checkin").length;
   const weightStall = coachAlerts.filter((a) => a.type === "weight-stall").length;
   const priorityList = [...coachAlerts].sort((a) => (a.severity === "high" ? -1 : 1)).slice(0, 4);
-  const repurchaseAlerts = useActiveAlerts();
+  const { data: repurchaseAlerts } = useActiveAlerts();
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">

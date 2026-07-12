@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { currentCustomer } from "@/lib/mock-data";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { setCheckinDone } from "@/lib/daily-progress";
 import { cn } from "@/lib/utils";
 import { useHasInventoryRecords, useTodayCheckIn } from "@/lib/inventory/hooks";
@@ -33,13 +34,20 @@ function formatSleepDuration(bedtime: string, wakeTime: string): string {
 
 export default function DailyCheckinPage() {
   const c = currentCustomer;
-  const hasInventory = useHasInventoryRecords(c.id);
-  const todayCheckIn = useTodayCheckIn(c.id);
+  const { user } = useAuthUser();
+  const customerId = user?.id ?? "";
+  const { data: hasInventory, loading: hasInventoryLoading } = useHasInventoryRecords(customerId);
+  const { data: todayCheckIn, loading: todayCheckInLoading } = useTodayCheckIn(customerId);
 
   // ---------- Legacy customer: no inventory records yet ----------
   const [legacyN, setLegacyN] = useState("0");
   const [legacyDX, setLegacyDX] = useState("0");
   const [legacyError, setLegacyError] = useState<string | null>(null);
+  const [legacySubmitting, setLegacySubmitting] = useState(false);
+
+  if (hasInventoryLoading || todayCheckInLoading || !user) {
+    return <div className="px-4 py-10 text-center text-sm text-slate-400">加载中...</div>;
+  }
 
   if (!hasInventory) {
     return (
@@ -50,7 +58,7 @@ export default function DailyCheckinPage() {
         </p>
         <form
           className="flex flex-col gap-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             const n = parseNonNegativeInt(legacyN);
             const dx = parseNonNegativeInt(legacyDX);
@@ -58,7 +66,9 @@ export default function DailyCheckinPage() {
               setLegacyError("剩余包数只能填写 0 或正整数");
               return;
             }
-            const result = initializeLegacyBalance(c.id, { MISU_N_PLUS: n, MISU_DX_PLUS: dx }, "customer");
+            setLegacySubmitting(true);
+            const result = await initializeLegacyBalance(customerId, { MISU_N_PLUS: n, MISU_DX_PLUS: dx });
+            setLegacySubmitting(false);
             if (!result.ok) {
               setLegacyError(result.error ?? "初始化失败，请重试");
               return;
@@ -99,9 +109,10 @@ export default function DailyCheckinPage() {
           )}
           <button
             type="submit"
-            className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600"
+            disabled={legacySubmitting}
+            className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-60"
           >
-            保存并继续打卡
+            {legacySubmitting ? "保存中..." : "保存并继续打卡"}
           </button>
         </form>
       </div>
@@ -110,7 +121,7 @@ export default function DailyCheckinPage() {
 
   return (
     <CheckInForm
-      customerId={c.id}
+      customerId={customerId}
       streakDays={c.streakDays}
       currentDay={c.currentDay}
       planLength={c.planLength}
@@ -160,7 +171,7 @@ function CheckInForm({
     setWakeTime(rec.wakeTime);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -171,7 +182,7 @@ function CheckInForm({
     }
 
     if (record && editing) {
-      const result = editCheckIn(customerId, record.id, { weight: weightNum, poopCount, bedtime, wakeTime, usage: [] }, "customer");
+      const result = await editCheckIn(customerId, record.id, { weight: weightNum, poopCount, bedtime, wakeTime });
       if (!result.ok) {
         setError(result.error ?? "更新失败，请重试");
         return;
@@ -180,7 +191,7 @@ function CheckInForm({
       return;
     }
 
-    const result = submitCheckIn({
+    const result = await submitCheckIn({
       id: checkInId,
       customerId,
       date: todayDateStr(),
@@ -188,8 +199,6 @@ function CheckInForm({
       poopCount,
       bedtime,
       wakeTime,
-      usage: [],
-      createdBy: "customer",
     });
     if (!result.ok) {
       setError(result.error ?? "打卡失败，请重试");
@@ -199,9 +208,9 @@ function CheckInForm({
     setJustSubmitted(true);
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!record) return;
-    const result = deleteCheckIn(customerId, record.id, "customer");
+    const result = await deleteCheckIn(customerId, record.id);
     if (!result.ok) {
       setError(result.error ?? "删除失败，请重试");
       return;
