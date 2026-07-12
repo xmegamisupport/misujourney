@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import type { Role } from "@/lib/types";
 import { roleNav, roleLabel, roleTheme } from "@/lib/nav";
 import { SidebarNavigation } from "@/components/ui/SidebarNavigation";
 import { BottomNavigation } from "@/components/ui/BottomNavigation";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
+import { SignOutButton } from "@/components/SignOutButton";
 import { cn } from "@/lib/utils";
 
 interface RoleShellProps {
@@ -27,9 +27,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
         footer={
           <div className="flex items-center justify-between">
             <RoleSwitcher compact />
-            <Link href="/" className="text-xs text-slate-400 hover:text-slate-600">
-              退出 Demo
-            </Link>
+            <SignOutButton className="text-xs text-slate-400 hover:text-slate-600" />
           </div>
         }
       />

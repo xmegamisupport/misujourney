@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AccountSettingsSection } from "@/components/AccountSettingsSection";
+import { SignOutButton } from "@/components/SignOutButton";
 import { cn } from "@/lib/utils";
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -108,6 +110,14 @@ export default function AdminSettingsPage() {
       >
         保存设置
       </button>
+
+      <div>
+        <p className="mb-3 text-sm font-semibold text-slate-700">账号</p>
+        <div className="flex flex-col gap-3">
+          <AccountSettingsSection />
+          <SignOutButton className="rounded-xl border border-rose-100 bg-rose-50 py-3 text-center text-sm font-semibold text-rose-500 transition hover:bg-rose-100" />
+        </div>
+      </div>
     </div>
   );
 }

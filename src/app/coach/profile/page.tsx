@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AccountSettingsSection } from "@/components/AccountSettingsSection";
+import { SignOutButton } from "@/components/SignOutButton";
 import { currentCoach } from "@/lib/mock-data";
 
 const linkItems = [
@@ -9,7 +11,6 @@ const linkItems = [
 ];
 
 const staticItems = [
-  { label: "账号设置", icon: "⚙️" },
   { label: "通知设置", icon: "🔔" },
   { label: "帮助中心", icon: "❓" },
 ];
@@ -76,6 +77,8 @@ export default function CoachProfilePage() {
         ))}
       </div>
 
+      <AccountSettingsSection />
+
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
         {staticItems.map((item) => (
           <div
@@ -89,12 +92,7 @@ export default function CoachProfilePage() {
         ))}
       </div>
 
-      <Link
-        href="/"
-        className="rounded-xl border border-rose-100 bg-rose-50 py-3 text-center text-sm font-semibold text-rose-500 transition hover:bg-rose-100"
-      >
-        退出登录
-      </Link>
+      <SignOutButton className="rounded-xl border border-rose-100 bg-rose-50 py-3 text-center text-sm font-semibold text-rose-500 transition hover:bg-rose-100" />
     </div>
   );
 }
