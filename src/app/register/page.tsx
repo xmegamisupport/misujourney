@@ -59,7 +59,12 @@ export default function RegisterPage() {
 
     if (signUpError) {
       setSubmitting(false);
-      setError(signUpError.message === "User already registered" ? "该邮箱已被注册，请直接登录" : signUpError.message);
+      if (signUpError.message === "User already registered") {
+        setError("该邮箱已被注册，请直接登录");
+      } else {
+        console.error("Sign up failed:", signUpError);
+        setError("注册失败，请稍后再试或联系客服");
+      }
       return;
     }
 

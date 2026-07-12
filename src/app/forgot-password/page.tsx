@@ -24,7 +24,8 @@ export default function ForgotPasswordPage() {
     });
     setSubmitting(false);
     if (resetError) {
-      setError(resetError.message);
+      console.error("Password reset failed:", resetError);
+      setError("发送失败，请稍后再试");
       return;
     }
     setSent(true);

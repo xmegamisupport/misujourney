@@ -47,7 +47,14 @@ function LoginForm() {
 
     if (signInError) {
       setSubmitting(false);
-      setError(signInError.message === "Invalid login credentials" ? "邮箱或密码不正确" : signInError.message);
+      if (signInError.message === "Invalid login credentials") {
+        setError("邮箱或密码不正确");
+      } else if (signInError.message === "Email not confirmed") {
+        setError("邮箱尚未确认，请查收确认邮件");
+      } else {
+        console.error("Sign in failed:", signInError);
+        setError("登录失败，请稍后再试");
+      }
       return;
     }
 
