@@ -1,0 +1,169 @@
+import type { ProductCode } from "./inventory/types";
+
+export type Role = "customer" | "coach" | "admin";
+
+export type PlanLength = 60 | 90;
+
+export interface TrendPoint {
+  label: string;
+  value: number;
+}
+
+export interface NutritionTargets {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+}
+
+export interface DailyTask {
+  id: string;
+  title: string;
+  description: string;
+  done: boolean;
+  icon: string;
+}
+
+export interface MealMisuItem {
+  productCode: ProductCode;
+  quantity: number;
+}
+
+export interface MealFoodItem {
+  id: string;
+  name: string;
+  servingLabel: string;
+  quantity: number;
+  caloriesPerUnit: number;
+  proteinPerUnit: number;
+  carbsPerUnit: number;
+  fatPerUnit: number;
+  fiberPerUnit: number;
+  /** true when nutrition is a rough placeholder (manually typed food, not AI-estimated) */
+  estimated?: boolean;
+}
+
+export interface MealEntry {
+  id: string;
+  type: "breakfast" | "lunch" | "dinner" | "snack" | "bedtime";
+  misuItems?: MealMisuItem[];
+  foodItems?: MealFoodItem[];
+  name: string;
+  time: string;
+  photoEmoji: string;
+  portion: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  misuScore: number;
+  goodPoints: string[];
+  improvePoints: string[];
+}
+
+export interface CustomerProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  planLength: PlanLength;
+  currentDay: number;
+  startDate: string;
+  startWeight: number;
+  currentWeight: number;
+  targetWeight: number;
+  startWaist: number;
+  currentWaist: number;
+  height: number;
+  age: number;
+  gender: "female" | "male";
+  phone: string;
+  coachId: string;
+  streakDays: number;
+  todayCompletionRate: number;
+  todayMisuScore: number;
+  weightTrend: TrendPoint[];
+  waistTrend: TrendPoint[];
+  scoreTrend: TrendPoint[];
+  nutritionTargets: NutritionTargets;
+  nutritionToday: NutritionTargets & { water: number; waterTarget: number };
+  tasks: DailyTask[];
+  meals: MealEntry[];
+  checkinRate: number;
+  tags: string[];
+  lastCheckIn: string;
+  productStock: "ok" | "low" | "out";
+}
+
+export interface CoachProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  title: string;
+  bio: string;
+  phone: string;
+  wechat: string;
+  referralCode: string;
+  totalCustomers: number;
+  activeThisWeek: number;
+  yearsExperience: number;
+  rating: number;
+  specialties: string[];
+}
+
+export interface AlertItem {
+  id: string;
+  customerId: string;
+  customerName: string;
+  avatar: string;
+  type: "no-checkin" | "weight-stall" | "low-stock" | "low-score";
+  title: string;
+  detail: string;
+  severity: "high" | "medium" | "low";
+  daysAgo: number;
+}
+
+export interface MessageThread {
+  id: string;
+  customerId: string;
+  customerName: string;
+  avatar: string;
+  lastMessage: string;
+  lastTime: string;
+  unread: number;
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  status: "active" | "inactive" | "pending";
+  joinedAt: string;
+}
+
+export interface LessonItem {
+  id: string;
+  title: string;
+  category: string;
+  duration: string;
+  status: "published" | "draft";
+  views: number;
+}
+
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  status: "published" | "draft";
+}
+
+export interface ProductGuideItem {
+  id: string;
+  name: string;
+  category: string;
+  summary: string;
+  status: "published" | "draft";
+}

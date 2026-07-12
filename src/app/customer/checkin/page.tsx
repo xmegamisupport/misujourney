@@ -1,0 +1,384 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { currentCustomer } from "@/lib/mock-data";
+import { setCheckinDone } from "@/lib/daily-progress";
+import { cn } from "@/lib/utils";
+import { useHasInventoryRecords, useTodayCheckIn } from "@/lib/inventory/hooks";
+import { initializeLegacyBalance, submitCheckIn, editCheckIn, deleteCheckIn, todayDateStr } from "@/lib/inventory/engine";
+import { parseNonNegativeInt } from "@/lib/inventory/validation";
+import type { PoopCount, DailyCheckIn } from "@/lib/inventory/types";
+
+const poopOptions: { key: PoopCount; label: string }[] = [
+  { key: "0", label: "0次" },
+  { key: "1", label: "1次" },
+  { key: "2", label: "2次" },
+  { key: "3+", label: "3次及以上" },
+];
+
+function formatSleepDuration(bedtime: string, wakeTime: string): string {
+  if (!bedtime || !wakeTime) return "";
+  const [bh, bm] = bedtime.split(":").map(Number);
+  const [wh, wm] = wakeTime.split(":").map(Number);
+  const bedMinutes = bh * 60 + bm;
+  const wakeMinutes = wh * 60 + wm;
+  let diff = wakeMinutes - bedMinutes;
+  if (diff <= 0) diff += 24 * 60;
+  const hours = Math.floor(diff / 60);
+  const minutes = diff % 60;
+  return minutes > 0 ? `${hours}小时${minutes}分钟` : `${hours}小时`;
+}
+
+export default function DailyCheckinPage() {
+  const c = currentCustomer;
+  const hasInventory = useHasInventoryRecords(c.id);
+  const todayCheckIn = useTodayCheckIn(c.id);
+
+  // ---------- Legacy customer: no inventory records yet ----------
+  const [legacyN, setLegacyN] = useState("0");
+  const [legacyDX, setLegacyDX] = useState("0");
+  const [legacyError, setLegacyError] = useState<string | null>(null);
+
+  if (!hasInventory) {
+    return (
+      <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
+        <PageHeader title="请先更新你的 MISU 产品库存" backHref="/customer" />
+        <p className="text-sm text-slate-500">
+          我们需要先知道你目前手上还有多少包 MISU 产品，才能开始帮你追踪每天的使用量。请填写目前实际剩余的包数（不是购买时的盒数）。
+        </p>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const n = parseNonNegativeInt(legacyN);
+            const dx = parseNonNegativeInt(legacyDX);
+            if (n === null || dx === null) {
+              setLegacyError("剩余包数只能填写 0 或正整数");
+              return;
+            }
+            const result = initializeLegacyBalance(c.id, { MISU_N_PLUS: n, MISU_DX_PLUS: dx }, "customer");
+            if (!result.ok) {
+              setLegacyError(result.error ?? "初始化失败，请重试");
+              return;
+            }
+            setLegacyError(null);
+          }}
+        >
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <label className="flex flex-col gap-1.5 text-sm text-slate-600">
+              MISU N+ 代餐剩余多少包？
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                value={legacyN}
+                onChange={(e) => setLegacyN(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              />
+            </label>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <label className="flex flex-col gap-1.5 text-sm text-slate-600">
+              MISU DX+ 排毒剩余多少包？
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                value={legacyDX}
+                onChange={(e) => setLegacyDX(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              />
+            </label>
+          </div>
+          {legacyError && (
+            <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{legacyError}</div>
+          )}
+          <button
+            type="submit"
+            className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600"
+          >
+            保存并继续打卡
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <CheckInForm
+      customerId={c.id}
+      streakDays={c.streakDays}
+      currentDay={c.currentDay}
+      planLength={c.planLength}
+      currentWeight={c.currentWeight}
+      targetWeight={c.targetWeight}
+      todayCheckIn={todayCheckIn}
+    />
+  );
+}
+
+function CheckInForm({
+  customerId,
+  streakDays,
+  currentDay,
+  planLength,
+  currentWeight,
+  targetWeight,
+  todayCheckIn,
+}: {
+  customerId: string;
+  streakDays: number;
+  currentDay: number;
+  planLength: number;
+  currentWeight: number;
+  targetWeight: number;
+  todayCheckIn: DailyCheckIn | undefined;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [justSubmitted, setJustSubmitted] = useState(false);
+  const [checkInId] = useState(() => `checkin_${crypto.randomUUID()}`);
+
+  const record = todayCheckIn;
+
+  const [weight, setWeight] = useState(record?.weight.toString() ?? currentWeight.toString());
+  const [poopCount, setPoopCount] = useState<PoopCount>(record?.poopCount ?? "1");
+  const [bedtime, setBedtime] = useState(record?.bedtime ?? "23:00");
+  const [wakeTime, setWakeTime] = useState(record?.wakeTime ?? "07:00");
+  const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const sleepDuration = formatSleepDuration(bedtime, wakeTime);
+
+  function resetFormToRecord(rec: DailyCheckIn) {
+    setWeight(rec.weight.toString());
+    setPoopCount(rec.poopCount);
+    setBedtime(rec.bedtime);
+    setWakeTime(rec.wakeTime);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    const weightNum = Number(weight);
+    if (!Number.isFinite(weightNum) || weightNum <= 0) {
+      setError("请输入有效的体重");
+      return;
+    }
+
+    if (record && editing) {
+      const result = editCheckIn(customerId, record.id, { weight: weightNum, poopCount, bedtime, wakeTime, usage: [] }, "customer");
+      if (!result.ok) {
+        setError(result.error ?? "更新失败，请重试");
+        return;
+      }
+      setEditing(false);
+      return;
+    }
+
+    const result = submitCheckIn({
+      id: checkInId,
+      customerId,
+      date: todayDateStr(),
+      weight: weightNum,
+      poopCount,
+      bedtime,
+      wakeTime,
+      usage: [],
+      createdBy: "customer",
+    });
+    if (!result.ok) {
+      setError(result.error ?? "打卡失败，请重试");
+      return;
+    }
+    setCheckinDone();
+    setJustSubmitted(true);
+  }
+
+  function handleDelete() {
+    if (!record) return;
+    const result = deleteCheckIn(customerId, record.id, "customer");
+    if (!result.ok) {
+      setError(result.error ?? "删除失败，请重试");
+      return;
+    }
+    setDeleting(false);
+  }
+
+  // ---------- Celebration screen right after a fresh submit ----------
+  if (justSubmitted && !editing) {
+    return (
+      <div className="flex flex-col items-center gap-4 px-4 py-20 text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-3xl">✅</span>
+        <p className="text-lg font-semibold text-slate-900">今日打卡完成！</p>
+        <p className="text-sm text-slate-500">已连续打卡 {streakDays + 1} 天，继续保持 🌱</p>
+        <Link
+          href="/customer"
+          className="mt-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+        >
+          返回首页
+        </Link>
+      </div>
+    );
+  }
+
+  // ---------- Already checked in today: summary + edit/delete ----------
+  if (record && !editing) {
+    return (
+      <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
+        <PageHeader title="每日体重打卡" subtitle={`Day ${currentDay} / ${planLength}`} backHref="/customer" />
+
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+          <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
+            <span>✅</span>今日已打卡
+          </p>
+          <div className="grid grid-cols-2 gap-3 text-sm text-slate-600">
+            <p>体重：{record.weight}kg</p>
+            <p>排便：{poopOptions.find((o) => o.key === record.poopCount)?.label}</p>
+            <p>
+              睡眠：{record.bedtime} - {record.wakeTime}
+            </p>
+            <p>睡眠时长：{formatSleepDuration(record.bedtime, record.wakeTime)}</p>
+          </div>
+        </div>
+
+        {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
+
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              resetFormToRecord(record);
+              setEditing(true);
+              setError(null);
+            }}
+            className="rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300"
+          >
+            编辑打卡
+          </button>
+          {!deleting ? (
+            <button
+              type="button"
+              onClick={() => setDeleting(true)}
+              className="rounded-xl border border-rose-100 bg-rose-50 py-3 text-sm font-semibold text-rose-500 transition hover:bg-rose-100"
+            >
+              删除打卡
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="rounded-xl bg-rose-500 py-3 text-sm font-semibold text-white transition hover:bg-rose-600"
+            >
+              确认删除？
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- Form: new check-in, or editing an existing one ----------
+  return (
+    <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
+      <PageHeader
+        title="每日体重打卡"
+        subtitle={`Day ${currentDay} / ${planLength}`}
+        backHref="/customer"
+        action={
+          editing ? (
+            <button
+              type="button"
+              onClick={() => {
+                setEditing(false);
+                setError(null);
+              }}
+              className="text-sm font-medium text-slate-400"
+            >
+              取消编辑
+            </button>
+          ) : undefined
+        }
+      />
+
+      <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <label className="flex flex-col gap-1.5 text-sm text-slate-600">
+            今日体重 (kg)
+            <input
+              type="number"
+              step="0.1"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+            />
+          </label>
+          <p className="mt-2 text-xs text-slate-400">
+            上次记录 {currentWeight}kg · 目标 {targetWeight}kg
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <p className="mb-3 flex items-center gap-1.5 text-sm text-slate-600">
+            <span>💩</span>排便情况
+          </p>
+          <div className="grid grid-cols-4 gap-2">
+            {poopOptions.map((option) => (
+              <button
+                type="button"
+                key={option.key}
+                onClick={() => setPoopCount(option.key)}
+                className={cn(
+                  "rounded-2xl border px-2 py-3 text-center text-xs font-medium transition",
+                  poopCount === option.key ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-100 text-slate-500",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <p className="mb-3 flex items-center gap-1.5 text-sm text-slate-600">
+            <span>😴</span>睡眠时间
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1.5 text-xs text-slate-500">
+              入睡时间
+              <input
+                type="time"
+                value={bedtime}
+                onChange={(e) => setBedtime(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-xs text-slate-500">
+              起床时间
+              <input
+                type="time"
+                value={wakeTime}
+                onChange={(e) => setWakeTime(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              />
+            </label>
+          </div>
+          {sleepDuration && <p className="mt-2 text-xs text-slate-400">共睡眠 {sleepDuration}</p>}
+        </div>
+
+        {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
+
+        <button
+          type="submit"
+          className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600"
+        >
+          {editing ? "保存修改" : "完成打卡"}
+        </button>
+      </form>
+    </div>
+  );
+}
