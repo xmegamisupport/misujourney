@@ -2,35 +2,37 @@ import type { Role } from "./types";
 
 export interface NavItem {
   href: string;
+  /** zh fallback label; RoleShell overrides this with the active language's translation. */
   label: string;
   icon: string;
+  key: string;
 }
 
 export const customerNav: NavItem[] = [
-  { href: "/customer", label: "首页", icon: "🏠" },
-  { href: "/customer/checkin", label: "打卡", icon: "✅" },
-  { href: "/customer/meals", label: "饮食", icon: "🍽️" },
-  { href: "/customer/learn", label: "学习", icon: "📚" },
-  { href: "/customer/progress", label: "成长", icon: "📈" },
-  { href: "/customer/profile", label: "我的", icon: "👤" },
+  { href: "/customer", label: "首页", icon: "🏠", key: "home" },
+  { href: "/customer/checkin", label: "打卡", icon: "✅", key: "checkin" },
+  { href: "/customer/meals", label: "饮食", icon: "🍽️", key: "meals" },
+  { href: "/customer/learn", label: "学习", icon: "📚", key: "learn" },
+  { href: "/customer/progress", label: "成长", icon: "📈", key: "progress" },
+  { href: "/customer/profile", label: "我的", icon: "👤", key: "profile" },
 ];
 
 export const coachNav: NavItem[] = [
-  { href: "/coach", label: "Dashboard", icon: "📊" },
-  { href: "/coach/customers", label: "顾客", icon: "👥" },
-  { href: "/coach/alerts", label: "提醒", icon: "🔔" },
-  { href: "/coach/messages", label: "消息", icon: "💬" },
-  { href: "/coach/referral", label: "Referral", icon: "🔗" },
-  { href: "/coach/profile", label: "我的", icon: "👤" },
+  { href: "/coach", label: "概览", icon: "📊", key: "dashboard" },
+  { href: "/coach/customers", label: "顾客", icon: "👥", key: "customers" },
+  { href: "/coach/alerts", label: "提醒", icon: "🔔", key: "alerts" },
+  { href: "/coach/messages", label: "消息", icon: "💬", key: "messages" },
+  { href: "/coach/referral", label: "推荐", icon: "🔗", key: "referral" },
+  { href: "/coach/profile", label: "我的", icon: "👤", key: "profile" },
 ];
 
 export const adminNav: NavItem[] = [
-  { href: "/admin", label: "Dashboard", icon: "📊" },
-  { href: "/admin/users", label: "Users", icon: "🧾" },
-  { href: "/admin/coaches", label: "Coaches", icon: "🌿" },
-  { href: "/admin/customers", label: "Customers", icon: "🧑‍🤝‍🧑" },
-  { href: "/admin/content/lessons", label: "Content", icon: "🗂️" },
-  { href: "/admin/settings", label: "Settings", icon: "⚙️" },
+  { href: "/admin", label: "概览", icon: "📊", key: "dashboard" },
+  { href: "/admin/users", label: "用户", icon: "🧾", key: "users" },
+  { href: "/admin/coaches", label: "教练", icon: "🌿", key: "coaches" },
+  { href: "/admin/customers", label: "顾客", icon: "🧑‍🤝‍🧑", key: "customers" },
+  { href: "/admin/content/lessons", label: "内容", icon: "🗂️", key: "content" },
+  { href: "/admin/settings", label: "设置", icon: "⚙️", key: "settings" },
 ];
 
 export const roleHome: Record<Role, string> = {
@@ -39,10 +41,11 @@ export const roleHome: Record<Role, string> = {
   admin: "/admin",
 };
 
+/** zh fallback labels; RoleShell overrides with the active language's translation. */
 export const roleLabel: Record<Role, string> = {
-  customer: "Customer",
+  customer: "顾客",
   coach: "Journey Coach",
-  admin: "XMEGAMI Admin",
+  admin: "XMEGAMI 管理员",
 };
 
 export const roleNav: Record<Role, NavItem[]> = {

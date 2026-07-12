@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { AccountSettingsSection } from "@/components/AccountSettingsSection";
 import { SignOutButton } from "@/components/SignOutButton";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { currentCoach } from "@/lib/mock-data";
 
 const linkItems = [
@@ -78,6 +79,10 @@ export default function CoachProfilePage() {
       </div>
 
       <AccountSettingsSection />
+
+      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        <LanguageSwitcher />
+      </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
         {staticItems.map((item) => (
