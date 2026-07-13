@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ProgressCard } from "@/components/ui/ProgressCard";
@@ -20,6 +20,31 @@ const DEFAULT_NUTRITION_TARGETS = { calories: 1500, protein: 90, fiber: 25 };
 /** Morning-weigh-in cutoff hour (24h, local time). Past this hour with no
  * check-in yet, we stop nudging for "today" and just wait for tomorrow. */
 const WEIGH_IN_CUTOFF_HOUR = 12;
+
+function getGreeting(hour: number): string {
+  if (hour >= 5 && hour < 12) return "早安";
+  if (hour >= 12 && hour < 18) return "午安";
+  if (hour >= 18 && hour < 23) return "晚上好";
+  return "夜深了";
+}
+
+/** The server has no notion of the customer's local clock, so reading
+ * `new Date().getHours()` directly in render would mismatch between the
+ * server-rendered HTML and the client's first paint. useSyncExternalStore's
+ * getServerSnapshot exists exactly for this: render a neutral hour during
+ * SSR/hydration, then swap to the real local hour right after mount. */
+function subscribeNoop() {
+  return () => {};
+}
+function getClientHour() {
+  return new Date().getHours();
+}
+function getServerHour() {
+  return 8;
+}
+function useLocalHour(): number {
+  return useSyncExternalStore(subscribeNoop, getClientHour, getServerHour);
+}
 
 export default function CustomerDashboardPage() {
   const { user } = useAuthUser();
@@ -43,7 +68,9 @@ export default function CustomerDashboardPage() {
   const waterDone = water >= waterTarget;
   const todayTasksDone = [weighInDone, mealDone, waterDone].filter(Boolean).length;
   const journeyProgressPercent = Math.round((todayTasksDone / 3) * 100);
-  const pastWeighInWindow = new Date().getHours() >= WEIGH_IN_CUTOFF_HOUR;
+  const currentHour = useLocalHour();
+  const pastWeighInWindow = currentHour >= WEIGH_IN_CUTOFF_HOUR;
+  const greeting = getGreeting(currentHour);
 
   const latestWeight = checkIns[0]?.weight ?? null;
   const currentDay = journey?.currentDay ?? 1;
@@ -60,7 +87,7 @@ export default function CustomerDashboardPage() {
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 md:px-8">
       <PageHeader
-        title={`早安，${journey?.name ?? ""} ${journey?.avatar ?? ""}`}
+        title={`${greeting}，${journey?.name ?? ""} ${journey?.avatar ?? ""}`}
         subtitle={`Day ${currentDay} / ${planLength} · Every Day Is A New Journey`}
         action={
           <Link
