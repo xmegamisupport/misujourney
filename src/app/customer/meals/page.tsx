@@ -9,6 +9,7 @@ import { useJourneySummary } from "@/lib/journey";
 import { useTodayMeals } from "@/lib/inventory/hooks";
 import { mealTypeOptions } from "@/lib/meal-types";
 import { PRODUCT_LABELS, PRODUCT_ICONS } from "@/lib/inventory/constants";
+import { starString } from "@/lib/meal-check/plate-analysis";
 
 const DEFAULT_NUTRITION_TARGETS = { calories: 1500, protein: 90, carbs: 150, fat: 50, fiber: 25 };
 
@@ -74,13 +75,13 @@ export default function TodayMealsPage() {
                       <p className="mt-1 truncate text-xs font-medium text-emerald-600">
                         {[
                           ...(meal.misuItems ?? []).map((m) => `${PRODUCT_ICONS[m.productCode]} ${PRODUCT_LABELS[m.productCode]} × ${m.quantity}`),
-                          ...(meal.foodItems ?? []).map((f) => `${f.name} × ${f.quantity}`),
+                          ...(meal.foodItems ?? []).map((f) => `${f.name} ${f.portionLabel}`),
                         ].join(" · ")}
                       </p>
                     )}
                   </div>
-                  <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600">
-                    {meal.misuScore}分
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-amber-500">
+                    {starString(meal.misuScore)}
                   </span>
                 </div>
               ) : (

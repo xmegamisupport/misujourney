@@ -1,21 +1,18 @@
 import type { ProductCode } from "../inventory/types";
+import type { FoodCategory, SelectedPortion } from "../food-portions/types";
 
 export interface MisuTagDraft {
   productCode: ProductCode;
   quantity: number;
 }
 
+/** AI-detection-stage shape: the AI only names the food and classifies it
+ * into a fixed category — it never guesses a gram amount or macros. */
 export interface FoodItemDraft {
   id: string;
   name: string;
-  servingLabel: string;
-  quantity: number;
-  caloriesPerUnit: number;
-  proteinPerUnit: number;
-  carbsPerUnit: number;
-  fatPerUnit: number;
-  fiberPerUnit: number;
-  estimated?: boolean;
+  category: FoodCategory;
+  portion?: SelectedPortion;
 }
 
 export interface NutritionTotals {
@@ -34,6 +31,12 @@ export interface MealDetectionDraft {
   foodItems: FoodItemDraft[];
 }
 
+export interface PlateAnalysisSummary {
+  vegetablePercent: number;
+  proteinPercent: number;
+  carbPercent: number;
+}
+
 /** Sessionstorage payload passed from the Confirm page to the Result page.
  * `mealId` is generated once on confirm and reused for both the saved
  * MealEntry and the inventory deduction transaction, so a double "完成记录"
@@ -44,4 +47,6 @@ export interface MealScoredDraft extends MealDetectionDraft {
   misuScore: number;
   goodPoints: string[];
   improvePoints: string[];
+  plateAnalysis: PlateAnalysisSummary;
+  aiAdvice: string;
 }

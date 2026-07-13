@@ -33,15 +33,15 @@ export interface MealMisuItem {
 export interface MealFoodItem {
   id: string;
   name: string;
-  servingLabel: string;
-  quantity: number;
-  caloriesPerUnit: number;
-  proteinPerUnit: number;
-  carbsPerUnit: number;
-  fatPerUnit: number;
-  fiberPerUnit: number;
-  /** true when nutrition is a rough placeholder (manually typed food, not AI-estimated) */
-  estimated?: boolean;
+  category: string;
+  portionLabel: string;
+  gram: number;
+  calories: number;
+  protein: number;
+  carbohydrate: number;
+  fat: number;
+  fiber: number;
+  isCustom?: boolean;
 }
 
 export interface MealEntry {
@@ -58,9 +58,11 @@ export interface MealEntry {
   carbs: number;
   fat: number;
   fiber: number;
+  /** 1-5 stars, deterministic 211-ratio score (not an AI guess) */
   misuScore: number;
   goodPoints: string[];
   improvePoints: string[];
+  aiAdvice: string;
 }
 
 export interface CustomerProfile {

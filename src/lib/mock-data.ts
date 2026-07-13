@@ -103,6 +103,7 @@ export const currentCustomer: CustomerProfile = {
       misuScore: 90,
       goodPoints: ["蛋白质充足", "纤维来源丰富", "含糖量控制得宜"],
       improvePoints: ["可以再增加一份坚果补充健康脂肪"],
+      aiAdvice: "",
     },
     {
       id: "m2",
@@ -119,6 +120,7 @@ export const currentCustomer: CustomerProfile = {
       misuScore: 88,
       goodPoints: ["优质蛋白来源", "蔬菜比例理想"],
       improvePoints: ["酱料建议减半", "可搭配一份水果补充维生素C"],
+      aiAdvice: "",
     },
     {
       id: "m3",
@@ -135,6 +137,7 @@ export const currentCustomer: CustomerProfile = {
       misuScore: 82,
       goodPoints: ["高蛋白低脂选择"],
       improvePoints: ["可加入少量莓果提升纤维摄取"],
+      aiAdvice: "",
     },
   ],
 };

@@ -27,8 +27,11 @@ import { useActiveAttentionFlags, useLatestCustomerInsight } from "@/lib/insight
 import { SEVERITY_STYLES } from "@/lib/insights/constants";
 import { buildCustomerTrendSummary } from "@/lib/insights/summary";
 import { createClient } from "@/lib/supabase/client";
+import { starString } from "@/lib/meal-check/plate-analysis";
+import { FOOD_CATEGORY_META } from "@/lib/food-portions/constants";
 import type { CustomerTrendSummary, AnalysisType } from "@/lib/insights/types";
 import type { ProductCode } from "@/lib/inventory/types";
+import type { FoodCategory } from "@/lib/food-portions/types";
 
 const productCodes: ProductCode[] = ["MISU_N_PLUS", "MISU_DX_PLUS"];
 const DIET_LABELS: Record<string, string> = { regular: "一般饮食", vegetarian: "素食", ovo_lacto_vegetarian: "蛋奶素", vegan: "全素", other: "其他" };
@@ -98,6 +101,8 @@ export default function CustomerDetailPage() {
       setGenerating(false);
     }
   }
+
+  const [expandedMealId, setExpandedMealId] = useState<string | null>(null);
 
   const [repurchaseOpen, setRepurchaseOpen] = useState(false);
   const [repurchaseProduct, setRepurchaseProduct] = useState<ProductCode>("MISU_N_PLUS");
@@ -511,18 +516,45 @@ export default function CustomerDetailPage() {
           <EmptyState icon="🍽️" title="今天还没有饮食记录" />
         ) : (
           <div className="flex flex-col gap-2">
-            {todayMeals.map((meal) => (
-              <div key={meal.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-xl">{meal.photoEmoji ?? "🍽️"}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-800">{meal.name}</p>
-                  <p className="text-xs text-slate-400">
-                    {meal.time} · {meal.calories}kcal
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600">{meal.misuScore}分</span>
-              </div>
-            ))}
+            {todayMeals.map((meal) => {
+              const expanded = expandedMealId === meal.id;
+              return (
+                <button
+                  key={meal.id}
+                  type="button"
+                  onClick={() => setExpandedMealId(expanded ? null : meal.id)}
+                  className="flex w-full flex-col gap-2.5 rounded-2xl border border-slate-100 bg-white p-3.5 text-left shadow-sm transition hover:border-emerald-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-xl">{meal.photoEmoji ?? "🍽️"}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-800">{meal.name}</p>
+                      <p className="text-xs text-slate-400">{meal.time}</p>
+                    </div>
+                    <span className="shrink-0 text-base text-amber-400">{starString(meal.misuScore)}</span>
+                  </div>
+
+                  {expanded && (
+                    <div className="flex flex-col gap-2 border-t border-slate-100 pt-2.5">
+                      {meal.foodItems && meal.foodItems.length > 0 && (
+                        <p className="text-xs text-slate-500">
+                          {meal.foodItems
+                            .map((f) => `${FOOD_CATEGORY_META[f.category as FoodCategory]?.emoji ?? ""} ${f.name} ${f.portionLabel}`)
+                            .join("、")}
+                        </p>
+                      )}
+                      {meal.goodPoints.length > 0 && (
+                        <p className="text-xs text-emerald-600">✅ {meal.goodPoints.join("、")}</p>
+                      )}
+                      {meal.improvePoints.length > 0 && (
+                        <p className="text-xs text-amber-600">💡 {meal.improvePoints.join("、")}</p>
+                      )}
+                      {meal.aiAdvice && <p className="text-xs text-sky-600">🤖 {meal.aiAdvice}</p>}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

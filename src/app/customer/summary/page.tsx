@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ScoreCircle } from "@/components/ui/ScoreCircle";
 import { StatCard } from "@/components/ui/StatCard";
+import { starString } from "@/lib/meal-check/plate-analysis";
 import { TaskCard } from "@/components/ui/TaskCard";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
@@ -70,7 +70,10 @@ export default function DailySummaryPage() {
       <PageHeader title="今日总结" subtitle={`Day ${journey?.currentDay ?? 1} / ${journey?.planLength ?? 30}`} backHref="/customer" />
 
       <div className="flex items-center gap-4 rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-sky-50 p-5">
-        <ScoreCircle value={todayMisuScore} label="MISU Score" colorClass="text-emerald-500" trackClass="text-white/70" />
+        <div className="shrink-0 text-center">
+          <p className="text-2xl leading-none text-amber-400">{starString(todayMisuScore)}</p>
+          <p className="mt-1 text-[11px] text-slate-500">211 餐盘评分</p>
+        </div>
         <p className="text-sm text-slate-600">
           今天你完成了 {doneTasks}/{tasks.length} 项任务，饮食记录 {mealTypesLogged} 餐。做得很好，继续保持这份坚持！
         </p>

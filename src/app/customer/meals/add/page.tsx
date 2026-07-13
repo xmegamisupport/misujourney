@@ -6,19 +6,11 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { mealTypeOptions } from "@/lib/meal-types";
 import { cn } from "@/lib/utils";
 import type { MealDetectionDraft } from "@/lib/meal-check/types";
+import type { FoodCategory } from "@/lib/food-portions/types";
 
 interface DetectionResponse {
   misuDetected: { productCode: "MISU_N_PLUS" | "MISU_DX_PLUS"; quantityGuess: number }[];
-  foodItems: {
-    name: string;
-    servingLabel: string;
-    quantityGuess: number;
-    caloriesPerUnit: number;
-    proteinPerUnit: number;
-    carbsPerUnit: number;
-    fatPerUnit: number;
-    fiberPerUnit: number;
-  }[];
+  foodItems: { name: string; category: FoodCategory }[];
 }
 
 export default function AddMealPage() {
@@ -65,13 +57,7 @@ export default function AddMealPage() {
         foodItems: (data.foodItems ?? []).map((f) => ({
           id: `food_${crypto.randomUUID()}`,
           name: f.name,
-          servingLabel: f.servingLabel,
-          quantity: Math.max(1, Math.round(f.quantityGuess)),
-          caloriesPerUnit: f.caloriesPerUnit,
-          proteinPerUnit: f.proteinPerUnit,
-          carbsPerUnit: f.carbsPerUnit,
-          fatPerUnit: f.fatPerUnit,
-          fiberPerUnit: f.fiberPerUnit,
+          category: f.category,
         })),
       };
 

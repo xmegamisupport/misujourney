@@ -9,29 +9,24 @@ export const runtime = "nodejs";
 const RESPONSE_SCHEMA = {
   type: "object",
   properties: {
-    misuScore: { type: "number", description: "0-100 分，综合评估这餐对体重管理计划的适合程度" },
-    goodPoints: {
-      type: "array",
-      items: { type: "string" },
-      description: "最多 3 条，这餐做得好的地方，中文短句",
-    },
-    improvePoints: {
-      type: "array",
-      items: { type: "string" },
-      description: "最多 3 条，这餐可以改善的地方，中文短句",
+    advice: {
+      type: "string",
+      description: "一句温暖、鼓励性的中文建议，根据 211 比例给出具体但不苛责的下一步小提示",
     },
   },
-  required: ["misuScore", "goodPoints", "improvePoints"],
+  required: ["advice"],
   additionalProperties: false,
 };
 
-const SYSTEM_PROMPT = `你是 MISU Journey 健康管理平台的营养分析助手。用户会给你这一餐已确认的完整组成（MISU 产品数量与其他食物明细）以及算好的营养总量，请你据此给出 MISU Meal Score 评分与简短、温暖、鼓励性的中文反馈。只根据 JSON Schema 输出结果，不要输出多余文字。`;
+const SYSTEM_PROMPT = `你是 MISU Journey 健康管理平台的营养分析助手。系统已经用固定规则算好这一餐的 211 餐盘比例（蔬菜/蛋白质/主食）与评分，你不需要也不可以重新计算或推翻这些数字。你的任务只是根据系统给的比例与说明，写一句简短、温暖、鼓励性的中文建议，帮助用户知道下一步可以怎么微调（例如「青菜再增加半份会更加均衡」）。不要提及具体克数或热量数字，只根据 JSON Schema 输出结果，不要输出多余文字。`;
 
 interface ScoreMealBody {
   mealType?: string;
   misuItems?: { productCode: ProductCode; quantity: number }[];
-  foodItems?: { name: string; servingLabel: string; quantity: number }[];
-  totals?: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
+  foodItems?: { name: string; category: string; portionLabel: string }[];
+  plateAnalysis?: { vegetablePercent: number; proteinPercent: number; carbPercent: number };
+  goodPoints?: string[];
+  improvePoints?: string[];
 }
 
 export async function POST(request: Request) {
@@ -43,29 +38,29 @@ export async function POST(request: Request) {
   const body = (await request.json()) as ScoreMealBody;
   const misuItems = body.misuItems ?? [];
   const foodItems = body.foodItems ?? [];
-  const totals = body.totals ?? { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+  const plateAnalysis = body.plateAnalysis ?? { vegetablePercent: 0, proteinPercent: 0, carbPercent: 0 };
 
-  const misuLines = misuItems
-    .filter((m) => m.quantity > 0)
-    .map((m) => `${PRODUCT_LABELS[m.productCode]} × ${m.quantity}`);
-  const foodLines = foodItems
-    .filter((f) => f.quantity > 0)
-    .map((f) => `${f.name} × ${f.quantity}（${f.servingLabel}）`);
+  const misuLines = misuItems.filter((m) => m.quantity > 0).map((m) => `${PRODUCT_LABELS[m.productCode]} × ${m.quantity}`);
+  const foodLines = foodItems.map((f) => `${f.name}（${f.portionLabel}）`);
 
   const description = [
     `餐别：${mealTypeLabel(body.mealType ?? "")}`,
     misuLines.length > 0 ? `MISU 产品：${misuLines.join("、")}` : "MISU 产品：无",
     foodLines.length > 0 ? `其他食物：${foodLines.join("、")}` : "其他食物：无",
-    `营养总量：热量 ${totals.calories}kcal，蛋白质 ${totals.protein}g，碳水 ${totals.carbs}g，脂肪 ${totals.fat}g，纤维 ${totals.fiber}g`,
-  ].join("\n");
+    `211 比例（系统已算好，不需重新计算）：蔬菜 ${plateAnalysis.vegetablePercent}%，蛋白质 ${plateAnalysis.proteinPercent}%，主食 ${plateAnalysis.carbPercent}%`,
+    body.goodPoints && body.goodPoints.length > 0 ? `系统判断做得好的地方：${body.goodPoints.join("、")}` : "",
+    body.improvePoints && body.improvePoints.length > 0 ? `系统判断可以改善的地方：${body.improvePoints.join("、")}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
-  const result = await callOpenAiJsonSchema(
+  const result = await callOpenAiJsonSchema<{ advice: string }>(
     apiKey,
     [
       { role: "system", content: [{ type: "input_text", text: SYSTEM_PROMPT }] },
       { role: "user", content: [{ type: "input_text", text: description }] },
     ],
-    "meal_score",
+    "meal_advice",
     RESPONSE_SCHEMA,
   );
 

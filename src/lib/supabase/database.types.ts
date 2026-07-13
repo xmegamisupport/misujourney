@@ -355,6 +355,60 @@ export type Database = {
           },
         ]
       }
+      food_portions: {
+        Row: {
+          calories: number
+          carbohydrate: number
+          created_at: string
+          display_name: string
+          emoji: string
+          fat: number
+          fiber: number
+          gram: number
+          id: string
+          is_base_unit: boolean
+          portion_label: string
+          portion_type: string
+          portion_value: number
+          protein: number
+          sort_order: number
+        }
+        Insert: {
+          calories: number
+          carbohydrate: number
+          created_at?: string
+          display_name: string
+          emoji?: string
+          fat: number
+          fiber: number
+          gram: number
+          id?: string
+          is_base_unit?: boolean
+          portion_label: string
+          portion_type: string
+          portion_value: number
+          protein: number
+          sort_order?: number
+        }
+        Update: {
+          calories?: number
+          carbohydrate?: number
+          created_at?: string
+          display_name?: string
+          emoji?: string
+          fat?: number
+          fiber?: number
+          gram?: number
+          id?: string
+          is_base_unit?: boolean
+          portion_label?: string
+          portion_type?: string
+          portion_value?: number
+          protein?: number
+          sort_order?: number
+        }
+        Relationships: []
+      }
       goal_assessments: {
         Row: {
           bmi: number
@@ -489,6 +543,7 @@ export type Database = {
       }
       meals: {
         Row: {
+          ai_advice: string
           calories: number
           carbs: number
           created_at: string
@@ -509,6 +564,7 @@ export type Database = {
           protein: number
         }
         Insert: {
+          ai_advice?: string
           calories?: number
           carbs?: number
           created_at?: string
@@ -529,6 +585,7 @@ export type Database = {
           protein?: number
         }
         Update: {
+          ai_advice?: string
           calories?: number
           carbs?: number
           created_at?: string
@@ -801,6 +858,7 @@ export type Database = {
       }
       record_meal: {
         Args: {
+          p_ai_advice?: string
           p_calories: number
           p_carbs: number
           p_customer_id: string

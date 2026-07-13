@@ -125,6 +125,7 @@ function mapMealRow(row: MealRow): MealEntry {
     misuScore: Number(row.misu_score),
     goodPoints: row.good_points,
     improvePoints: row.improve_points,
+    aiAdvice: row.ai_advice ?? "",
   };
 }
 
@@ -413,6 +414,7 @@ export interface RecordMealInput {
   misuScore: number;
   goodPoints: string[];
   improvePoints: string[];
+  aiAdvice?: string;
 }
 
 /** Deducts MISU stock (with a row-level lock + sufficiency check) and saves
@@ -438,6 +440,7 @@ export async function recordMeal(input: RecordMealInput): Promise<EngineResult> 
     p_misu_score: input.misuScore,
     p_good_points: input.goodPoints,
     p_improve_points: input.improvePoints,
+    p_ai_advice: input.aiAdvice ?? "",
   });
   if (error) return { ok: false, error: rpcErrorMessage(error) };
   notifyInventoryChange();
