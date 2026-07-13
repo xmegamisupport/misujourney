@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { todayDateStr, yesterdayDateStr } from "@/lib/inventory/engine";
 import { useCheckoutForDate } from "@/lib/checkout/hooks";
@@ -12,6 +13,7 @@ import type { BowelMovementLevel, SpecialCondition } from "@/lib/checkout/types"
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import { buildCustomerTrendSummary, syncAttentionFlags } from "@/lib/insights/summary";
 import { createClient } from "@/lib/supabase/client";
+import { useTodayJourneyDay } from "@/lib/journey-day/hooks";
 import { cn } from "@/lib/utils";
 
 export default function EveningCheckoutPage() {
@@ -35,6 +37,12 @@ function EveningCheckoutForm() {
 
   const { data: existing, loading } = useCheckoutForDate(customerId, targetDate);
   const { data: currentGoal } = useCurrentCustomerGoal(customerId);
+  // Yesterday's make-up checkout must always stay reachable regardless of
+  // whether today's journey has started; only today's own checkout needs
+  // today's Journey Day to already be active.
+  const { data: todayJourney, loading: journeyLoading } = useTodayJourneyDay(customerId, today);
+  const journeyActive = (todayJourney?.status ?? "waiting_for_morning") === "active";
+  const blockedByJourney = !isMakeUp && !journeyLoading && !journeyActive;
 
   const [bowelMovement, setBowelMovement] = useState<BowelMovementLevel | "">("");
   const [conditions, setConditions] = useState<SpecialCondition[]>([]);
@@ -89,8 +97,21 @@ function EveningCheckoutForm() {
     router.push("/customer");
   }
 
-  if (loading || existing) {
+  if (loading || existing || (!isMakeUp && journeyLoading)) {
     return <div className="px-4 py-10 text-center text-sm text-slate-400">加载中...</div>;
+  }
+
+  if (blockedByJourney) {
+    return (
+      <div className="px-4 py-10 md:px-8">
+        <PageHeader title="🌙 睡前回顾" backHref="/customer" />
+        <EmptyState
+          icon="🌱"
+          title="今天的 Journey 还没开始"
+          description="请先回到首页完成或跳过晨重，今天结束后再来完成睡前回顾。"
+        />
+      </div>
+    );
   }
 
   return (

@@ -320,6 +320,50 @@ export type Database = {
           },
         ]
       }
+      daily_journeys: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          journey_date: string
+          morning_weight_status: string
+          start_method: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          journey_date: string
+          morning_weight_status?: string
+          start_method?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          journey_date?: string
+          morning_weight_status?: string
+          start_method?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_journeys_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_water_logs: {
         Row: {
           created_at: string
@@ -633,6 +677,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           start_date: string | null
           start_weight: number | null
+          timezone: string
           updated_at: string
         }
         Insert: {
@@ -652,6 +697,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           start_date?: string | null
           start_weight?: number | null
+          timezone?: string
           updated_at?: string
         }
         Update: {
@@ -671,6 +717,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           start_date?: string | null
           start_weight?: number | null
+          timezone?: string
           updated_at?: string
         }
         Relationships: [
@@ -820,6 +867,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      customer_local_date: { Args: { p_customer_id: string }; Returns: string }
       get_inventory_alert_status: {
         Args: {
           p_product_code: Database["public"]["Enums"]["product_code"]
@@ -879,6 +927,18 @@ export type Database = {
         }
         Returns: Json
       }
+      record_morning_checkin: {
+        Args: {
+          p_bedtime: string
+          p_checkin_id: string
+          p_customer_id: string
+          p_date: string
+          p_poop_count: Database["public"]["Enums"]["poop_count"]
+          p_wake_time: string
+          p_weight: number
+        }
+        Returns: Json
+      }
       record_repurchase: {
         Args: {
           p_boxes: number
@@ -888,6 +948,10 @@ export type Database = {
           p_product_code: Database["public"]["Enums"]["product_code"]
         }
         Returns: undefined
+      }
+      skip_morning_checkin: {
+        Args: { p_customer_id: string; p_date: string }
+        Returns: Json
       }
     }
     Enums: {

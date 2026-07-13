@@ -2,9 +2,14 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { mealTypeOptions } from "@/lib/meal-types";
 import { cn } from "@/lib/utils";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useTodayJourneyDay } from "@/lib/journey-day/hooks";
+import { todayDateStr } from "@/lib/inventory/engine";
 import type { MealDetectionDraft } from "@/lib/meal-check/types";
 import type { FoodCategory } from "@/lib/food-portions/types";
 
@@ -15,12 +20,36 @@ interface DetectionResponse {
 
 export default function AddMealPage() {
   const router = useRouter();
+  const { user } = useAuthUser();
+  const customerId = user?.id ?? "";
+  const today = todayDateStr();
+  const { data: todayJourney, loading: journeyLoading } = useTodayJourneyDay(customerId, today);
+  const journeyActive = (todayJourney?.status ?? "waiting_for_morning") === "active";
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mealType, setMealType] = useState("lunch");
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  if (!journeyLoading && !journeyActive) {
+    return (
+      <div className="px-4 py-10 md:px-8">
+        <PageHeader title="记录食物" backHref="/customer" />
+        <EmptyState
+          icon="🌱"
+          title="今天的 Journey 还没开始"
+          description="请先回到首页完成或跳过晨重，再来记录这一餐。"
+          action={
+            <Link href="/customer" className="text-sm font-medium text-emerald-600">
+              返回首页 →
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
 
   function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

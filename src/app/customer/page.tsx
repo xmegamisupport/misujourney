@@ -13,14 +13,18 @@ import { todayDateStr, yesterdayDateStr } from "@/lib/inventory/engine";
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import { calculateWaterTargetMl } from "@/lib/goals/goal-calculator";
 import { useCheckoutForDate } from "@/lib/checkout/hooks";
+import { useTodayJourneyDay } from "@/lib/journey-day/hooks";
+import { skipMorningCheckin } from "@/lib/journey-day/engine";
 
 const waterPresets = [100, 200, 300];
 /** Only used for the brief window before the real per-customer target
  * (Journey Start Weight x 40ml, from customer_goals) has loaded. */
 const FALLBACK_WATER_TARGET_ML = 2000;
 const DEFAULT_NUTRITION_TARGETS = { calories: 1500, protein: 90, fiber: 25 };
-/** Morning-weigh-in cutoff hour (24h, local time). Past this hour with no
- * check-in yet, we stop nudging for "today" and just wait for tomorrow. */
+/** Morning weigh-in window (24h, local time): before the start hour it's
+ * still "night" (don't offer weigh-in yet); from start to cutoff it's the
+ * real window; past the cutoff with no check-in, offer skipping instead. */
+const MORNING_WINDOW_START_HOUR = 4;
 const WEIGH_IN_CUTOFF_HOUR = 12;
 
 function getGreeting(hour: number): string {
@@ -71,14 +75,33 @@ export default function CustomerDashboardPage() {
   const { data: yesterdayCheckout, loading: yesterdayCheckoutLoading } = useCheckoutForDate(customerId, yesterday);
   const [catchupDismissed, setCatchupDismissed] = useState(false);
 
+  const { data: todayJourney, loading: todayJourneyLoading, refresh: refreshJourney } = useTodayJourneyDay(customerId, today);
+  const journeyActive = (todayJourney?.status ?? "waiting_for_morning") === "active";
+  const [skipping, setSkipping] = useState(false);
+  const [skipError, setSkipError] = useState<string | null>(null);
+
   const weighInDone = Boolean(todayCheckIn);
   const mealDone = addedMeals.length > 0;
   const waterDone = water >= waterTarget;
   const todayTasksDone = [weighInDone, mealDone, waterDone].filter(Boolean).length;
   const journeyProgressPercent = Math.round((todayTasksDone / 3) * 100);
   const currentHour = useLocalHour();
+  const tooEarlyForMorning = currentHour < MORNING_WINDOW_START_HOUR;
   const pastWeighInWindow = currentHour >= WEIGH_IN_CUTOFF_HOUR;
+  const inMorningWindow = !tooEarlyForMorning && !pastWeighInWindow;
   const greeting = getGreeting(currentHour);
+
+  async function handleSkipMorning() {
+    setSkipping(true);
+    setSkipError(null);
+    const result = await skipMorningCheckin(customerId, today);
+    setSkipping(false);
+    if (!result.ok) {
+      setSkipError(result.error ?? "操作失败，请重试");
+      return;
+    }
+    refreshJourney();
+  }
 
   const latestWeight = checkIns[0]?.weight ?? null;
   const currentDay = journey?.currentDay ?? 1;
@@ -137,6 +160,49 @@ export default function CustomerDashboardPage() {
         }
       />
 
+      {!todayJourneyLoading && !journeyActive && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-sm">
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-3xl">🌱</span>
+          {tooEarlyForMorning ? (
+            <>
+              <p className="text-base font-semibold text-slate-800">新一天会在你明早完成晨重后开始。</p>
+              {!yesterdayCheckoutLoading && currentDay > 1 && !yesterdayCheckout ? (
+                <p className="mt-2 text-sm text-amber-600">昨天的睡前回顾还未完成。</p>
+              ) : (
+                <p className="mt-2 text-sm text-slate-400">好好休息，明早完成晨重后再开始新的 Journey。</p>
+              )}
+            </>
+          ) : inMorningWindow ? (
+            <>
+              <p className="text-base font-semibold text-slate-800">准备好开始新的一天了吗？</p>
+              <p className="mt-1 text-sm text-slate-500">完成今日晨重，正式开始今天的 Journey。</p>
+              <Link
+                href="/customer/checkin"
+                className="mt-4 inline-block rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+              >
+                开始今日晨重
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="text-base font-semibold text-slate-800">今天错过晨重也没关系</p>
+              <p className="mt-1 text-sm text-slate-500">你可以选择直接开始今天的 Journey，但今天不会有晨重记录。</p>
+              {skipError && <p className="mt-2 text-sm text-rose-500">{skipError}</p>}
+              <button
+                type="button"
+                disabled={skipping}
+                onClick={handleSkipMorning}
+                className="mt-4 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
+              >
+                {skipping ? "处理中..." : "今天不记录晨重，继续 Journey"}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {journeyActive && (
+        <>
       <ProgressCard label="今日 Journey 完成度" percent={journeyProgressPercent} icon="🌱" sublabel="完成今天的任务，保持你的 Journey" />
 
       {currentGoal && (
@@ -189,6 +255,14 @@ export default function CustomerDashboardPage() {
                 <p className="text-xs text-slate-400">已记录 {todayCheckIn?.weight}kg</p>
               </div>
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400 bg-emerald-400 text-xs text-white">✓</span>
+            </div>
+          ) : todayJourney?.morningWeightStatus === "skipped" ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">⚖️</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-500">今日晨重</p>
+                <p className="text-xs text-slate-400">今天选择不记录晨重</p>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5">
@@ -363,6 +437,8 @@ export default function CustomerDashboardPage() {
       >
         完成今日总结
       </Link>
+        </>
+      )}
     </div>
   );
 }

@@ -27,14 +27,27 @@ export function subscribeInventory(callback: () => void) {
   return () => window.removeEventListener(CHANGE_EVENT, callback);
 }
 
+/** Local calendar date (device timezone), not UTC — "today" for a Malaysia
+ * customer at 11pm must not roll over to tomorrow just because it's already
+ * past midnight UTC. The server independently re-derives "today" from
+ * profiles.timezone (see customer_local_date()) for anything gating-relevant;
+ * this is only ever used client-side to match what the customer actually sees
+ * on their own clock. */
+function localDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function todayDateStr(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localDateStr(new Date());
 }
 
 export function yesterdayDateStr(): string {
   const d = new Date();
-  d.setUTCDate(d.getUTCDate() - 1);
-  return d.toISOString().slice(0, 10);
+  d.setDate(d.getDate() - 1);
+  return localDateStr(d);
 }
 
 // ---------- Row <-> domain type mappers ----------
@@ -334,34 +347,27 @@ export interface SubmitCheckInInput {
   wakeTime: string;
 }
 
-/** Daily check-ins no longer carry MISU usage (see task #31) so this is a
- * plain table write — no RPC needed, RLS already scopes it to the owner. */
+/** Goes through record_morning_checkin() rather than a plain insert: this is
+ * the one action that starts the customer's Journey Day (creates/activates
+ * their daily_journeys row in the same transaction as the checkin row). */
 export async function submitCheckIn(input: SubmitCheckInInput): Promise<EngineResult<DailyCheckIn>> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("daily_checkins")
-    .insert({
-      id: input.id,
-      customer_id: input.customerId,
-      checkin_date: input.date,
-      weight: input.weight,
-      poop_count: input.poopCount,
-      bedtime: input.bedtime,
-      wake_time: input.wakeTime,
-    })
-    .select()
-    .single();
+  const { error } = await supabase.rpc("record_morning_checkin", {
+    p_checkin_id: input.id,
+    p_customer_id: input.customerId,
+    p_date: input.date,
+    p_weight: input.weight,
+    p_poop_count: input.poopCount,
+    p_bedtime: input.bedtime,
+    p_wake_time: input.wakeTime,
+  });
 
-  if (error) {
-    if (error.code === "23505") {
-      // unique (customer_id, checkin_date) — already checked in today.
-      const existing = await getCheckInForDate(input.customerId, input.date);
-      if (existing) return { ok: true, data: existing };
-    }
-    return { ok: false, error: error.message };
-  }
+  if (error) return { ok: false, error: error.message };
+
+  const record = await getCheckInForDate(input.customerId, input.date);
+  if (!record) return { ok: false, error: "打卡失败，请重试" };
   notifyInventoryChange();
-  return { ok: true, data: mapCheckInRow(data) };
+  return { ok: true, data: record };
 }
 
 export interface EditCheckInInput {
