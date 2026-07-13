@@ -58,10 +58,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  // referral_code has a unique DB constraint — if two people race for the
-  // same code, roll back the just-created auth user rather than leaving an
-  // orphaned coach account with no working referral code.
-  const { error: updateError } = await admin.from("profiles").update({ referral_code: referralCode, phone }).eq("id", created.user.id);
+  // role must be set here explicitly, not left to handle_new_user() alone:
+  // admin.createUser() inserts the auth.users row first (default
+  // app_metadata) and only merges in the custom app_metadata with a
+  // separate update afterward, so the AFTER INSERT trigger never actually
+  // sees role: 'coach' — confirmed live, not a hypothetical. referral_code
+  // also has a unique DB constraint — if two people race for the same code,
+  // roll back the just-created auth user rather than leaving an orphaned
+  // coach account with no working referral code.
+  const { error: updateError } = await admin.from("profiles").update({ role: "coach", referral_code: referralCode, phone }).eq("id", created.user.id);
   if (updateError) {
     await admin.auth.admin.deleteUser(created.user.id);
     const message = updateError.message.toLowerCase().includes("duplicate") ? "该 Reseller Username 已被使用，请更换" : "注册失败，请稍后再试";

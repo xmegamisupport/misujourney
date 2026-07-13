@@ -135,9 +135,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
+  // role must be set here explicitly, not left to handle_new_user() alone:
+  // admin.createUser() inserts the auth.users row first (default
+  // app_metadata) and only merges in the custom app_metadata with a
+  // separate update afterward, so the AFTER INSERT trigger never actually
+  // sees role: 'coach' — confirmed live, not a hypothetical.
   const { error: updateError } = await admin
     .from("profiles")
-    .update({ referral_code: referralCode, whatsapp_number: whatsappNumber })
+    .update({ role: "coach", referral_code: referralCode, whatsapp_number: whatsappNumber })
     .eq("id", created.user.id);
 
   if (updateError) {
