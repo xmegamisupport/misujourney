@@ -7,10 +7,68 @@ import { createClient } from "@/lib/supabase/client";
 import { initializeInventoryFromRegistration } from "@/lib/inventory/engine";
 import { UNITS_PER_BOX } from "@/lib/inventory/constants";
 import { parseNonNegativeInt } from "@/lib/inventory/validation";
+import { registerCoachAccount } from "@/lib/coach/engine";
 
 const PENDING_INVENTORY_KEY = "misu_pending_inventory_init";
 
+type Mode = "choose" | "customer" | "coach";
+
 export default function RegisterPage() {
+  const [mode, setMode] = useState<Mode>("choose");
+
+  if (mode === "coach") return <CoachRegisterForm onBack={() => setMode("choose")} />;
+  if (mode === "customer") return <CustomerRegisterForm onBack={() => setMode("choose")} />;
+  return <RoleChoice onChoose={setMode} />;
+}
+
+function RoleChoice({ onChoose }: { onChoose: (mode: Mode) => void }) {
+  return (
+    <div className="flex min-h-screen flex-1 items-center justify-center bg-gradient-to-b from-emerald-50 via-white to-sky-50 px-6 py-12">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center gap-2 text-center">
+          <span className="text-4xl">🌱</span>
+          <h1 className="text-xl font-semibold text-slate-900">加入 MISU Journey</h1>
+          <p className="text-sm text-emerald-600">Every Day Is A New Journey</p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={() => onChoose("customer")}
+            className="flex items-center gap-4 rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-sm transition hover:border-emerald-300 hover:shadow-md"
+          >
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-2xl">🙋</span>
+            <div>
+              <p className="text-base font-semibold text-slate-900">我是顾客 Customer</p>
+              <p className="text-sm text-slate-500">开始记录我的 MISU Journey</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onChoose("coach")}
+            className="flex items-center gap-4 rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-sm transition hover:border-violet-300 hover:shadow-md"
+          >
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-50 text-2xl">🌿</span>
+            <div>
+              <p className="text-base font-semibold text-slate-900">我是 MISU Coach</p>
+              <p className="text-sm text-slate-500">注册成为 Coach / Reseller</p>
+            </div>
+          </button>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-slate-500">
+          已经有账号？{" "}
+          <Link href="/login" className="font-medium text-emerald-600">
+            直接登录
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function CustomerRegisterForm({ onBack }: { onBack: () => void }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -115,6 +173,9 @@ export default function RegisterPage() {
         </div>
 
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <button type="button" onClick={onBack} className="mb-4 text-sm font-medium text-slate-400 transition hover:text-slate-600">
+            ← 返回
+          </button>
           <h2 className="mb-5 text-lg font-semibold text-slate-900">创建账号</h2>
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             <label className="flex flex-col gap-1.5 text-sm text-slate-600">
@@ -205,6 +266,141 @@ export default function RegisterPage() {
           <p className="mt-4 text-center text-sm text-slate-500">
             已经有账号？{" "}
             <Link href="/login" className="font-medium text-emerald-600">
+              直接登录
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CoachRegisterForm({ onBack }: { onBack: () => void }) {
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!name.trim()) return setError("请输入姓名");
+    if (!email.trim()) return setError("请输入邮箱");
+    if (password.length < 6) return setError("密码至少需要 6 位");
+    if (!phone.trim()) return setError("请输入电话号码");
+    if (!referralCode.trim()) return setError("请输入 Reseller Username");
+
+    setSubmitting(true);
+    const result = await registerCoachAccount({
+      name: name.trim(),
+      email: email.trim(),
+      password,
+      phone: phone.trim(),
+      referralCode: referralCode.trim(),
+    });
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.error ?? "注册失败，请稍后再试");
+      return;
+    }
+
+    router.push("/coach");
+    router.refresh();
+  }
+
+  return (
+    <div className="flex min-h-screen flex-1 items-center justify-center bg-gradient-to-b from-violet-50 via-white to-sky-50 px-6 py-12">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center gap-2 text-center">
+          <span className="text-4xl">🌿</span>
+          <h1 className="text-xl font-semibold text-slate-900">注册 MISU Coach</h1>
+          <p className="text-sm text-violet-600">Every Day Is A New Journey</p>
+        </div>
+
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <button type="button" onClick={onBack} className="mb-4 text-sm font-medium text-slate-400 transition hover:text-slate-600">
+            ← 返回
+          </button>
+          <h2 className="mb-5 text-lg font-semibold text-slate-900">创建 Coach 账号</h2>
+          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <label className="flex flex-col gap-1.5 text-sm text-slate-600">
+              全名
+              <input
+                type="text"
+                placeholder="你的全名"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm text-slate-600">
+              Reseller Username
+              <input
+                type="text"
+                placeholder="例如 CHLOE688"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              />
+              <span className="text-[11px] text-slate-400">顾客注册时会用这个代码绑定你作为专属 Coach，3-20 位英文字母或数字</span>
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm text-slate-600">
+              电话号码
+              <input
+                type="tel"
+                placeholder="你的电话号码"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm text-slate-600">
+              邮箱
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm text-slate-600">
+              密码
+              <input
+                type="password"
+                placeholder="至少 6 位"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              />
+            </label>
+
+            <label className="flex items-start gap-2 text-xs text-slate-500">
+              <input type="checkbox" required className="mt-0.5" />
+              我已阅读并同意《服务条款》与《隐私政策》
+            </label>
+
+            {error && (
+              <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="mt-1 rounded-xl bg-violet-500 py-3 text-center text-sm font-semibold text-white transition hover:bg-violet-600 disabled:opacity-60"
+            >
+              {submitting ? "注册中..." : "注册并开始"}
+            </button>
+          </form>
+          <p className="mt-4 text-center text-sm text-slate-500">
+            已经有账号？{" "}
+            <Link href="/login" className="font-medium text-violet-600">
               直接登录
             </Link>
           </p>
