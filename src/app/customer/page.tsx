@@ -9,8 +9,10 @@ import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
 import { addWater, useWaterIntake } from "@/lib/daily-progress";
 import { useTodayMeals, useTodayCheckIn, useCustomerCheckIns } from "@/lib/inventory/hooks";
+import { todayDateStr, yesterdayDateStr } from "@/lib/inventory/engine";
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import { calculateWaterTargetMl } from "@/lib/goals/goal-calculator";
+import { useCheckoutForDate } from "@/lib/checkout/hooks";
 
 const waterPresets = [100, 200, 350, 500];
 /** Only used for the brief window before the real per-customer target
@@ -63,6 +65,12 @@ export default function CustomerDashboardPage() {
   const { data: todayCheckIn } = useTodayCheckIn(customerId);
   const { data: checkIns } = useCustomerCheckIns(customerId);
 
+  const today = todayDateStr();
+  const yesterday = yesterdayDateStr();
+  const { data: todayCheckout } = useCheckoutForDate(customerId, today);
+  const { data: yesterdayCheckout, loading: yesterdayCheckoutLoading } = useCheckoutForDate(customerId, yesterday);
+  const [catchupDismissed, setCatchupDismissed] = useState(false);
+
   const weighInDone = Boolean(todayCheckIn);
   const mealDone = addedMeals.length > 0;
   const waterDone = water >= waterTarget;
@@ -84,8 +92,38 @@ export default function CustomerDashboardPage() {
     : null;
   const goalReached = remaining !== null && remaining.max <= 0;
 
+  // Only nudge for a missed checkout if "yesterday" was actually a Journey
+  // day for this customer (not before they registered) — otherwise a brand
+  // new customer would get a bogus "make up yesterday" prompt on day 1.
+  const needsCatchup = currentDay > 1 && !yesterdayCheckoutLoading && !yesterdayCheckout && !catchupDismissed;
+
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 md:px-8">
+      {needsCatchup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-6">
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-lg">
+            <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-3xl">🌙</span>
+            <p className="text-lg font-semibold text-slate-900">昨天还差最后一步 🌙</p>
+            <p className="mt-2 text-sm text-slate-500">花30秒完成昨天的睡前回顾，再开始今天的Journey。</p>
+            <div className="mt-5 flex flex-col gap-2">
+              <Link
+                href={`/customer/checkout?date=${yesterday}`}
+                className="rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+              >
+                完成昨天回顾
+              </Link>
+              <button
+                type="button"
+                onClick={() => setCatchupDismissed(true)}
+                className="rounded-xl py-3 text-sm font-medium text-slate-400 transition hover:text-slate-600"
+              >
+                稍后提醒
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <PageHeader
         title={`${greeting}，${journey?.name ?? ""} ${journey?.avatar ?? ""}`}
         subtitle={`Day ${currentDay} / ${planLength} · Every Day Is A New Journey`}
@@ -297,6 +335,27 @@ export default function CustomerDashboardPage() {
         </div>
         <span className="text-slate-300">→</span>
       </Link>
+
+      {todayCheckout ? (
+        <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 shadow-sm">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl">✅</span>
+          <p className="text-sm font-semibold text-slate-700">今日回顾已完成</p>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">🌙</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-slate-800">睡前回顾</p>
+            <p className="text-xs text-slate-400">今天还没有完成今天的回顾。</p>
+          </div>
+          <Link
+            href="/customer/checkout"
+            className="shrink-0 rounded-full bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
+          >
+            立即填写
+          </Link>
+        </div>
+      )}
 
       <Link
         href="/customer/summary"

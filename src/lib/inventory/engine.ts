@@ -31,6 +31,12 @@ export function todayDateStr(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+export function yesterdayDateStr(): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
 // ---------- Row <-> domain type mappers ----------
 
 type InventoryRow = Database["public"]["Tables"]["customer_inventory"]["Row"];

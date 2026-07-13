@@ -158,6 +158,50 @@ export type Database = {
           },
         ]
       }
+      daily_evening_checkouts: {
+        Row: {
+          bowel_movement: Database["public"]["Enums"]["bowel_movement_level"]
+          checkout_date: string
+          completed_at: string
+          created_at: string
+          customer_id: string
+          id: string
+          notes: string | null
+          special_conditions: string[]
+          updated_at: string
+        }
+        Insert: {
+          bowel_movement: Database["public"]["Enums"]["bowel_movement_level"]
+          checkout_date: string
+          completed_at?: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          notes?: string | null
+          special_conditions?: string[]
+          updated_at?: string
+        }
+        Update: {
+          bowel_movement?: Database["public"]["Enums"]["bowel_movement_level"]
+          checkout_date?: string
+          completed_at?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          notes?: string | null
+          special_conditions?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_evening_checkouts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goal_assessments: {
         Row: {
           bmi: number
@@ -638,6 +682,7 @@ export type Database = {
     Enums: {
       activity_level: "sedentary" | "light" | "moderate" | "high"
       bmi_category: "underweight" | "normal" | "overweight" | "obese"
+      bowel_movement_level: "none" | "once" | "two_or_more"
       diet_type:
         | "regular"
         | "vegetarian"
@@ -796,6 +841,7 @@ export const Constants = {
   public: {
     Enums: {
       activity_level: ["sedentary", "light", "moderate", "high"],
+      bowel_movement_level: ["none", "once", "two_or_more"],
       bmi_category: ["underweight", "normal", "overweight", "obese"],
       diet_type: [
         "regular",
