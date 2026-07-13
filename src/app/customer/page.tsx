@@ -14,7 +14,7 @@ import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import { calculateWaterTargetMl } from "@/lib/goals/goal-calculator";
 import { useCheckoutForDate } from "@/lib/checkout/hooks";
 
-const waterPresets = [100, 200, 350, 500];
+const waterPresets = [100, 200, 300];
 /** Only used for the brief window before the real per-customer target
  * (Journey Start Weight x 40ml, from customer_goals) has loaded. */
 const FALLBACK_WATER_TARGET_ML = 2000;
@@ -222,29 +222,29 @@ export default function CustomerDashboardPage() {
             </div>
             <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${mealDone ? "border-emerald-400 bg-emerald-400 text-white" : "border-slate-300 text-transparent"}`}>✓</span>
           </Link>
-
-          <div className={`flex items-center gap-3 rounded-2xl border p-3.5 ${waterDone ? "border-emerald-100 bg-emerald-50/60" : "border-slate-100 bg-white"}`}>
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">💧</span>
-            <div className="min-w-0 flex-1">
-              <p className={`text-sm font-medium ${waterDone ? "text-slate-500 line-through" : "text-slate-800"}`}>饮水打卡</p>
-              <p className="text-xs text-slate-400">已喝 {water} / {waterTarget}ml</p>
-            </div>
-            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${waterDone ? "border-emerald-400 bg-emerald-400 text-white" : "border-slate-300 text-transparent"}`}>✓</span>
-          </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
-        <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
-          <span>今日目标</span>
-          <span className="font-semibold text-slate-700">{waterTarget}ml</span>
+      <div className={`rounded-2xl border p-4 shadow-sm ${waterDone ? "border-emerald-100 bg-emerald-50/60" : "border-sky-100 bg-white"}`}>
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">💧</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-slate-800">饮水打卡</p>
+            <p className="text-2xl font-bold leading-tight text-sky-600">
+              {water}
+              <span className="ml-1 text-sm font-normal text-slate-400">/ {waterTarget}ml</span>
+            </p>
+          </div>
+          <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${waterDone ? "border-emerald-400 bg-emerald-400 text-white" : "border-slate-300 text-transparent"}`}>✓</span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-sky-50">
+
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-sky-50">
           <div
             className="h-full rounded-full bg-sky-400 transition-all"
             style={{ width: `${Math.min(100, Math.round((water / waterTarget) * 100))}%` }}
           />
         </div>
+
         <div className="mt-3 flex flex-wrap gap-2">
           {waterPresets.map((amount) => (
             <button
