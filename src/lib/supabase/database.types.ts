@@ -585,6 +585,75 @@ export type Database = {
           },
         ]
       }
+      journey_nutrition_targets: {
+        Row: {
+          activity_level: Database["public"]["Enums"]["activity_level"]
+          bmr: number
+          calculation_method: string
+          created_at: string
+          customer_id: string
+          daily_calories: number
+          daily_carbohydrate: number
+          daily_fat: number
+          daily_fiber: number
+          daily_protein: number
+          id: string
+          journey_id: string
+          journey_start_weight_kg: number
+          tdee: number
+          updated_at: string
+        }
+        Insert: {
+          activity_level: Database["public"]["Enums"]["activity_level"]
+          bmr: number
+          calculation_method?: string
+          created_at?: string
+          customer_id: string
+          daily_calories: number
+          daily_carbohydrate: number
+          daily_fat: number
+          daily_fiber: number
+          daily_protein: number
+          id?: string
+          journey_id: string
+          journey_start_weight_kg: number
+          tdee: number
+          updated_at?: string
+        }
+        Update: {
+          activity_level?: Database["public"]["Enums"]["activity_level"]
+          bmr?: number
+          calculation_method?: string
+          created_at?: string
+          customer_id?: string
+          daily_calories?: number
+          daily_carbohydrate?: number
+          daily_fat?: number
+          daily_fiber?: number
+          daily_protein?: number
+          id?: string
+          journey_id?: string
+          journey_start_weight_kg?: number
+          tdee?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_nutrition_targets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_nutrition_targets_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "customer_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meals: {
         Row: {
           ai_advice: string
@@ -846,6 +915,46 @@ export type Database = {
         }
         Returns: undefined
       }
+      calculate_bmr: {
+        Args: {
+          p_age: number
+          p_gender: string
+          p_height_cm: number
+          p_weight_kg: number
+        }
+        Returns: number
+      }
+      calculate_daily_calories: {
+        Args: { p_gender: string; p_tdee: number }
+        Returns: number
+      }
+      calculate_daily_carbohydrate: {
+        Args: {
+          p_daily_calories: number
+          p_daily_fat: number
+          p_daily_protein: number
+        }
+        Returns: number
+      }
+      calculate_daily_fat: {
+        Args: { p_daily_calories: number }
+        Returns: number
+      }
+      calculate_daily_fiber: {
+        Args: { p_daily_calories: number }
+        Returns: number
+      }
+      calculate_daily_protein: {
+        Args: { p_journey_start_weight_kg: number }
+        Returns: number
+      }
+      calculate_tdee: {
+        Args: {
+          p_activity_level: Database["public"]["Enums"]["activity_level"]
+          p_bmr: number
+        }
+        Returns: number
+      }
       complete_registration_goals: {
         Args: {
           p_activity_level: Database["public"]["Enums"]["activity_level"]
@@ -875,6 +984,18 @@ export type Database = {
         Returns: string
       }
       customer_local_date: { Args: { p_customer_id: string }; Returns: string }
+      generate_journey_nutrition_target: {
+        Args: {
+          p_activity_level: Database["public"]["Enums"]["activity_level"]
+          p_age: number
+          p_customer_id: string
+          p_gender: string
+          p_height_cm: number
+          p_journey_id: string
+          p_journey_start_weight_kg: number
+        }
+        Returns: string
+      }
       get_inventory_alert_status: {
         Args: {
           p_product_code: Database["public"]["Enums"]["product_code"]

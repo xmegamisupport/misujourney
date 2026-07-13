@@ -10,13 +10,13 @@ import { useTodayMeals } from "@/lib/inventory/hooks";
 import { mealTypeOptions } from "@/lib/meal-types";
 import { PRODUCT_LABELS, PRODUCT_ICONS } from "@/lib/inventory/constants";
 import { starString } from "@/lib/meal-check/plate-analysis";
-
-const DEFAULT_NUTRITION_TARGETS = { calories: 1500, protein: 90, carbs: 150, fat: 50, fiber: 25 };
+import { useCurrentNutritionTargets } from "@/lib/nutrition/hooks";
 
 export default function TodayMealsPage() {
   const { user } = useAuthUser();
   const { data: journey } = useJourneySummary(user?.id ?? "");
   const { data: addedMeals } = useTodayMeals(user?.id ?? "");
+  const { data: nutritionTargets, loading: nutritionTargetsLoading } = useCurrentNutritionTargets(user?.id ?? "");
 
   const addedTotals = addedMeals.reduce(
     (acc, m) => ({
@@ -44,13 +44,19 @@ export default function TodayMealsPage() {
         }
       />
 
-      <div className="grid grid-cols-3 gap-3 md:grid-cols-5">
-        <NutritionCard label="热量" value={addedTotals.calories} target={DEFAULT_NUTRITION_TARGETS.calories} unit="kcal" icon="🔥" color="bg-amber-400" />
-        <NutritionCard label="蛋白质" value={addedTotals.protein} target={DEFAULT_NUTRITION_TARGETS.protein} unit="g" icon="🥚" color="bg-sky-400" />
-        <NutritionCard label="碳水" value={addedTotals.carbs} target={DEFAULT_NUTRITION_TARGETS.carbs} unit="g" icon="🍚" color="bg-orange-400" />
-        <NutritionCard label="脂肪" value={addedTotals.fat} target={DEFAULT_NUTRITION_TARGETS.fat} unit="g" icon="🥑" color="bg-rose-400" />
-        <NutritionCard label="纤维" value={addedTotals.fiber} target={DEFAULT_NUTRITION_TARGETS.fiber} unit="g" icon="🥦" color="bg-emerald-400" />
-      </div>
+      {nutritionTargets ? (
+        <div className="grid grid-cols-3 gap-3 md:grid-cols-5">
+          <NutritionCard label="热量" value={addedTotals.calories} target={nutritionTargets.dailyCalories} unit="kcal" icon="🔥" color="bg-amber-400" />
+          <NutritionCard label="蛋白质" value={addedTotals.protein} target={nutritionTargets.dailyProtein} unit="g" icon="🥚" color="bg-sky-400" />
+          <NutritionCard label="碳水" value={addedTotals.carbs} target={nutritionTargets.dailyCarbohydrate} unit="g" icon="🍚" color="bg-orange-400" />
+          <NutritionCard label="脂肪" value={addedTotals.fat} target={nutritionTargets.dailyFat} unit="g" icon="🥑" color="bg-rose-400" />
+          <NutritionCard label="纤维" value={addedTotals.fiber} target={nutritionTargets.dailyFiber} unit="g" icon="🥦" color="bg-emerald-400" />
+        </div>
+      ) : !nutritionTargetsLoading ? (
+        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
+          完善身高/体重/年龄/性别/活动量资料后，将自动生成你的每日营养目标。
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-4">
         {mealTypeOptions.map((type) => {

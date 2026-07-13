@@ -17,12 +17,12 @@ import { calculateWaterTargetMl } from "@/lib/goals/goal-calculator";
 import { useCheckoutForDate } from "@/lib/checkout/hooks";
 import { useTodayJourneyDay } from "@/lib/journey-day/hooks";
 import { skipMorningCheckin } from "@/lib/journey-day/engine";
+import { useCurrentNutritionTargets } from "@/lib/nutrition/hooks";
 
 const waterPresets = [100, 200, 300];
 /** Only used for the brief window before the real per-customer target
  * (Journey Start Weight x 40ml, from customer_goals) has loaded. */
 const FALLBACK_WATER_TARGET_ML = 2000;
-const DEFAULT_NUTRITION_TARGETS = { calories: 1500, protein: 90, fiber: 25 };
 /** Morning weigh-in window (24h, local time): before the start hour it's
  * still "night" (locked, no action offered yet); from start to cutoff is the
  * real window (weigh-in offered); past the cutoff with no check-in, offer
@@ -62,6 +62,7 @@ export default function CustomerDashboardPage() {
   const customerId = user?.id ?? "";
   const { data: journey } = useJourneySummary(customerId);
   const { data: currentGoal } = useCurrentCustomerGoal(customerId);
+  const { data: nutritionTargets, loading: nutritionTargetsLoading } = useCurrentNutritionTargets(customerId);
   const { data: addedMeals } = useTodayMeals(customerId);
   const addedCalories = addedMeals.reduce((sum, m) => sum + m.calories, 0);
   const addedProtein = addedMeals.reduce((sum, m) => sum + m.protein, 0);
@@ -353,32 +354,38 @@ export default function CustomerDashboardPage() {
 
       <div>
         <p className="mb-2 text-sm font-semibold text-slate-700">今日营养</p>
-        <div className="grid grid-cols-3 gap-3">
-          <NutritionCard
-            label="热量"
-            value={addedCalories}
-            target={DEFAULT_NUTRITION_TARGETS.calories}
-            unit="kcal"
-            icon="🔥"
-            color="bg-amber-400"
-          />
-          <NutritionCard
-            label="蛋白质"
-            value={addedProtein}
-            target={DEFAULT_NUTRITION_TARGETS.protein}
-            unit="g"
-            icon="🥚"
-            color="bg-sky-400"
-          />
-          <NutritionCard
-            label="纤维"
-            value={addedFiber}
-            target={DEFAULT_NUTRITION_TARGETS.fiber}
-            unit="g"
-            icon="🥦"
-            color="bg-emerald-400"
-          />
-        </div>
+        {nutritionTargets ? (
+          <div className="grid grid-cols-3 gap-3">
+            <NutritionCard
+              label="热量"
+              value={addedCalories}
+              target={nutritionTargets.dailyCalories}
+              unit="kcal"
+              icon="🔥"
+              color="bg-amber-400"
+            />
+            <NutritionCard
+              label="蛋白质"
+              value={addedProtein}
+              target={nutritionTargets.dailyProtein}
+              unit="g"
+              icon="🥚"
+              color="bg-sky-400"
+            />
+            <NutritionCard
+              label="纤维"
+              value={addedFiber}
+              target={nutritionTargets.dailyFiber}
+              unit="g"
+              icon="🥦"
+              color="bg-emerald-400"
+            />
+          </div>
+        ) : !nutritionTargetsLoading ? (
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
+            完善身高/体重/年龄/性别/活动量资料后，将自动生成你的每日营养目标。
+          </div>
+        ) : null}
       </div>
 
       <Link
