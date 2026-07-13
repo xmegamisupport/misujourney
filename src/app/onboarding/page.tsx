@@ -6,16 +6,19 @@ import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { cn } from "@/lib/utils";
 import {
   calculateBMI,
-  calculateStageGoal,
+  calculateWeightGoalRange,
+  canSuggestWeightLoss,
   evaluateGoalStatus,
   getBMICategory,
   isAbnormalInput,
+  isCustomLossWithinRange,
   validateLongTermGoal,
   buildJourneyPlan,
-} from "@/lib/goals/calculations";
+} from "@/lib/goals/goal-calculator";
 import { DIET_TYPE_LABELS, ACTIVITY_LEVEL_LABELS, GOAL_TYPE_LABELS, GOAL_TYPE_ICONS, JOURNEY_PLAN_OPTIONS, BMI_CATEGORY_LABELS } from "@/lib/goals/constants";
 import { completeRegistrationGoals, type CompleteRegistrationGoalsResult } from "@/lib/goals/engine";
-import type { ActivityLevel, DietType, GoalType, JourneyDays } from "@/lib/goals/types";
+import { useWeightGoalRules } from "@/lib/goals/hooks";
+import type { ActivityLevel, DietType, GoalStatus, GoalType, JourneyDays, WeightGoalRange } from "@/lib/goals/types";
 
 const TOTAL_STEPS = 6;
 
@@ -32,6 +35,8 @@ interface WizardDraft {
   goalType: GoalType | "";
   journeyDays: JourneyDays | 0;
   longTermGoalWeight: string;
+  useCustomGoal: boolean;
+  customLossKg: string;
 }
 
 const EMPTY_DRAFT: WizardDraft = {
@@ -47,6 +52,8 @@ const EMPTY_DRAFT: WizardDraft = {
   goalType: "",
   journeyDays: 0,
   longTermGoalWeight: "",
+  useCustomGoal: false,
+  customLossKg: "",
 };
 
 const DRAFT_STORAGE_KEY = "misu-onboarding-draft";
@@ -101,6 +108,7 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<CompleteRegistrationGoalsResult | null>(null);
+  const { data: weightGoalRules } = useWeightGoalRules();
 
   // Auto-save: every step/field change is persisted so a refresh mid-wizard
   // doesn't lose progress. Cleared once the RPC actually submits.
@@ -122,22 +130,40 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
   const bmiCategory = bmi !== null ? getBMICategory(bmi) : null;
   const abnormal = hasBasicNumbers ? isAbnormalInput(height, currentWeight, age) : false;
 
-  const stageGoalPreview = useMemo(() => {
+  const longTermGoalWeight = draft.longTermGoalWeight.trim() ? Number(draft.longTermGoalWeight) : null;
+  const longTermGoalValid = longTermGoalWeight === null || (height > 0 && validateLongTermGoal(longTermGoalWeight, height));
+
+  const goalStatus: GoalStatus | null = useMemo(() => {
     if (bmi === null || !draft.goalType) return null;
-    const status = evaluateGoalStatus({
+    return evaluateGoalStatus({
       heightCm: height,
       currentWeightKg: currentWeight,
       age,
       bmi,
       goalType: draft.goalType,
-      longTermGoalWeightKg: null,
+      longTermGoalWeightKg: longTermGoalWeight,
     });
-    const stageGoal = calculateStageGoal(currentWeight, bmi, draft.goalType, status);
-    return { stageGoal, status };
-  }, [bmi, currentWeight, height, age, draft.goalType]);
+  }, [bmi, currentWeight, height, age, draft.goalType, longTermGoalWeight]);
 
-  const longTermGoalWeight = draft.longTermGoalWeight.trim() ? Number(draft.longTermGoalWeight) : null;
-  const longTermGoalValid = longTermGoalWeight === null || (height > 0 && validateLongTermGoal(longTermGoalWeight, height));
+  const canSuggestLoss = bmi !== null && goalStatus !== null && draft.goalType === "lose_weight" && canSuggestWeightLoss({ bmi, goalType: draft.goalType, goalStatus });
+
+  const weightGoalRange: WeightGoalRange | null = useMemo(() => {
+    if (!canSuggestLoss || !draft.journeyDays) return null;
+    return calculateWeightGoalRange(weightGoalRules, currentWeight, draft.journeyDays);
+  }, [weightGoalRules, canSuggestLoss, currentWeight, draft.journeyDays]);
+
+  const customLossKg = draft.customLossKg.trim() ? Number(draft.customLossKg) : null;
+  const customWithinRange = weightGoalRange && customLossKg !== null && customLossKg > 0 ? isCustomLossWithinRange(customLossKg, weightGoalRange) : null;
+
+  const finalTarget = useMemo(() => {
+    if (!canSuggestLoss) return { min: currentWeight, max: currentWeight };
+    if (draft.useCustomGoal && customLossKg !== null && customLossKg > 0) {
+      const t = Math.round((currentWeight - customLossKg) * 10) / 10;
+      return { min: t, max: t };
+    }
+    if (weightGoalRange) return { min: weightGoalRange.minTargetWeightKg, max: weightGoalRange.maxTargetWeightKg };
+    return { min: currentWeight, max: currentWeight };
+  }, [canSuggestLoss, draft.useCustomGoal, customLossKg, currentWeight, weightGoalRange]);
 
   function validateStep(): string | null {
     if (step === 1) {
@@ -150,7 +176,7 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
       if (!draft.activityLevel) return "请选择活动量";
     }
     if (step === 3 && !draft.goalType) return "请选择主要目标";
-    if (step === 4 && !draft.journeyDays) return "请选择 Journey 计划";
+    if (step === 5 && !draft.journeyDays) return "请选择 MISU JOURNEY 计划";
     return null;
   }
 
@@ -170,6 +196,10 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
   }
 
   async function handleSubmit() {
+    if (canSuggestLoss && draft.useCustomGoal && (customLossKg === null || customLossKg <= 0)) {
+      setError("请输入自订减重公斤数目");
+      return;
+    }
     setError(null);
     setSubmitting(true);
     const submitResult = await completeRegistrationGoals({
@@ -186,6 +216,8 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
       journeyDays: draft.journeyDays as JourneyDays,
       longTermGoalWeight: longTermGoalWeight ?? undefined,
       referralCode: draft.referralCode.trim() || undefined,
+      useCustomGoal: canSuggestLoss && draft.useCustomGoal,
+      customLossKg: customLossKg ?? undefined,
     });
     setSubmitting(false);
     if (!submitResult.ok || !submitResult.data) {
@@ -215,19 +247,24 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
           {step === 1 && <StepBasicInfo draft={draft} update={update} />}
           {step === 2 && <StepBmi bmi={bmi} bmiCategory={bmiCategory} abnormal={abnormal} />}
           {step === 3 && <StepGoalType draft={draft} update={update} />}
-          {step === 4 && <StepJourneyPlan draft={draft} update={update} />}
-          {step === 5 && (
-            <StepStageGoal
-              currentWeight={currentWeight}
-              stageGoalPreview={stageGoalPreview}
-              journeyDays={draft.journeyDays}
-            />
-          )}
-          {step === 6 && (
+          {step === 4 && (
             <StepLongTermGoal
               value={draft.longTermGoalWeight}
               onChange={(v) => update("longTermGoalWeight", v)}
               valid={longTermGoalValid}
+            />
+          )}
+          {step === 5 && <StepJourneyPlan draft={draft} update={update} />}
+          {step === 6 && (
+            <StepStageGoal
+              currentWeight={currentWeight}
+              canSuggestLoss={canSuggestLoss}
+              weightGoalRange={weightGoalRange}
+              finalTarget={finalTarget}
+              draft={draft}
+              update={update}
+              customWithinRange={customWithinRange}
+              journeyDays={draft.journeyDays}
             />
           )}
 
@@ -388,7 +425,7 @@ function StepGoalType({ draft, update }: { draft: WizardDraft; update: <K extend
 function StepJourneyPlan({ draft, update }: { draft: WizardDraft; update: <K extends keyof WizardDraft>(key: K, value: WizardDraft[K]) => void }) {
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 4 · 选择 Journey 计划</h2>
+      <h2 className="text-base font-semibold text-slate-900">Step 5 · 选择 MISU JOURNEY 计划</h2>
       <div className="flex flex-col gap-3">
         {JOURNEY_PLAN_OPTIONS.map((option) => (
           <button
@@ -411,33 +448,141 @@ function StepJourneyPlan({ draft, update }: { draft: WizardDraft; update: <K ext
   );
 }
 
+function formatRange(min: number, max: number): string {
+  return Math.abs(min - max) < 0.05 ? `${min}` : `${min} ~ ${max}`;
+}
+
 function StepStageGoal({
   currentWeight,
-  stageGoalPreview,
+  canSuggestLoss,
+  weightGoalRange,
+  finalTarget,
+  draft,
+  update,
+  customWithinRange,
   journeyDays,
 }: {
   currentWeight: number;
-  stageGoalPreview: { stageGoal: number; status: ReturnType<typeof evaluateGoalStatus> } | null;
+  canSuggestLoss: boolean;
+  weightGoalRange: WeightGoalRange | null;
+  finalTarget: { min: number; max: number };
+  draft: WizardDraft;
+  update: <K extends keyof WizardDraft>(key: K, value: WizardDraft[K]) => void;
+  customWithinRange: boolean | null;
   journeyDays: JourneyDays | 0;
 }) {
   const plan = journeyDays ? buildJourneyPlan(journeyDays) : null;
-  const isMaintain = stageGoalPreview && Math.abs(stageGoalPreview.stageGoal - currentWeight) < 0.05;
+  const [warningDismissed, setWarningDismissed] = useState(false);
+  const showWarning = customWithinRange === false && !warningDismissed;
+
+  if (!currentWeight || !journeyDays) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h2 className="text-base font-semibold text-slate-900">Step 6 · 第一阶段目标建议</h2>
+        <p className="text-sm text-slate-400">请先完成前面几步</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 5 · 第一阶段目标</h2>
-      {stageGoalPreview ? (
+      <h2 className="text-base font-semibold text-slate-900">Step 6 · 第一阶段目标建议</h2>
+
+      {!canSuggestLoss ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 text-center">
           <p className="text-xs text-slate-500">目前 {currentWeight}kg</p>
           <p className="mt-1 text-sm font-medium text-emerald-700">第一阶段目标</p>
-          <p className="text-3xl font-semibold text-slate-900">{stageGoalPreview.stageGoal}kg</p>
-          {!isMaintain && (
-            <p className="mt-1 text-xs text-slate-500">预计减少 {Math.round((currentWeight - stageGoalPreview.stageGoal) * 10) / 10}kg</p>
-          )}
+          <p className="text-xl font-semibold text-slate-900">维持体重，专注习惯养成</p>
         </div>
+      ) : weightGoalRange ? (
+        <>
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 text-center">
+            <p className="text-xs text-slate-500">根据你的资料，我们建议第一阶段目标：</p>
+            <p className="mt-3 text-xs font-medium text-slate-500">减重</p>
+            <p className="text-2xl font-semibold text-slate-900">{formatRange(weightGoalRange.minLossKg, weightGoalRange.maxLossKg)}kg</p>
+            <p className="mt-3 text-xs font-medium text-slate-500">预计体重</p>
+            <p className="text-2xl font-semibold text-slate-900">{formatRange(weightGoalRange.minTargetWeightKg, weightGoalRange.maxTargetWeightKg)}kg</p>
+            <p className="mt-3 text-xs text-slate-400">这个目标属于健康且较容易坚持的减重速度。实际成果会受到饮食、睡眠、运动、执行率及个人体质影响。</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => update("useCustomGoal", false)}
+              className={cn(
+                "rounded-xl border px-3 py-2.5 text-sm font-medium transition",
+                !draft.useCustomGoal ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-500 hover:border-slate-300",
+              )}
+            >
+              使用系统建议
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                update("useCustomGoal", true);
+                setWarningDismissed(false);
+              }}
+              className={cn(
+                "rounded-xl border px-3 py-2.5 text-sm font-medium transition",
+                draft.useCustomGoal ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-500 hover:border-slate-300",
+              )}
+            >
+              自订目标
+            </button>
+          </div>
+
+          {draft.useCustomGoal && (
+            <div className="flex flex-col gap-3">
+              <FieldLabel>
+                自订减重目标 (kg)
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={draft.customLossKg}
+                  onChange={(e) => {
+                    update("customLossKg", e.target.value);
+                    setWarningDismissed(false);
+                  }}
+                  placeholder={`例如 ${weightGoalRange.minLossKg}`}
+                  className={inputClass}
+                />
+              </FieldLabel>
+              {showWarning && (
+                <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                  <p>⚠️ 这个目标已经超出系统建议范围。</p>
+                  <p className="mt-1">为了健康及更高成功率，我们建议第一阶段目标维持在 {formatRange(weightGoalRange.minLossKg, weightGoalRange.maxLossKg)}kg。</p>
+                  <p className="mt-1">你仍然可以继续使用自己的目标。</p>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setWarningDismissed(true)}
+                      className="rounded-lg border border-amber-200 bg-white px-2 py-1.5 text-xs font-semibold text-amber-700"
+                    >
+                      继续使用我的目标
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        update("useCustomGoal", false);
+                        update("customLossKg", "");
+                      }}
+                      className="rounded-lg bg-amber-500 px-2 py-1.5 text-xs font-semibold text-white"
+                    >
+                      改用系统建议
+                    </button>
+                  </div>
+                </div>
+              )}
+              {customWithinRange !== false && customLossKgValid(draft.customLossKg) && (
+                <p className="text-center text-xs text-slate-500">预计体重 {finalTarget.min}kg</p>
+              )}
+            </div>
+          )}
+        </>
       ) : (
-        <p className="text-sm text-slate-400">请先完成前面几步</p>
+        <p className="text-sm text-slate-400">目前体重区间暂无建议规则，请联系客服。</p>
       )}
+
       <p className="text-xs text-slate-400">建议先完成第一阶段，再继续下一阶段。</p>
       {plan && (
         <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600">
@@ -451,13 +596,18 @@ function StepStageGoal({
   );
 }
 
+function customLossKgValid(value: string): boolean {
+  const n = Number(value);
+  return value.trim() !== "" && n > 0;
+}
+
 function StepLongTermGoal({ value, onChange, valid }: { value: string; onChange: (v: string) => void; valid: boolean }) {
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 6 · 长期目标（可选）</h2>
+      <h2 className="text-base font-semibold text-slate-900">Step 4 · 最终目标（可选）</h2>
       <p className="text-sm text-slate-500">如果你希望填写最终理想体重，可以填写。这不会直接成为当前执行目标，会在你完成第一阶段后重新规划。</p>
       <FieldLabel>
-        Long Term Goal (kg)
+        最终目标体重 (kg)
         <input
           type="number"
           inputMode="decimal"
@@ -483,6 +633,7 @@ function OnboardingResult({ result, onStart }: { result: CompleteRegistrationGoa
     goal_restricted: { title: "已切换为习惯养成目标", body: "这个阶段我们先专注在饮食、饮水与打卡习惯，而不是体重数字。" },
   };
   const copy = statusCopy[result.goalStatus] ?? statusCopy.auto_approved;
+  const isMaintain = Math.abs(result.stageGoalWeightMin - result.stageGoalWeightMax) < 0.05 && result.goalStatus === "goal_restricted";
 
   return (
     <div className="flex min-h-screen flex-1 items-center justify-center bg-gradient-to-b from-emerald-50 via-white to-sky-50 px-6 py-10">
@@ -491,10 +642,10 @@ function OnboardingResult({ result, onStart }: { result: CompleteRegistrationGoa
         <p className="text-lg font-semibold text-slate-900">{copy.title}</p>
         <p className="mt-1 text-sm text-slate-500">{copy.body}</p>
 
-        {result.goalStatus !== "goal_restricted" && (
+        {!isMaintain && (
           <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
-            <p className="text-xs text-slate-500">第一阶段目标</p>
-            <p className="text-2xl font-semibold text-slate-900">{result.stageGoalWeight}kg</p>
+            <p className="text-xs text-slate-500">第一阶段目标{result.isCustomGoal ? "（自订）" : ""}</p>
+            <p className="text-2xl font-semibold text-slate-900">{formatRange(result.stageGoalWeightMin, result.stageGoalWeightMax)}kg</p>
           </div>
         )}
 

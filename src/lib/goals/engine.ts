@@ -11,18 +11,23 @@ import type {
   GoalPlan,
   GoalType,
   JourneyDays,
+  WeightGoalRule,
 } from "./types";
 
 type CustomerGoalRow = Database["public"]["Tables"]["customer_goals"]["Row"];
 type GoalPlanRow = Database["public"]["Tables"]["goal_plans"]["Row"];
 type GoalAssessmentRow = Database["public"]["Tables"]["goal_assessments"]["Row"];
+type WeightGoalRuleRow = Database["public"]["Tables"]["weight_goal_rules"]["Row"];
 
 function mapCustomerGoalRow(row: CustomerGoalRow): CustomerGoal {
   return {
     id: row.id,
     customerId: row.customer_id,
     currentStage: row.current_stage,
-    stageGoalWeight: Number(row.stage_goal_weight),
+    stageGoalWeightMin: Number(row.stage_goal_weight_min),
+    stageGoalWeightMax: Number(row.stage_goal_weight_max),
+    isCustomGoal: row.is_custom_goal,
+    baseWeightKg: Number(row.base_weight_kg),
     longTermGoalWeight: row.long_term_goal_weight === null ? null : Number(row.long_term_goal_weight),
     goalStatus: row.goal_status,
     createdAt: row.created_at,
@@ -48,10 +53,22 @@ function mapGoalAssessmentRow(row: GoalAssessmentRow): GoalAssessment {
     customerId: row.customer_id,
     bmi: Number(row.bmi),
     bmiCategory: row.bmi_category,
-    suggestedStageGoal: Number(row.suggested_stage_goal),
+    suggestedStageGoalMin: Number(row.suggested_stage_goal_min),
+    suggestedStageGoalMax: Number(row.suggested_stage_goal_max),
     longTermGoal: row.long_term_goal === null ? null : Number(row.long_term_goal),
     goalStatus: row.goal_status,
     createdAt: row.created_at,
+  };
+}
+
+function mapWeightGoalRuleRow(row: WeightGoalRuleRow): WeightGoalRule {
+  return {
+    id: row.id,
+    minWeightKg: row.min_weight === null ? null : Number(row.min_weight),
+    maxWeightKg: row.max_weight === null ? null : Number(row.max_weight),
+    journeyDays: row.journey_days as JourneyDays,
+    minLossKg: Number(row.min_loss_kg),
+    maxLossKg: Number(row.max_loss_kg),
   };
 }
 
@@ -112,6 +129,16 @@ export async function getCurrentGoalsForCustomers(customerIds: string[]): Promis
   return map;
 }
 
+/** Admin-configurable weight-loss suggestion table — fetched fresh so the
+ * onboarding wizard's live preview always matches what the RPC will compute,
+ * without hardcoding the rule table in the UI. */
+export async function getWeightGoalRules(): Promise<WeightGoalRule[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("weight_goal_rules").select("*").eq("is_active", true);
+  if (error) throw error;
+  return (data ?? []).map(mapWeightGoalRuleRow);
+}
+
 export interface CompleteRegistrationGoalsInput {
   customerId: string;
   name: string;
@@ -126,13 +153,19 @@ export interface CompleteRegistrationGoalsInput {
   journeyDays: JourneyDays;
   longTermGoalWeight?: number;
   referralCode?: string;
+  useCustomGoal?: boolean;
+  customLossKg?: number;
 }
 
 export interface CompleteRegistrationGoalsResult {
   bmi: number;
   bmiCategory: string;
   goalStatus: string;
-  stageGoalWeight: number;
+  stageGoalWeightMin: number;
+  stageGoalWeightMax: number;
+  isCustomGoal: boolean;
+  suggestedMin: number;
+  suggestedMax: number;
   journeyDays: number;
   targetCheckInDays: number;
   target211Meals: number;
@@ -144,7 +177,7 @@ export interface CompleteRegistrationGoalsResult {
 /** The only place onboarding data gets written — mirrors the RPC-for-writes
  * pattern used throughout the inventory system. All calculation happens
  * server-side in complete_registration_goals(); nothing computed client-side
- * (see ./calculations.ts) is trusted or reused here. */
+ * (see ./goal-calculator.ts) is trusted or reused here. */
 export async function completeRegistrationGoals(input: CompleteRegistrationGoalsInput): Promise<GoalEngineResult<CompleteRegistrationGoalsResult>> {
   const supabase = createClient();
   const { data, error } = await supabase.rpc("complete_registration_goals", {
@@ -161,6 +194,8 @@ export async function completeRegistrationGoals(input: CompleteRegistrationGoals
     p_journey_days: input.journeyDays,
     p_long_term_goal_weight: input.longTermGoalWeight ?? undefined,
     p_referral_code: input.referralCode ?? undefined,
+    p_use_custom_goal: input.useCustomGoal ?? false,
+    p_custom_loss_kg: input.customLossKg ?? undefined,
   });
   if (error) return { ok: false, error: error.message };
   return { ok: true, data: data as unknown as CompleteRegistrationGoalsResult };

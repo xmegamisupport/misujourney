@@ -16,31 +16,40 @@ export type Database = {
     Tables: {
       customer_goals: {
         Row: {
+          base_weight_kg: number
           created_at: string
           current_stage: number
           customer_id: string
           goal_status: Database["public"]["Enums"]["goal_status"]
           id: string
+          is_custom_goal: boolean
           long_term_goal_weight: number | null
-          stage_goal_weight: number
+          stage_goal_weight_max: number
+          stage_goal_weight_min: number
         }
         Insert: {
+          base_weight_kg: number
           created_at?: string
           current_stage?: number
           customer_id: string
           goal_status: Database["public"]["Enums"]["goal_status"]
           id?: string
+          is_custom_goal?: boolean
           long_term_goal_weight?: number | null
-          stage_goal_weight: number
+          stage_goal_weight_max: number
+          stage_goal_weight_min: number
         }
         Update: {
+          base_weight_kg?: number
           created_at?: string
           current_stage?: number
           customer_id?: string
           goal_status?: Database["public"]["Enums"]["goal_status"]
           id?: string
+          is_custom_goal?: boolean
           long_term_goal_weight?: number | null
-          stage_goal_weight?: number
+          stage_goal_weight_max?: number
+          stage_goal_weight_min?: number
         }
         Relationships: [
           {
@@ -155,7 +164,8 @@ export type Database = {
           goal_status: Database["public"]["Enums"]["goal_status"]
           id: string
           long_term_goal: number | null
-          suggested_stage_goal: number
+          suggested_stage_goal_max: number
+          suggested_stage_goal_min: number
         }
         Insert: {
           bmi: number
@@ -165,7 +175,8 @@ export type Database = {
           goal_status: Database["public"]["Enums"]["goal_status"]
           id?: string
           long_term_goal?: number | null
-          suggested_stage_goal: number
+          suggested_stage_goal_max: number
+          suggested_stage_goal_min: number
         }
         Update: {
           bmi?: number
@@ -175,7 +186,8 @@ export type Database = {
           goal_status?: Database["public"]["Enums"]["goal_status"]
           id?: string
           long_term_goal?: number | null
-          suggested_stage_goal?: number
+          suggested_stage_goal_max?: number
+          suggested_stage_goal_min?: number
         }
         Relationships: [
           {
@@ -471,6 +483,42 @@ export type Database = {
           },
         ]
       }
+      weight_goal_rules: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          journey_days: number
+          max_loss_kg: number
+          max_weight: number | null
+          min_loss_kg: number
+          min_weight: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          journey_days: number
+          max_loss_kg: number
+          max_weight?: number | null
+          min_loss_kg: number
+          min_weight?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          journey_days?: number
+          max_loss_kg?: number
+          max_weight?: number | null
+          min_loss_kg?: number
+          min_weight?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -496,6 +544,7 @@ export type Database = {
           p_activity_level: Database["public"]["Enums"]["activity_level"]
           p_age: number
           p_current_weight: number
+          p_custom_loss_kg?: number
           p_customer_id: string
           p_diet_type: Database["public"]["Enums"]["diet_type"]
           p_gender: string
@@ -506,6 +555,7 @@ export type Database = {
           p_name: string
           p_phone: string
           p_referral_code?: string
+          p_use_custom_goal?: boolean
         }
         Returns: Json
       }

@@ -12,7 +12,7 @@ import { TrendChart } from "@/components/ui/TrendChart";
 import { currentCustomer, currentCoach } from "@/lib/mock-data";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { addWater, useWaterIntake, useTodayTasks } from "@/lib/daily-progress";
-import { useCustomerInventory, useHasInventoryRecords, useCustomerTransactions, useTodayMeals, useTodayCheckIn } from "@/lib/inventory/hooks";
+import { useCustomerInventory, useHasInventoryRecords, useCustomerTransactions, useTodayMeals, useTodayCheckIn, useCustomerCheckIns } from "@/lib/inventory/hooks";
 import { calcAverageDailyUsage, calcEstimatedDaysRemaining, todayDateStr } from "@/lib/inventory/engine";
 import { InventoryStatusCard } from "@/components/inventory/InventoryStatusCard";
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
@@ -41,6 +41,7 @@ export default function CustomerDashboardPage() {
   const { data: transactions } = useCustomerTransactions(customerId);
   const { data: currentGoal } = useCurrentCustomerGoal(customerId);
   const { data: todayCheckIn } = useTodayCheckIn(customerId);
+  const { data: checkIns } = useCustomerCheckIns(customerId);
 
   const today = todayDateStr();
   const journeyProgress = [
@@ -51,6 +52,16 @@ export default function CustomerDashboardPage() {
     { label: "MISU产品", icon: "🥤", done: transactions.some((t) => t.createdAt.slice(0, 10) === today && (t.type === "MEAL_USAGE" || t.type === "CHECK_IN_USAGE")) },
   ];
   const journeyProgressPercent = Math.round((journeyProgress.filter((i) => i.done).length / journeyProgress.length) * 100);
+
+  const latestWeight = checkIns[0]?.weight ?? null;
+  const hasWeightGoal = Boolean(currentGoal) && currentGoal!.stageGoalWeightMin < currentGoal!.baseWeightKg;
+  const remaining = hasWeightGoal && latestWeight !== null
+    ? {
+        min: Math.max(0, Math.round((latestWeight - currentGoal!.stageGoalWeightMax) * 10) / 10),
+        max: Math.max(0, Math.round((latestWeight - currentGoal!.stageGoalWeightMin) * 10) / 10),
+      }
+    : null;
+  const goalReached = remaining !== null && remaining.max <= 0;
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 md:px-8">
@@ -88,24 +99,54 @@ export default function CustomerDashboardPage() {
       <div className="grid grid-cols-3 gap-3">
         <StatCard label="今日完成率" value={`${completionRate}%`} icon="✅" accent="bg-emerald-50 text-emerald-600" />
         <StatCard label="连续打卡" value={c.streakDays} unit="天" icon="🔥" accent="bg-amber-50 text-amber-600" />
-        <StatCard label="当前体重" value={c.currentWeight} unit="kg" icon="⚖️" accent="bg-sky-50 text-sky-600" />
+        <StatCard label="当前体重" value={latestWeight ?? c.currentWeight} unit="kg" icon="⚖️" accent="bg-sky-50 text-sky-600" />
       </div>
+
+      {currentGoal && (
+        <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
+          <p className="mb-3 text-sm font-semibold text-slate-700">🎯 第一阶段目标</p>
+          {!hasWeightGoal ? (
+            <p className="text-sm text-slate-500">目前专注在习惯养成，暂无体重目标。每一个阶段完成以后，再重新评估下一阶段目标。</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-y-3 text-sm">
+              <div>
+                <p className="text-xs text-slate-400">目前体重</p>
+                <p className="text-lg font-semibold text-slate-900">{currentGoal.baseWeightKg}kg</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">第一阶段目标</p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {currentGoal.stageGoalWeightMin === currentGoal.stageGoalWeightMax
+                    ? `${currentGoal.stageGoalWeightMin}`
+                    : `${currentGoal.stageGoalWeightMin} ~ ${currentGoal.stageGoalWeightMax}`}
+                  kg
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">目前进度</p>
+                <p className="text-lg font-semibold text-emerald-600">{latestWeight !== null ? `${latestWeight}kg` : "尚未打卡"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">距离建议目标</p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {goalReached
+                    ? "🎉 已达成"
+                    : remaining
+                      ? `还有 ${remaining.min === remaining.max ? remaining.min : `${remaining.min} ~ ${remaining.max}`}kg`
+                      : "—"}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-slate-400">🎯 第一阶段目标</p>
-            <p className="text-2xl font-semibold text-slate-900">
-              {currentGoal ? `${currentGoal.stageGoalWeight}kg` : "—"}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-slate-400">Progress</p>
-            <p className="text-2xl font-semibold text-emerald-600">{journeyProgressPercent}%</p>
-          </div>
+          <p className="text-sm font-semibold text-slate-700">Today&apos;s Progress</p>
+          <p className="text-2xl font-semibold text-emerald-600">{journeyProgressPercent}%</p>
         </div>
-        <p className="mt-3 mb-2 text-xs font-medium text-slate-500">Today&apos;s Progress</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           {journeyProgress.map((item) => (
             <div key={item.label} className="flex items-center gap-2 text-sm">
               <span>{item.done ? "✅" : "⬜"}</span>

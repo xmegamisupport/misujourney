@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCurrentCustomerGoal, getCurrentGoalPlan, getCurrentGoalsForCustomers } from "./engine";
-import type { CustomerGoal, GoalPlan } from "./types";
+import { getCurrentCustomerGoal, getCurrentGoalPlan, getCurrentGoalsForCustomers, getWeightGoalRules } from "./engine";
+import type { CustomerGoal, GoalPlan, WeightGoalRule } from "./types";
 
 export function useCurrentCustomerGoal(customerId: string): { data: CustomerGoal | undefined; loading: boolean } {
   const [data, setData] = useState<CustomerGoal | undefined>(undefined);
@@ -42,6 +42,27 @@ export function useCurrentGoalPlan(customerId: string): { data: GoalPlan | undef
       cancelled = true;
     };
   }, [customerId]);
+
+  return { data, loading };
+}
+
+export function useWeightGoalRules(): { data: WeightGoalRule[]; loading: boolean } {
+  const [data, setData] = useState<WeightGoalRule[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getWeightGoalRules()
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return { data, loading };
 }
