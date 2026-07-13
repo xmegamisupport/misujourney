@@ -28,7 +28,7 @@ export default function DailySummaryPage() {
   const { data: todayCheckIn } = useTodayCheckIn(customerId);
   const { data: transactions } = useCustomerTransactions(customerId);
   const waterTarget = currentGoal?.waterTargetMl ?? (journey?.startWeight ? calculateWaterTargetMl(journey.startWeight) : FALLBACK_WATER_TARGET_ML);
-  const water = useWaterIntake(customerId, 0, waterTarget);
+  const water = useWaterIntake(customerId, 0);
   const today = todayDateStr();
 
   const todayMisuScore = addedMeals.length > 0 ? Math.round(addedMeals.reduce((sum, m) => sum + m.misuScore, 0) / addedMeals.length) : 0;

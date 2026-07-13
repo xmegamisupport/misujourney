@@ -39,17 +39,19 @@ async function persistWaterLog(customerId: string, totalMl: number) {
   if (error) console.error("Failed to persist water log", error);
 }
 
-export function addWater(customerId: string, amountMl: number, baseline: number, target: number) {
+/** No upper cap at `target` — customers can keep logging water past their
+ * daily goal instead of the button silently doing nothing once "done". */
+export function addWater(customerId: string, amountMl: number, baseline: number) {
   const key = waterKey(customerId);
   const raw = localStorage.getItem(key);
   const current = raw !== null ? Number(raw) : baseline;
-  const next = Math.max(0, Math.min(target, current + amountMl));
+  const next = Math.max(0, current + amountMl);
   localStorage.setItem(key, String(next));
   emitChange();
   void persistWaterLog(customerId, next);
 }
 
-export function useWaterIntake(customerId: string, baseline: number, target: number): number {
+export function useWaterIntake(customerId: string, baseline: number): number {
   const key = waterKey(customerId);
   const raw = useSyncExternalStore(
     subscribe,
@@ -57,5 +59,5 @@ export function useWaterIntake(customerId: string, baseline: number, target: num
     () => null,
   );
   const value = raw !== null ? Number(raw) : baseline;
-  return Math.max(0, Math.min(target, value));
+  return Math.max(0, value);
 }

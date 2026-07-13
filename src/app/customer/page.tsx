@@ -59,7 +59,7 @@ export default function CustomerDashboardPage() {
   const addedFiber = addedMeals.reduce((sum, m) => sum + m.fiber, 0);
 
   const waterTarget = currentGoal?.waterTargetMl ?? (journey?.startWeight ? calculateWaterTargetMl(journey.startWeight) : FALLBACK_WATER_TARGET_ML);
-  const water = useWaterIntake(customerId, 0, waterTarget);
+  const water = useWaterIntake(customerId, 0);
   const [customWater, setCustomWater] = useState("");
 
   const { data: todayCheckIn } = useTodayCheckIn(customerId);
@@ -242,7 +242,7 @@ export default function CustomerDashboardPage() {
         <div className="h-2 w-full overflow-hidden rounded-full bg-sky-50">
           <div
             className="h-full rounded-full bg-sky-400 transition-all"
-            style={{ width: `${Math.round((water / waterTarget) * 100)}%` }}
+            style={{ width: `${Math.min(100, Math.round((water / waterTarget) * 100))}%` }}
           />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -250,7 +250,7 @@ export default function CustomerDashboardPage() {
             <button
               key={amount}
               type="button"
-              onClick={() => addWater(customerId, amount, 0, waterTarget)}
+              onClick={() => addWater(customerId, amount, 0)}
               className="rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-xs font-medium text-sky-700 transition hover:border-sky-300 active:scale-95"
             >
               +{amount}ml
@@ -272,7 +272,7 @@ export default function CustomerDashboardPage() {
             onClick={() => {
               const amount = Number(customWater);
               if (amount > 0) {
-                addWater(customerId, amount, 0, waterTarget);
+                addWater(customerId, amount, 0);
                 setCustomWater("");
               }
             }}
