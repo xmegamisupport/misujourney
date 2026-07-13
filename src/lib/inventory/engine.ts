@@ -278,6 +278,27 @@ export async function getTodayMeals(customerId: string): Promise<MealEntry[]> {
   return (data ?? []).map(mapMealRow);
 }
 
+/** Batched lookup for a Coach's customer roster — same pattern as
+ * getCheckInsForCustomers. */
+export async function getTodayMealsForCustomers(customerIds: string[]): Promise<Record<string, MealEntry[]>> {
+  if (customerIds.length === 0) return {};
+  const supabase = createClient();
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const { data, error } = await supabase
+    .from("meals")
+    .select("*")
+    .in("customer_id", customerIds)
+    .gte("created_at", startOfDay.toISOString())
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  const map: Record<string, MealEntry[]> = {};
+  for (const row of data ?? []) {
+    (map[row.customer_id] ??= []).push(mapMealRow(row));
+  }
+  return map;
+}
+
 /** Usage-driven daily average across the last N days, from an already-fetched
  * transaction list (callers load transactions once and share them). */
 export function calcAverageDailyUsage(transactions: InventoryTransaction[], productCode: ProductCode, daysWindow = 7): number | null {

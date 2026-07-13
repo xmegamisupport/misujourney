@@ -18,6 +18,8 @@ import { useCheckoutForDate } from "@/lib/checkout/hooks";
 import { useTodayJourneyDay } from "@/lib/journey-day/hooks";
 import { skipMorningCheckin } from "@/lib/journey-day/engine";
 import { useCurrentNutritionTargets } from "@/lib/nutrition/hooks";
+import { buildDailyNutritionAdvice } from "@/lib/nutrition/daily-advice";
+import { countVegetableServings, VEGETABLE_SERVINGS_TARGET } from "@/lib/meal-check/plate-analysis";
 
 const waterPresets = [100, 200, 300];
 /** Only used for the brief window before the real per-customer target
@@ -66,7 +68,7 @@ export default function CustomerDashboardPage() {
   const { data: addedMeals } = useTodayMeals(customerId);
   const addedCalories = addedMeals.reduce((sum, m) => sum + m.calories, 0);
   const addedProtein = addedMeals.reduce((sum, m) => sum + m.protein, 0);
-  const addedFiber = addedMeals.reduce((sum, m) => sum + m.fiber, 0);
+  const vegServingsDone = countVegetableServings(addedMeals);
 
   const waterTarget = currentGoal?.waterTargetMl ?? (journey?.startWeight ? calculateWaterTargetMl(journey.startWeight) : FALLBACK_WATER_TARGET_ML);
   const water = useWaterIntake(customerId, 0);
@@ -353,40 +355,43 @@ export default function CustomerDashboardPage() {
       )}
 
       <div>
-        <p className="mb-2 text-sm font-semibold text-slate-700">今日营养</p>
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-sm font-semibold text-slate-700">今日营养</p>
+          <Link href="/customer/meals" className="text-xs font-medium text-sky-600">
+            查看详情 →
+          </Link>
+        </div>
         {nutritionTargets ? (
-          <div className="grid grid-cols-3 gap-3">
-            <NutritionCard
-              label="热量"
-              value={addedCalories}
-              target={nutritionTargets.dailyCalories}
-              unit="kcal"
-              icon="🔥"
-              color="bg-amber-400"
-            />
-            <NutritionCard
-              label="蛋白质"
-              value={addedProtein}
-              target={nutritionTargets.dailyProtein}
-              unit="g"
-              icon="🥚"
-              color="bg-sky-400"
-            />
-            <NutritionCard
-              label="纤维"
-              value={addedFiber}
-              target={nutritionTargets.dailyFiber}
-              unit="g"
-              icon="🥦"
-              color="bg-emerald-400"
-            />
-          </div>
+          <Link href="/customer/meals" className="grid grid-cols-2 gap-3">
+            <NutritionCard label="热量" value={addedCalories} target={nutritionTargets.dailyCalories} unit="kcal" icon="🔥" color="bg-amber-400" />
+            <NutritionCard label="蛋白质" value={addedProtein} target={nutritionTargets.dailyProtein} unit="g" icon="🥩" color="bg-sky-400" />
+            <NutritionCard label="蔬菜" value={vegServingsDone} target={VEGETABLE_SERVINGS_TARGET} unit="份" icon="🥬" color="bg-emerald-400" />
+            <NutritionCard label="饮水" value={water} target={waterTarget} unit="ml" icon="💧" color="bg-sky-400" />
+          </Link>
         ) : !nutritionTargetsLoading ? (
           <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
             完善身高/体重/年龄/性别/活动量资料后，将自动生成你的每日营养目标。
           </div>
         ) : null}
       </div>
+
+      {nutritionTargets && (
+        <div className="flex items-start gap-3 rounded-2xl border border-sky-100 bg-sky-50/50 p-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">🤖</span>
+          <div className="min-w-0 flex-1">
+            <p className="mb-1 text-xs font-semibold text-sky-700">AI 今日建议</p>
+            <p className="text-sm text-slate-700">
+              {buildDailyNutritionAdvice({
+                caloriesPercent: Math.round((addedCalories / nutritionTargets.dailyCalories) * 100),
+                proteinPercent: Math.round((addedProtein / nutritionTargets.dailyProtein) * 100),
+                vegServingsDone,
+                vegServingsTarget: VEGETABLE_SERVINGS_TARGET,
+                waterPercent: Math.round((water / waterTarget) * 100),
+              })}
+            </p>
+          </div>
+        </div>
+      )}
 
       <Link
         href="/customer/learn"

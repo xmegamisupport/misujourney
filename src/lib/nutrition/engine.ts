@@ -40,3 +40,21 @@ export async function getCurrentNutritionTargets(customerId: string): Promise<Jo
   if (error) throw error;
   return data ? mapRow(data) : undefined;
 }
+
+/** Batched lookup for a Coach's customer roster — same pattern as
+ * getCurrentGoalsForCustomers in the goals engine. */
+export async function getNutritionTargetsForCustomers(customerIds: string[]): Promise<Record<string, JourneyNutritionTargets>> {
+  if (customerIds.length === 0) return {};
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("journey_nutrition_targets")
+    .select("*")
+    .in("customer_id", customerIds)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const map: Record<string, JourneyNutritionTargets> = {};
+  for (const row of data ?? []) {
+    if (!map[row.customer_id]) map[row.customer_id] = mapRow(row);
+  }
+  return map;
+}

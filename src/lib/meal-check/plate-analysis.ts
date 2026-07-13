@@ -1,4 +1,5 @@
 import type { FoodCategory } from "@/lib/food-portions/types";
+import type { MealEntry } from "@/lib/types";
 
 export type PlateGroup = "vegetable" | "protein" | "carb" | "other";
 
@@ -173,6 +174,24 @@ export function buildPlateGroupChecks(analysis: {
       action: GROUP_ACTIONS[group][status],
     };
   });
+}
+
+const MAIN_MEAL_TYPES: MealEntry["type"][] = ["breakfast", "lunch", "dinner"];
+
+/** One "份" per main meal (breakfast/lunch/dinner) — matches the app's
+ * three-main-meal structure, not a separate configurable setting. */
+export const VEGETABLE_SERVINGS_TARGET = MAIN_MEAL_TYPES.length;
+
+/** A main meal counts as a vegetable "份" achieved when its recorded food
+ * items (re-analyzed from the persisted category+gram, same as the 211
+ * score) hit at least the vegetable target band — no separate stored flag. */
+export function countVegetableServings(meals: MealEntry[]): number {
+  return meals.filter((meal) => {
+    if (!MAIN_MEAL_TYPES.includes(meal.type)) return false;
+    const items = (meal.foodItems ?? []).map((f) => ({ category: f.category as FoodCategory, gram: f.gram }));
+    const analysis = calculatePlateAnalysis(items);
+    return analysis.vegetablePercent >= TARGET_BANDS.vegetable.low;
+  }).length;
 }
 
 export function plateBalanceTier(score: number): { label: string; message: string; colorClass: string } {

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
+import { NutritionCard } from "@/components/ui/NutritionCard";
 import { TrendChart } from "@/components/ui/TrendChart";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,8 @@ import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
 import { useCustomerProfile } from "@/lib/coach/hooks";
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
+import { useCurrentNutritionTargets } from "@/lib/nutrition/hooks";
+import { countVegetableServings, VEGETABLE_SERVINGS_TARGET } from "@/lib/meal-check/plate-analysis";
 import { useCustomerInventory, useCustomerTransactions, useCustomerCheckIns, useTodayMeals } from "@/lib/inventory/hooks";
 import { calcAverageDailyUsage, calcEstimatedDaysRemaining, recordRepurchase, manualAdjustment } from "@/lib/inventory/engine";
 import {
@@ -51,6 +54,7 @@ export default function CustomerDetailPage() {
   const { data: profile, loading: profileLoading } = useCustomerProfile(customerId);
   const { data: journey } = useJourneySummary(customerId);
   const { data: currentGoal } = useCurrentCustomerGoal(customerId);
+  const { data: nutritionTargets } = useCurrentNutritionTargets(customerId);
   const { data: flags } = useActiveAttentionFlags(customerId);
 
   const [notes, setNotes] = useState<string[]>([
@@ -63,6 +67,17 @@ export default function CustomerDetailPage() {
   const { data: transactions } = useCustomerTransactions(customerId);
   const { data: checkIns } = useCustomerCheckIns(customerId);
   const { data: todayMeals } = useTodayMeals(customerId);
+  const todayNutritionTotals = useMemo(
+    () => ({
+      calories: todayMeals.reduce((sum, m) => sum + m.calories, 0),
+      protein: todayMeals.reduce((sum, m) => sum + m.protein, 0),
+      carbs: todayMeals.reduce((sum, m) => sum + m.carbs, 0),
+      fat: todayMeals.reduce((sum, m) => sum + m.fat, 0),
+      fiber: todayMeals.reduce((sum, m) => sum + m.fiber, 0),
+    }),
+    [todayMeals],
+  );
+  const todayVegServings = useMemo(() => countVegetableServings(todayMeals), [todayMeals]);
 
   const [analysisType, setAnalysisType] = useState<AnalysisType>("weekly_7_day");
   const { data: insight, refresh: refreshInsight } = useLatestCustomerInsight(customerId, analysisType);
@@ -509,6 +524,20 @@ export default function CustomerDetailPage() {
           <p className="py-6 text-center text-sm text-slate-400">还没有体重记录</p>
         )}
       </div>
+
+      {nutritionTargets && (
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <p className="mb-3 text-sm font-semibold text-slate-700">今日营养</p>
+          <div className="grid grid-cols-3 gap-3 md:grid-cols-5">
+            <NutritionCard label="热量" value={todayNutritionTotals.calories} target={nutritionTargets.dailyCalories} unit="kcal" icon="🔥" color="bg-amber-400" />
+            <NutritionCard label="蛋白质" value={todayNutritionTotals.protein} target={nutritionTargets.dailyProtein} unit="g" icon="🥩" color="bg-sky-400" />
+            <NutritionCard label="碳水" value={todayNutritionTotals.carbs} target={nutritionTargets.dailyCarbohydrate} unit="g" icon="🍚" color="bg-orange-400" />
+            <NutritionCard label="脂肪" value={todayNutritionTotals.fat} target={nutritionTargets.dailyFat} unit="g" icon="🥑" color="bg-rose-400" />
+            <NutritionCard label="纤维" value={todayNutritionTotals.fiber} target={nutritionTargets.dailyFiber} unit="g" icon="🥦" color="bg-emerald-400" />
+          </div>
+          <p className="mt-3 text-xs text-slate-400">🥬 蔬菜份数 {todayVegServings}/{VEGETABLE_SERVINGS_TARGET}份 · Journey Target 为该顾客本阶段固定目标</p>
+        </div>
+      )}
 
       <div>
         <p className="mb-2 text-sm font-semibold text-slate-700">今日饮食记录</p>

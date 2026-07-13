@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { todayDateStr } from "@/lib/inventory/engine";
 
@@ -60,4 +60,46 @@ export function useWaterIntake(customerId: string, baseline: number): number {
   );
   const value = raw !== null ? Number(raw) : baseline;
   return Math.max(0, value);
+}
+
+/** A Coach reads a customer's water intake from another browser, so the
+ * localStorage-first value above doesn't apply — this reads the persisted
+ * daily_water_logs mirror instead (batched, for the customer roster). */
+export async function getWaterLogsForCustomers(customerIds: string[], date: string): Promise<Record<string, number>> {
+  if (customerIds.length === 0) return {};
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("daily_water_logs")
+    .select("customer_id, total_ml")
+    .in("customer_id", customerIds)
+    .eq("log_date", date);
+  if (error) throw error;
+  const map: Record<string, number> = {};
+  for (const row of data ?? []) {
+    map[row.customer_id] = row.total_ml;
+  }
+  return map;
+}
+
+export function useWaterLogsForCustomers(customerIds: string[], date: string): { data: Record<string, number>; loading: boolean } {
+  const [data, setData] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+  const key = customerIds.join(",");
+
+  useEffect(() => {
+    let cancelled = false;
+    getWaterLogsForCustomers(customerIds, date)
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, date]);
+
+  return { data, loading };
 }

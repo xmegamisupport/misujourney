@@ -13,6 +13,7 @@ import {
   getInventoryForCustomers,
   getCheckInsForCustomers,
   getTransactionsForCustomers,
+  getTodayMealsForCustomers,
 } from "./engine";
 import type { CustomerInventory, DailyCheckIn, InventoryTransaction, RepurchaseAlert } from "./types";
 import type { MealEntry } from "@/lib/types";
@@ -98,4 +99,8 @@ export function useCheckInsForCustomers(customerIds: string[]): AsyncResource<Re
 
 export function useTransactionsForCustomers(customerIds: string[]): AsyncResource<Record<string, InventoryTransaction[]>> {
   return useInventoryResource(() => getTransactionsForCustomers(customerIds), {}, [customerIds.join(",")]);
+}
+
+export function useTodayMealsForCustomers(customerIds: string[]): AsyncResource<Record<string, MealEntry[]>> {
+  return useInventoryResource(() => getTodayMealsForCustomers(customerIds), {}, [customerIds.join(",")]);
 }

@@ -6,10 +6,14 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useMyCustomers } from "@/lib/coach/hooks";
-import { useCheckInsForCustomers } from "@/lib/inventory/hooks";
+import { useCheckInsForCustomers, useTodayMealsForCustomers } from "@/lib/inventory/hooks";
 import { useCheckoutsForCustomers } from "@/lib/checkout/hooks";
 import { useAttentionFlagsForCustomers, useLatestInsightsForCustomers } from "@/lib/insights/hooks";
 import { SEVERITY_STYLES } from "@/lib/insights/constants";
+import { useGoalsForCustomers } from "@/lib/goals/hooks";
+import { useNutritionTargetsForCustomers } from "@/lib/nutrition/hooks";
+import { useWaterLogsForCustomers } from "@/lib/daily-progress";
+import { countVegetableServings, VEGETABLE_SERVINGS_TARGET } from "@/lib/meal-check/plate-analysis";
 import { cn } from "@/lib/utils";
 
 const filters = [
@@ -40,6 +44,10 @@ export default function CustomerListPage() {
   const { data: checkoutMap } = useCheckoutsForCustomers(customerIds, weekAgo, today);
   const { data: flagsMap } = useAttentionFlagsForCustomers(customerIds);
   const { data: insightMap } = useLatestInsightsForCustomers(customerIds, "weekly_7_day");
+  const { data: goalMap } = useGoalsForCustomers(customerIds);
+  const { data: nutritionTargetMap } = useNutritionTargetsForCustomers(customerIds);
+  const { data: todayMealsMap } = useTodayMealsForCustomers(customerIds);
+  const { data: waterMap } = useWaterLogsForCustomers(customerIds, today);
 
   const rows = useMemo(() => {
     return customers
@@ -54,14 +62,23 @@ export default function CustomerListPage() {
         const flags = flagsMap[c.id] ?? [];
         const insight = insightMap[c.id];
         const checkedOutToday = (checkoutMap[c.id] ?? []).some((co) => co.checkoutDate === today);
-        return { customer: c, latestWeight, weightChange, checkoutDays, flags, insight, checkedOutToday };
+        const todayMeals = todayMealsMap[c.id] ?? [];
+        const nutrition = {
+          calories: todayMeals.reduce((sum, m) => sum + m.calories, 0),
+          protein: todayMeals.reduce((sum, m) => sum + m.protein, 0),
+          vegServings: countVegetableServings(todayMeals),
+          water: waterMap[c.id] ?? 0,
+          target: nutritionTargetMap[c.id],
+          waterTarget: goalMap[c.id]?.waterTargetMl ?? null,
+        };
+        return { customer: c, latestWeight, weightChange, checkoutDays, flags, insight, checkedOutToday, nutrition };
       })
       .filter((row) => {
         if (filter === "attention") return row.flags.length > 0;
         if (filter === "no_checkout_today") return !row.checkedOutToday;
         return true;
       });
-  }, [customers, query, filter, checkInMap, checkoutMap, flagsMap, insightMap, weekAgo, today]);
+  }, [customers, query, filter, checkInMap, checkoutMap, flagsMap, insightMap, todayMealsMap, waterMap, nutritionTargetMap, goalMap, weekAgo, today]);
 
   return (
     <div className="flex flex-col gap-4 px-4 pb-8 md:px-8">
@@ -93,7 +110,7 @@ export default function CustomerListPage() {
         <EmptyState icon="🔍" title="没有找到符合条件的顾客" />
       ) : (
         <div className="flex flex-col gap-2">
-          {rows.map(({ customer, latestWeight, weightChange, checkoutDays, flags, insight }) => (
+          {rows.map(({ customer, latestWeight, weightChange, checkoutDays, flags, insight, nutrition }) => (
             <Link
               key={customer.id}
               href={`/coach/customers/${customer.id}`}
@@ -113,6 +130,33 @@ export default function CustomerListPage() {
                   <p className="text-[11px] text-slate-400">睡前回顾</p>
                 </div>
               </div>
+
+              {nutrition.target && (
+                <div className="grid grid-cols-4 gap-1.5 rounded-xl bg-slate-50 px-2 py-2 text-center">
+                  <div>
+                    <p className="text-[11px] text-slate-400">🔥 热量</p>
+                    <p className="text-xs font-semibold text-slate-700">
+                      {nutrition.calories}/{nutrition.target.dailyCalories}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-slate-400">🥩 蛋白质</p>
+                    <p className="text-xs font-semibold text-slate-700">
+                      {nutrition.protein}/{nutrition.target.dailyProtein}g
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-slate-400">🥬 蔬菜</p>
+                    <p className="text-xs font-semibold text-slate-700">
+                      {nutrition.vegServings}/{VEGETABLE_SERVINGS_TARGET}份
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-slate-400">💧 饮水</p>
+                    <p className="text-xs font-semibold text-slate-700">{nutrition.waterTarget !== null ? `${nutrition.water}/${nutrition.waterTarget}ml` : `${nutrition.water}ml`}</p>
+                  </div>
+                </div>
+              )}
 
               {flags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
