@@ -34,6 +34,17 @@ export interface PlateAnalysisResult {
   improvePoints: string[];
 }
 
+type TargetGroup = "vegetable" | "protein" | "carb";
+
+/** Target band per group, in percent of (veg+protein+carb) gram weight —
+ * the single source of truth for both the score/notes below and the
+ * customer-facing status chips (buildPlateGroupChecks). */
+const TARGET_BANDS: Record<TargetGroup, { low: number; high: number }> = {
+  vegetable: { low: 40, high: 60 },
+  protein: { low: 15, high: 35 },
+  carb: { low: 15, high: 35 },
+};
+
 /** Deterministic 211-plate analysis (2 份蔬菜 : 1 份蛋白质 : 1 份主食, i.e. a
  * 50/25/25 gram-weighted target). Entirely rule-based — no AI — so the score
  * and ✅/⚠️ notes are reproducible and never invented by the model. */
@@ -69,27 +80,27 @@ export function calculatePlateAnalysis(items: PlateAnalysisInput[]): PlateAnalys
   const improvePoints: string[] = [];
   let goodCount = 0;
 
-  if (vegetablePercent < 40) {
+  if (vegetablePercent < TARGET_BANDS.vegetable.low) {
     improvePoints.push("蔬菜可以再增加一些");
-  } else if (vegetablePercent <= 60) {
+  } else if (vegetablePercent <= TARGET_BANDS.vegetable.high) {
     goodPoints.push("蔬菜比例均衡");
     goodCount += 1;
   } else {
     improvePoints.push("蔬菜比例偏高，可以搭配多一点蛋白质与主食");
   }
 
-  if (proteinPercent < 15) {
+  if (proteinPercent < TARGET_BANDS.protein.low) {
     improvePoints.push("蛋白质不足，可以再增加一些");
-  } else if (proteinPercent <= 35) {
+  } else if (proteinPercent <= TARGET_BANDS.protein.high) {
     goodPoints.push("蛋白质充足");
     goodCount += 1;
   } else {
     improvePoints.push("蛋白质偏高，可以搭配更多蔬菜");
   }
 
-  if (carbPercent < 15) {
+  if (carbPercent < TARGET_BANDS.carb.low) {
     improvePoints.push("主食偏少，可以再增加一些");
-  } else if (carbPercent <= 35) {
+  } else if (carbPercent <= TARGET_BANDS.carb.high) {
     goodPoints.push("主食比例均衡");
     goodCount += 1;
   } else {
@@ -104,4 +115,68 @@ export function calculatePlateAnalysis(items: PlateAnalysisInput[]): PlateAnalys
 export function starString(score: number, max = 5): string {
   const filled = Math.max(0, Math.min(max, Math.round(score)));
   return "★".repeat(filled) + "☆".repeat(max - filled);
+}
+
+export type PlateGroupStatus = "good" | "high" | "low";
+
+export interface PlateGroupCheck {
+  group: TargetGroup;
+  label: string;
+  emoji: string;
+  status: PlateGroupStatus;
+  statusLabel: string;
+  action: string;
+}
+
+const GROUP_META: Record<TargetGroup, { label: string; emoji: string }> = {
+  vegetable: { label: "蔬菜", emoji: "🥬" },
+  protein: { label: "蛋白质", emoji: "🍗" },
+  carb: { label: "主食", emoji: "🍚" },
+};
+
+const GROUP_ACTIONS: Record<TargetGroup, Record<PlateGroupStatus, string>> = {
+  vegetable: { low: "建议增加半份", good: "保持目前份量即可", high: "下一餐可以少一点蔬菜" },
+  protein: { low: "可以再增加一些蛋白质", good: "保持目前份量即可", high: "下一餐可以减少一点蛋白质" },
+  carb: { low: "主食偏少，可以再增加一些", good: "保持目前份量即可", high: "下一餐减少约半碗" },
+};
+
+function groupStatus(percent: number, group: TargetGroup): PlateGroupStatus {
+  const band = TARGET_BANDS[group];
+  if (percent < band.low) return "low";
+  if (percent > band.high) return "high";
+  return "good";
+}
+
+const STATUS_LABELS: Record<PlateGroupStatus, string> = { good: "刚刚好", high: "稍多", low: "偏少" };
+
+/** Translates the same percentages behind calculatePlateAnalysis into a
+ * customer-facing 🟢/🟡/🔴 status + one-line action per group — no new
+ * calculation, just friendlier copy for the same underlying numbers. */
+export function buildPlateGroupChecks(analysis: {
+  vegetablePercent: number;
+  proteinPercent: number;
+  carbPercent: number;
+}): PlateGroupCheck[] {
+  const percents: Record<TargetGroup, number> = {
+    vegetable: analysis.vegetablePercent,
+    protein: analysis.proteinPercent,
+    carb: analysis.carbPercent,
+  };
+  return (["vegetable", "protein", "carb"] as const).map((group) => {
+    const status = groupStatus(percents[group], group);
+    return {
+      group,
+      label: GROUP_META[group].label,
+      emoji: GROUP_META[group].emoji,
+      status,
+      statusLabel: STATUS_LABELS[status],
+      action: GROUP_ACTIONS[group][status],
+    };
+  });
+}
+
+export function plateBalanceTier(score: number): { label: string; message: string; colorClass: string } {
+  if (score >= 5) return { label: "Excellent", message: "这一餐已经很接近 211 餐盘。", colorClass: "text-emerald-600" };
+  if (score === 4) return { label: "Good", message: "只需要调整一点点，就会更加均衡。", colorClass: "text-emerald-600" };
+  return { label: "Needs Improvement", message: "这一餐可以再调整一下，下一餐会更均衡。", colorClass: "text-amber-600" };
 }
