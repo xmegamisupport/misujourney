@@ -679,6 +679,7 @@ export type Database = {
           start_weight: number | null
           timezone: string
           updated_at: string
+          whatsapp_number: string | null
         }
         Insert: {
           activity_level?: Database["public"]["Enums"]["activity_level"] | null
@@ -699,6 +700,7 @@ export type Database = {
           start_weight?: number | null
           timezone?: string
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Update: {
           activity_level?: Database["public"]["Enums"]["activity_level"] | null
@@ -719,6 +721,7 @@ export type Database = {
           start_weight?: number | null
           timezone?: string
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Relationships: [
           {
@@ -867,6 +870,10 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      customer_journey_date: {
+        Args: { p_customer_id: string }
+        Returns: string
+      }
       customer_local_date: { Args: { p_customer_id: string }; Returns: string }
       get_inventory_alert_status: {
         Args: {
@@ -874,6 +881,15 @@ export type Database = {
           p_remaining: number
         }
         Returns: string
+      }
+      get_my_coach_contact: {
+        Args: never
+        Returns: {
+          avatar: string
+          coach_id: string
+          name: string
+          whatsapp_number: string
+        }[]
       }
       init_customer_inventory: {
         Args: {

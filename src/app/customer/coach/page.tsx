@@ -1,8 +1,29 @@
+"use client";
+
+import { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { currentCoach } from "@/lib/mock-data";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useJourneySummary } from "@/lib/journey";
+import { useMyCoachContact } from "@/lib/coach-contact/hooks";
+import { normalizeWhatsAppNumber, buildWhatsAppLink, buildCoachContactMessage } from "@/lib/whatsapp";
 
 export default function CustomerCoachProfilePage() {
   const coach = currentCoach;
+  const { user } = useAuthUser();
+  const { data: journey } = useJourneySummary(user?.id ?? "");
+  const { data: coachContact, loading: coachContactLoading } = useMyCoachContact();
+  const [opening, setOpening] = useState(false);
+
+  const whatsappNumber = coachContact?.whatsappNumber ? normalizeWhatsAppNumber(coachContact.whatsappNumber) : null;
+
+  function handleContactClick() {
+    if (!whatsappNumber || opening) return;
+    setOpening(true);
+    const message = buildCoachContactMessage(journey?.name || "顾客");
+    window.open(buildWhatsAppLink(whatsappNumber, message), "_blank", "noopener,noreferrer");
+    setTimeout(() => setOpening(false), 1500);
+  }
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
@@ -20,20 +41,32 @@ export default function CustomerCoachProfilePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      {coachContactLoading ? (
         <button
           type="button"
-          className="rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+          disabled
+          className="rounded-xl bg-slate-100 py-3 text-sm font-semibold text-slate-400"
         >
-          💬 发消息
+          加载中...
         </button>
+      ) : !coachContact ? (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-center text-sm text-slate-500">
+          目前还没有绑定 Coach，请联系管理员协助。
+        </div>
+      ) : !whatsappNumber ? (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-center text-sm text-slate-500">
+          Coach 的 WhatsApp 资料暂未设置，请联系管理员。
+        </div>
+      ) : (
         <button
           type="button"
-          className="rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300"
+          disabled={opening}
+          onClick={handleContactClick}
+          className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-60"
         >
-          📞 拨打电话
+          💬 WhatsApp 联系 Coach
         </button>
-      </div>
+      )}
 
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
         <p className="mb-2 text-sm font-semibold text-slate-700">关于我</p>
