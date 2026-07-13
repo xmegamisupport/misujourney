@@ -26,6 +26,7 @@ export type Database = {
           long_term_goal_weight: number | null
           stage_goal_weight_max: number
           stage_goal_weight_min: number
+          water_target_ml: number
         }
         Insert: {
           base_weight_kg: number
@@ -38,6 +39,7 @@ export type Database = {
           long_term_goal_weight?: number | null
           stage_goal_weight_max: number
           stage_goal_weight_min: number
+          water_target_ml: number
         }
         Update: {
           base_weight_kg?: number
@@ -50,6 +52,7 @@ export type Database = {
           long_term_goal_weight?: number | null
           stage_goal_weight_max?: number
           stage_goal_weight_min?: number
+          water_target_ml?: number
         }
         Relationships: [
           {

@@ -8,23 +8,27 @@ import { StatCard } from "@/components/ui/StatCard";
 import { TaskCard } from "@/components/ui/TaskCard";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
+import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
+import { calculateWaterTargetMl } from "@/lib/goals/goal-calculator";
 import { useWaterIntake } from "@/lib/daily-progress";
 import { useTodayMeals, useTodayCheckIn, useCustomerTransactions } from "@/lib/inventory/hooks";
 import { todayDateStr } from "@/lib/inventory/engine";
 import type { DailyTask } from "@/lib/types";
 
-const DEFAULT_WATER_TARGET_ML = 2000;
+const FALLBACK_WATER_TARGET_ML = 2000;
 
 export default function DailySummaryPage() {
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
   const { data: journey } = useJourneySummary(customerId);
+  const { data: currentGoal } = useCurrentCustomerGoal(customerId);
   const [reflection, setReflection] = useState("");
   const [done, setDone] = useState(false);
   const { data: addedMeals } = useTodayMeals(customerId);
   const { data: todayCheckIn } = useTodayCheckIn(customerId);
   const { data: transactions } = useCustomerTransactions(customerId);
-  const water = useWaterIntake(customerId, 0, DEFAULT_WATER_TARGET_ML);
+  const waterTarget = currentGoal?.waterTargetMl ?? (journey?.startWeight ? calculateWaterTargetMl(journey.startWeight) : FALLBACK_WATER_TARGET_ML);
+  const water = useWaterIntake(customerId, 0, waterTarget);
   const today = todayDateStr();
 
   const todayMisuScore = addedMeals.length > 0 ? Math.round(addedMeals.reduce((sum, m) => sum + m.misuScore, 0) / addedMeals.length) : 0;
@@ -32,7 +36,7 @@ export default function DailySummaryPage() {
   const tasks: DailyTask[] = [
     { id: "checkin", title: "每日体重打卡", description: "体重 + 状态记录", done: Boolean(todayCheckIn), icon: "⚖️" },
     { id: "meals", title: "211 餐盘记录", description: `已记录 ${addedMeals.length} 餐`, done: addedMeals.length > 0, icon: "🍽️" },
-    { id: "water", title: `喝水 ${DEFAULT_WATER_TARGET_ML}ml`, description: `已完成 ${water}ml`, done: water >= DEFAULT_WATER_TARGET_ML, icon: "💧" },
+    { id: "water", title: `喝水 ${waterTarget}ml`, description: `已完成 ${water}ml`, done: water >= waterTarget, icon: "💧" },
     {
       id: "misu",
       title: "MISU 产品打卡",

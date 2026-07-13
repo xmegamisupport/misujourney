@@ -93,6 +93,12 @@ export function isCustomLossWithinRange(customLossKg: number, range: WeightGoalR
   return customLossKg >= range.minLossKg && customLossKg <= range.maxLossKg;
 }
 
+/** Journey Start Weight x 40ml, rounded to the nearest 250ml — fixed for
+ * the whole stage, never recalculated day-to-day off a fluctuating weight. */
+export function calculateWaterTargetMl(startWeightKg: number): number {
+  return Math.round((startWeightKg * 40) / 250) * 250;
+}
+
 export interface JourneyPlanTargets {
   targetCheckInDays: number;
   target211Meals: number;

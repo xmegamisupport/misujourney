@@ -28,6 +28,7 @@ function mapCustomerGoalRow(row: CustomerGoalRow): CustomerGoal {
     stageGoalWeightMax: Number(row.stage_goal_weight_max),
     isCustomGoal: row.is_custom_goal,
     baseWeightKg: Number(row.base_weight_kg),
+    waterTargetMl: row.water_target_ml,
     longTermGoalWeight: row.long_term_goal_weight === null ? null : Number(row.long_term_goal_weight),
     goalStatus: row.goal_status,
     createdAt: row.created_at,
@@ -166,6 +167,7 @@ export interface CompleteRegistrationGoalsResult {
   isCustomGoal: boolean;
   suggestedMin: number;
   suggestedMax: number;
+  waterTargetMl: number;
   journeyDays: number;
   targetCheckInDays: number;
   target211Meals: number;

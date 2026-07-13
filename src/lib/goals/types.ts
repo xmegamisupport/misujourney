@@ -35,6 +35,7 @@ export interface CustomerGoal {
   stageGoalWeightMax: number;
   isCustomGoal: boolean;
   baseWeightKg: number;
+  waterTargetMl: number;
   longTermGoalWeight: number | null;
   goalStatus: GoalStatus;
   createdAt: string;
