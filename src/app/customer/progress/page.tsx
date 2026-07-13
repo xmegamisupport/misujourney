@@ -8,6 +8,7 @@ import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import { useCustomerCheckIns } from "@/lib/inventory/hooks";
+import { useLatestCustomerInsight } from "@/lib/insights/hooks";
 import type { TrendPoint } from "@/lib/types";
 
 export default function ProgressPage() {
@@ -16,6 +17,7 @@ export default function ProgressPage() {
   const { data: journey } = useJourneySummary(customerId);
   const { data: currentGoal } = useCurrentCustomerGoal(customerId);
   const { data: checkIns } = useCustomerCheckIns(customerId);
+  const { data: weeklyInsight } = useLatestCustomerInsight(customerId, "weekly_7_day");
 
   const currentDay = journey?.currentDay ?? 1;
   const planLength = journey?.planLength ?? 30;
@@ -70,6 +72,13 @@ export default function ProgressPage() {
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="打卡率" value={`${checkinRate}%`} icon="✅" accent="bg-emerald-50 text-emerald-600" />
         <StatCard label="连续打卡" value={journey?.streakDays ?? 0} unit="天" icon="🔥" accent="bg-amber-50 text-amber-600" />
+      </div>
+
+      <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+        <p className="mb-1 text-sm font-semibold text-slate-700">🌱 本周小结</p>
+        <p className="text-sm leading-relaxed text-slate-600">
+          {weeklyInsight?.customerMessage ?? "继续记录几天，我们会帮你整理更有参考价值的趋势。"}
+        </p>
       </div>
     </div>
   );

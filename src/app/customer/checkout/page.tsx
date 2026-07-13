@@ -9,6 +9,9 @@ import { useCheckoutForDate } from "@/lib/checkout/hooks";
 import { submitEveningCheckout } from "@/lib/checkout/engine";
 import { BOWEL_MOVEMENT_LABELS, SPECIAL_CONDITION_OPTIONS } from "@/lib/checkout/constants";
 import type { BowelMovementLevel, SpecialCondition } from "@/lib/checkout/types";
+import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
+import { buildCustomerTrendSummary, syncAttentionFlags } from "@/lib/insights/summary";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 export default function EveningCheckoutPage() {
@@ -31,6 +34,7 @@ function EveningCheckoutForm() {
   const targetDate = isMakeUp ? yesterday : today;
 
   const { data: existing, loading } = useCheckoutForDate(customerId, targetDate);
+  const { data: currentGoal } = useCurrentCustomerGoal(customerId);
 
   const [bowelMovement, setBowelMovement] = useState<BowelMovementLevel | "">("");
   const [conditions, setConditions] = useState<SpecialCondition[]>([]);
@@ -69,6 +73,19 @@ function EveningCheckoutForm() {
       setError(result.error ?? "提交失败，请重试");
       return;
     }
+
+    // Attention flags are cheap (no AI) — refresh them right away so a Coach
+    // sees up-to-date tags without waiting for the next AI-summary
+    // generation. Best-effort: a failure here shouldn't block the customer
+    // from returning to the dashboard after a successful checkout.
+    try {
+      const supabase = createClient();
+      const summary = await buildCustomerTrendSummary(supabase, customerId, { periodDays: 7, waterTargetMl: currentGoal?.waterTargetMl ?? 2000 });
+      await syncAttentionFlags(supabase, customerId, summary);
+    } catch (err) {
+      console.error("Failed to refresh attention flags", err);
+    }
+
     router.push("/customer");
   }
 

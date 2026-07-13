@@ -1,50 +1,71 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { CustomerCard } from "@/components/ui/CustomerCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { allCustomers } from "@/lib/mock-data";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useMyCustomers } from "@/lib/coach/hooks";
+import { useCheckInsForCustomers } from "@/lib/inventory/hooks";
+import { useCheckoutsForCustomers } from "@/lib/checkout/hooks";
+import { useAttentionFlagsForCustomers, useLatestInsightsForCustomers } from "@/lib/insights/hooks";
+import { SEVERITY_STYLES } from "@/lib/insights/constants";
 import { cn } from "@/lib/utils";
-import { useInventoryForCustomers, useCheckInsForCustomers, useActiveAlerts } from "@/lib/inventory/hooks";
-import {
-  PRODUCT_LABELS,
-  INVENTORY_ALERT_STATUS_LABELS,
-  INVENTORY_ALERT_STATUS_STYLES,
-  getInventoryAlertStatus,
-  combineAlertStatuses,
-} from "@/lib/inventory/constants";
-import type { ProductCode } from "@/lib/inventory/types";
 
 const filters = [
   { key: "all", label: "全部" },
   { key: "attention", label: "需要关注" },
-  { key: "active", label: "高活跃" },
+  { key: "no_checkout_today", label: "今日未回顾" },
 ];
 
+function daysAgoDateStr(daysAgo: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - daysAgo);
+  return d.toISOString().slice(0, 10);
+}
+
 export default function CustomerListPage() {
+  const { user } = useAuthUser();
+  const coachId = user?.id ?? "";
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
 
-  const customerIds = useMemo(() => allCustomers.map((c) => c.id), []);
-  const { data: inventoryMap } = useInventoryForCustomers(customerIds);
-  const { data: checkInMap } = useCheckInsForCustomers(customerIds);
-  const { data: activeAlerts } = useActiveAlerts();
+  const { data: customers } = useMyCustomers(coachId);
+  const customerIds = useMemo(() => customers.map((c) => c.id), [customers]);
 
-  const customers = useMemo(() => {
-    return allCustomers.filter((c) => {
-      const matchesQuery = c.name.includes(query);
-      const matchesFilter =
-        filter === "all" ||
-        (filter === "attention" && (c.streakDays === 0 || c.todayCompletionRate < 40)) ||
-        (filter === "active" && c.tags.includes("高活跃"));
-      return matchesQuery && matchesFilter;
-    });
-  }, [query, filter]);
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const weekAgo = useMemo(() => daysAgoDateStr(6), []);
+
+  const { data: checkInMap } = useCheckInsForCustomers(customerIds);
+  const { data: checkoutMap } = useCheckoutsForCustomers(customerIds, weekAgo, today);
+  const { data: flagsMap } = useAttentionFlagsForCustomers(customerIds);
+  const { data: insightMap } = useLatestInsightsForCustomers(customerIds, "weekly_7_day");
+
+  const rows = useMemo(() => {
+    return customers
+      .filter((c) => c.name.includes(query))
+      .map((c) => {
+        const checkIns = [...(checkInMap[c.id] ?? [])].sort((a, b) => b.date.localeCompare(a.date));
+        const latestWeight = checkIns[0]?.weight ?? null;
+        const weekCheckIns = checkIns.filter((ci) => ci.date >= weekAgo);
+        const oldestInWeek = weekCheckIns[weekCheckIns.length - 1];
+        const weightChange = latestWeight !== null && oldestInWeek && weekCheckIns.length >= 2 ? Math.round((latestWeight - oldestInWeek.weight) * 10) / 10 : null;
+        const checkoutDays = (checkoutMap[c.id] ?? []).length;
+        const flags = flagsMap[c.id] ?? [];
+        const insight = insightMap[c.id];
+        const checkedOutToday = (checkoutMap[c.id] ?? []).some((co) => co.checkoutDate === today);
+        return { customer: c, latestWeight, weightChange, checkoutDays, flags, insight, checkedOutToday };
+      })
+      .filter((row) => {
+        if (filter === "attention") return row.flags.length > 0;
+        if (filter === "no_checkout_today") return !row.checkedOutToday;
+        return true;
+      });
+  }, [customers, query, filter, checkInMap, checkoutMap, flagsMap, insightMap, weekAgo, today]);
 
   return (
     <div className="flex flex-col gap-4 px-4 pb-8 md:px-8">
-      <PageHeader title="我的顾客" subtitle={`共 ${allCustomers.length} 位顾客`} />
+      <PageHeader title="我的顾客" subtitle={`共 ${customers.length} 位顾客`} />
 
       <input
         value={query}
@@ -68,67 +89,44 @@ export default function CustomerListPage() {
         ))}
       </div>
 
-      {customers.length === 0 ? (
+      {rows.length === 0 ? (
         <EmptyState icon="🔍" title="没有找到符合条件的顾客" />
       ) : (
         <div className="flex flex-col gap-2">
-          {customers.map((c) => {
-            const rows = inventoryMap[c.id] ?? [];
-            const nRemaining = rows.find((r) => r.productCode === "MISU_N_PLUS")?.remainingUnits;
-            const dxRemaining = rows.find((r) => r.productCode === "MISU_DX_PLUS")?.remainingUnits;
-            const checkIns = checkInMap[c.id] ?? [];
-            const lastCheckInDate = checkIns.length > 0 ? [...checkIns].sort((a, b) => b.date.localeCompare(a.date))[0].date : null;
-            const needsFollowUp = activeAlerts.some((a) => a.customerId === c.id);
+          {rows.map(({ customer, latestWeight, weightChange, checkoutDays, flags, insight }) => (
+            <Link
+              key={customer.id}
+              href={`/coach/customers/${customer.id}`}
+              className="flex flex-col gap-2.5 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">{customer.avatar ?? "🙂"}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-800">{customer.name}</p>
+                  <p className="text-xs text-slate-400">
+                    最近晨重 {latestWeight !== null ? `${latestWeight}kg` : "暂无记录"}
+                    {weightChange !== null && ` · 近7天 ${weightChange >= 0 ? "+" : ""}${weightChange}kg`}
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-sm font-semibold text-slate-700">{checkoutDays}/7</p>
+                  <p className="text-[11px] text-slate-400">睡前回顾</p>
+                </div>
+              </div>
 
-            const statuses = rows.map((r) => getInventoryAlertStatus(r.productCode, r.remainingUnits));
-            const combined = rows.length > 0 ? combineAlertStatuses(statuses) : null;
+              {flags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {flags.map((flag) => (
+                    <span key={flag.id} className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", SEVERITY_STYLES[flag.severity])}>
+                      {flag.flagLabel}
+                    </span>
+                  ))}
+                </div>
+              )}
 
-            return (
-              <CustomerCard
-                key={c.id}
-                customer={c}
-                href={`/coach/customers/${c.id}`}
-                footer={
-                  rows.length === 0 ? (
-                    <p className="text-xs text-slate-400">尚未填写产品库存资料</p>
-                  ) : (
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                        {(["MISU_N_PLUS", "MISU_DX_PLUS"] as ProductCode[]).map((code) => {
-                          const remaining = code === "MISU_N_PLUS" ? nRemaining : dxRemaining;
-                          return (
-                            <span key={code}>
-                              {PRODUCT_LABELS[code]}：{remaining !== undefined ? `剩余 ${remaining} 包` : "未记录"}
-                            </span>
-                          );
-                        })}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {combined && (
-                          <span
-                            className={cn(
-                              "rounded-full px-2 py-0.5 text-[11px] font-medium",
-                              INVENTORY_ALERT_STATUS_STYLES[combined].chip,
-                            )}
-                          >
-                            状态：{INVENTORY_ALERT_STATUS_LABELS[combined]}
-                          </span>
-                        )}
-                        {needsFollowUp && (
-                          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-600">
-                            需要跟进回购
-                          </span>
-                        )}
-                        <span className="text-[11px] text-slate-400">
-                          最近打卡：{lastCheckInDate ?? "暂无记录"}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                }
-              />
-            );
-          })}
+              <p className="truncate text-xs text-slate-500">{insight ? insight.summary : "暂无 AI 摘要，点击查看详情生成"}</p>
+            </Link>
+          ))}
         </div>
       )}
     </div>

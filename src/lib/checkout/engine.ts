@@ -31,6 +31,25 @@ export async function getCheckoutForDate(customerId: string, date: string): Prom
   return data ? mapCheckoutRow(data) : undefined;
 }
 
+/** Batched lookup for a Coach's customer roster over a date range — same
+ * pattern as getCheckInsForCustomers. */
+export async function getCheckoutsForCustomers(customerIds: string[], startDate: string, endDate: string): Promise<Record<string, EveningCheckout[]>> {
+  if (customerIds.length === 0) return {};
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("daily_evening_checkouts")
+    .select("*")
+    .in("customer_id", customerIds)
+    .gte("checkout_date", startDate)
+    .lte("checkout_date", endDate);
+  if (error) throw error;
+  const map: Record<string, EveningCheckout[]> = {};
+  for (const row of (data ?? []).map(mapCheckoutRow)) {
+    (map[row.customerId] ??= []).push(row);
+  }
+  return map;
+}
+
 export interface SubmitEveningCheckoutInput {
   customerId: string;
   date: string;

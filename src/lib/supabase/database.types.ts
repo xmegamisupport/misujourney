@@ -14,6 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_ai_insights: {
+        Row: {
+          analysis_type: string
+          coach_focus: Json
+          created_at: string
+          customer_id: string
+          customer_message: string
+          data_quality: string
+          generated_at: string
+          generated_date: string | null
+          id: string
+          medical_caution: boolean
+          period_end: string
+          period_start: string
+          positive_progress: Json
+          possible_factors: Json
+          source_data: Json
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          analysis_type: string
+          coach_focus?: Json
+          created_at?: string
+          customer_id: string
+          customer_message: string
+          data_quality: string
+          generated_at?: string
+          generated_date?: string | null
+          id?: string
+          medical_caution?: boolean
+          period_end: string
+          period_start: string
+          positive_progress?: Json
+          possible_factors?: Json
+          source_data: Json
+          summary: string
+          updated_at?: string
+        }
+        Update: {
+          analysis_type?: string
+          coach_focus?: Json
+          created_at?: string
+          customer_id?: string
+          customer_message?: string
+          data_quality?: string
+          generated_at?: string
+          generated_date?: string | null
+          id?: string
+          medical_caution?: boolean
+          period_end?: string
+          period_start?: string
+          positive_progress?: Json
+          possible_factors?: Json
+          source_data?: Json
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_ai_insights_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_attention_flags: {
+        Row: {
+          created_at: string
+          customer_id: string
+          flag_label: string
+          flag_type: string
+          id: string
+          is_active: boolean
+          resolved_at: string | null
+          severity: string
+          source_end_date: string
+          source_start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          flag_label: string
+          flag_type: string
+          id?: string
+          is_active?: boolean
+          resolved_at?: string | null
+          severity: string
+          source_end_date: string
+          source_start_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          flag_label?: string
+          flag_type?: string
+          id?: string
+          is_active?: boolean
+          resolved_at?: string | null
+          severity?: string
+          source_end_date?: string
+          source_start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_attention_flags_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_goals: {
         Row: {
           base_weight_kg: number
@@ -195,6 +313,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "daily_evening_checkouts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_water_logs: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          log_date: string
+          total_ml: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          log_date: string
+          total_ml?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          log_date?: string
+          total_ml?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_water_logs_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -841,8 +994,8 @@ export const Constants = {
   public: {
     Enums: {
       activity_level: ["sedentary", "light", "moderate", "high"],
-      bowel_movement_level: ["none", "once", "two_or_more"],
       bmi_category: ["underweight", "normal", "overweight", "obese"],
+      bowel_movement_level: ["none", "once", "two_or_more"],
       diet_type: [
         "regular",
         "vegetarian",
