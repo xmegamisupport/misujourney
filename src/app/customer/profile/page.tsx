@@ -5,8 +5,14 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { AccountSettingsSection } from "@/components/AccountSettingsSection";
 import { SignOutButton } from "@/components/SignOutButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { InventoryStatusCard } from "@/components/inventory/InventoryStatusCard";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
+import { useHasInventoryRecords, useCustomerInventory, useCustomerTransactions } from "@/lib/inventory/hooks";
+import { calcAverageDailyUsage, calcEstimatedDaysRemaining } from "@/lib/inventory/engine";
+import type { ProductCode } from "@/lib/inventory/types";
+
+const inventoryProducts: ProductCode[] = ["MISU_N_PLUS", "MISU_DX_PLUS"];
 
 const linkItems = [
   { href: "/customer/progress", label: "我的成长", icon: "📈" },
@@ -22,8 +28,12 @@ const staticItems = [
 
 export default function CustomerProfilePage() {
   const { user } = useAuthUser();
-  const { data: journey } = useJourneySummary(user?.id ?? "");
+  const customerId = user?.id ?? "";
+  const { data: journey } = useJourneySummary(customerId);
   const currentWeight = journey?.latestWeight ?? journey?.startWeight ?? null;
+  const { data: hasInventory } = useHasInventoryRecords(customerId);
+  const { data: inventoryRows } = useCustomerInventory(customerId);
+  const { data: transactions } = useCustomerTransactions(customerId);
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
@@ -54,6 +64,39 @@ export default function CustomerProfilePage() {
           <p className="text-base font-semibold text-slate-900">{currentWeight ?? "—"}kg</p>
           <p className="text-xs text-slate-400">当前体重</p>
         </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm font-semibold text-slate-700">我的产品库存</p>
+        {hasInventory ? (
+          <div className="grid grid-cols-2 gap-3">
+            {inventoryProducts.map((productCode) => {
+              const row = inventoryRows.find((r) => r.productCode === productCode);
+              const avgDailyUsage = calcAverageDailyUsage(transactions, productCode);
+              const estimatedDaysRemaining = calcEstimatedDaysRemaining(row?.remainingUnits ?? 0, avgDailyUsage);
+              return (
+                <InventoryStatusCard
+                  key={productCode}
+                  productCode={productCode}
+                  remainingUnits={row?.remainingUnits ?? 0}
+                  totalUsedUnits={row?.totalUsedUnits ?? 0}
+                  estimatedDaysRemaining={estimatedDaysRemaining}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <Link
+            href="/customer/checkin"
+            className="flex items-center gap-3 rounded-2xl border border-dashed border-amber-200 bg-amber-50/50 p-4 transition hover:border-amber-300"
+          >
+            <span className="text-2xl">📦</span>
+            <div>
+              <p className="text-sm font-semibold text-slate-800">请先更新你的 MISU 产品库存</p>
+              <p className="text-xs text-slate-500">填写目前剩余包数，开始追踪库存 →</p>
+            </div>
+          </Link>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">

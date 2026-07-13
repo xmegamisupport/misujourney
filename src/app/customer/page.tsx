@@ -3,22 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { StatCard } from "@/components/ui/StatCard";
 import { NutritionCard } from "@/components/ui/NutritionCard";
 import { ScoreCircle } from "@/components/ui/ScoreCircle";
 import { TrendChart } from "@/components/ui/TrendChart";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
 import { addWater, useWaterIntake } from "@/lib/daily-progress";
-import { useCustomerInventory, useHasInventoryRecords, useCustomerTransactions, useTodayMeals, useTodayCheckIn, useCustomerCheckIns } from "@/lib/inventory/hooks";
-import { calcAverageDailyUsage, calcEstimatedDaysRemaining, todayDateStr } from "@/lib/inventory/engine";
-import { InventoryStatusCard } from "@/components/inventory/InventoryStatusCard";
+import { useCustomerTransactions, useTodayMeals, useTodayCheckIn, useCustomerCheckIns } from "@/lib/inventory/hooks";
+import { todayDateStr } from "@/lib/inventory/engine";
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
-import type { ProductCode } from "@/lib/inventory/types";
 import type { TrendPoint } from "@/lib/types";
 
 const waterPresets = [100, 200, 350, 500];
-const inventoryProducts: ProductCode[] = ["MISU_N_PLUS", "MISU_DX_PLUS"];
 const DEFAULT_WATER_TARGET_ML = 2000;
 const DEFAULT_NUTRITION_TARGETS = { calories: 1500, protein: 90, fiber: 25 };
 
@@ -34,8 +30,6 @@ export default function CustomerDashboardPage() {
   const water = useWaterIntake(customerId, 0, DEFAULT_WATER_TARGET_ML);
   const [customWater, setCustomWater] = useState("");
 
-  const { data: hasInventory } = useHasInventoryRecords(customerId);
-  const { data: inventoryRows } = useCustomerInventory(customerId);
   const { data: transactions } = useCustomerTransactions(customerId);
   const { data: currentGoal } = useCurrentCustomerGoal(customerId);
   const { data: todayCheckIn } = useTodayCheckIn(customerId);
@@ -52,7 +46,6 @@ export default function CustomerDashboardPage() {
   const journeyProgressPercent = Math.round((journeyProgress.filter((i) => i.done).length / journeyProgress.length) * 100);
 
   const latestWeight = checkIns[0]?.weight ?? null;
-  const displayWeight = latestWeight ?? journey?.startWeight ?? null;
   const weightTrendData: TrendPoint[] = [...checkIns].reverse().map((ci) => ({ label: ci.date.slice(5), value: ci.weight }));
   const currentDay = journey?.currentDay ?? 1;
   const planLength = journey?.planLength ?? 30;
@@ -98,11 +91,6 @@ export default function CustomerDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard label="连续打卡" value={journey?.streakDays ?? 0} unit="天" icon="🔥" accent="bg-amber-50 text-amber-600" />
-        <StatCard label="当前体重" value={displayWeight ?? "—"} unit={displayWeight !== null ? "kg" : undefined} icon="⚖️" accent="bg-sky-50 text-sky-600" />
-      </div>
-
       {currentGoal && (
         <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
           <p className="mb-3 text-sm font-semibold text-slate-700">🎯 第一阶段目标</p>
@@ -111,7 +99,7 @@ export default function CustomerDashboardPage() {
           ) : (
             <div className="grid grid-cols-2 gap-y-3 text-sm">
               <div>
-                <p className="text-xs text-slate-400">目前体重</p>
+                <p className="text-xs text-slate-400">今日体重</p>
                 <p className="text-lg font-semibold text-slate-900">{currentGoal.baseWeightKg}kg</p>
               </div>
               <div>
@@ -155,39 +143,6 @@ export default function CustomerDashboardPage() {
             </div>
           ))}
         </div>
-      </div>
-
-      <div>
-        <p className="mb-2 text-sm font-semibold text-slate-700">我的产品库存</p>
-        {hasInventory ? (
-          <div className="grid grid-cols-2 gap-3">
-            {inventoryProducts.map((productCode) => {
-              const row = inventoryRows.find((r) => r.productCode === productCode);
-              const avgDailyUsage = calcAverageDailyUsage(transactions, productCode);
-              const estimatedDaysRemaining = calcEstimatedDaysRemaining(row?.remainingUnits ?? 0, avgDailyUsage);
-              return (
-                <InventoryStatusCard
-                  key={productCode}
-                  productCode={productCode}
-                  remainingUnits={row?.remainingUnits ?? 0}
-                  totalUsedUnits={row?.totalUsedUnits ?? 0}
-                  estimatedDaysRemaining={estimatedDaysRemaining}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <Link
-            href="/customer/checkin"
-            className="flex items-center gap-3 rounded-2xl border border-dashed border-amber-200 bg-amber-50/50 p-4 transition hover:border-amber-300"
-          >
-            <span className="text-2xl">📦</span>
-            <div>
-              <p className="text-sm font-semibold text-slate-800">请先更新你的 MISU 产品库存</p>
-              <p className="text-xs text-slate-500">填写目前剩余包数，开始追踪库存 →</p>
-            </div>
-          </Link>
-        )}
       </div>
 
       <div>
