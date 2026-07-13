@@ -4,15 +4,17 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { NutritionCard } from "@/components/ui/NutritionCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { currentCustomer } from "@/lib/mock-data";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useJourneySummary } from "@/lib/journey";
 import { useTodayMeals } from "@/lib/inventory/hooks";
 import { mealTypeOptions } from "@/lib/meal-types";
 import { PRODUCT_LABELS, PRODUCT_ICONS } from "@/lib/inventory/constants";
 
+const DEFAULT_NUTRITION_TARGETS = { calories: 1500, protein: 90, carbs: 150, fat: 50, fiber: 25 };
+
 export default function TodayMealsPage() {
-  const c = currentCustomer;
   const { user } = useAuthUser();
+  const { data: journey } = useJourneySummary(user?.id ?? "");
   const { data: addedMeals } = useTodayMeals(user?.id ?? "");
 
   const addedTotals = addedMeals.reduce(
@@ -30,7 +32,7 @@ export default function TodayMealsPage() {
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
       <PageHeader
         title="今日饮食"
-        subtitle={`Day ${c.currentDay} / ${c.planLength}`}
+        subtitle={`Day ${journey?.currentDay ?? 1} / ${journey?.planLength ?? 30}`}
         action={
           <Link
             href="/customer/meals/add"
@@ -42,16 +44,16 @@ export default function TodayMealsPage() {
       />
 
       <div className="grid grid-cols-3 gap-3 md:grid-cols-5">
-        <NutritionCard label="热量" value={c.nutritionToday.calories + addedTotals.calories} target={c.nutritionTargets.calories} unit="kcal" icon="🔥" color="bg-amber-400" />
-        <NutritionCard label="蛋白质" value={c.nutritionToday.protein + addedTotals.protein} target={c.nutritionTargets.protein} unit="g" icon="🥚" color="bg-sky-400" />
-        <NutritionCard label="碳水" value={c.nutritionToday.carbs + addedTotals.carbs} target={c.nutritionTargets.carbs} unit="g" icon="🍚" color="bg-orange-400" />
-        <NutritionCard label="脂肪" value={c.nutritionToday.fat + addedTotals.fat} target={c.nutritionTargets.fat} unit="g" icon="🥑" color="bg-rose-400" />
-        <NutritionCard label="纤维" value={c.nutritionToday.fiber + addedTotals.fiber} target={c.nutritionTargets.fiber} unit="g" icon="🥦" color="bg-emerald-400" />
+        <NutritionCard label="热量" value={addedTotals.calories} target={DEFAULT_NUTRITION_TARGETS.calories} unit="kcal" icon="🔥" color="bg-amber-400" />
+        <NutritionCard label="蛋白质" value={addedTotals.protein} target={DEFAULT_NUTRITION_TARGETS.protein} unit="g" icon="🥚" color="bg-sky-400" />
+        <NutritionCard label="碳水" value={addedTotals.carbs} target={DEFAULT_NUTRITION_TARGETS.carbs} unit="g" icon="🍚" color="bg-orange-400" />
+        <NutritionCard label="脂肪" value={addedTotals.fat} target={DEFAULT_NUTRITION_TARGETS.fat} unit="g" icon="🥑" color="bg-rose-400" />
+        <NutritionCard label="纤维" value={addedTotals.fiber} target={DEFAULT_NUTRITION_TARGETS.fiber} unit="g" icon="🥦" color="bg-emerald-400" />
       </div>
 
       <div className="flex flex-col gap-4">
         {mealTypeOptions.map((type) => {
-          const meal = addedMeals.find((m) => m.type === type.key) ?? c.meals.find((m) => m.type === type.key);
+          const meal = addedMeals.find((m) => m.type === type.key);
           return (
             <div key={type.key}>
               <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700">

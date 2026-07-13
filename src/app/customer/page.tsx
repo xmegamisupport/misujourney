@@ -4,37 +4,35 @@ import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
-import { ProgressCard } from "@/components/ui/ProgressCard";
 import { NutritionCard } from "@/components/ui/NutritionCard";
-import { TaskCard } from "@/components/ui/TaskCard";
 import { ScoreCircle } from "@/components/ui/ScoreCircle";
 import { TrendChart } from "@/components/ui/TrendChart";
-import { currentCustomer, currentCoach } from "@/lib/mock-data";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
-import { addWater, useWaterIntake, useTodayTasks } from "@/lib/daily-progress";
+import { useJourneySummary } from "@/lib/journey";
+import { addWater, useWaterIntake } from "@/lib/daily-progress";
 import { useCustomerInventory, useHasInventoryRecords, useCustomerTransactions, useTodayMeals, useTodayCheckIn, useCustomerCheckIns } from "@/lib/inventory/hooks";
 import { calcAverageDailyUsage, calcEstimatedDaysRemaining, todayDateStr } from "@/lib/inventory/engine";
 import { InventoryStatusCard } from "@/components/inventory/InventoryStatusCard";
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import type { ProductCode } from "@/lib/inventory/types";
+import type { TrendPoint } from "@/lib/types";
 
 const waterPresets = [100, 200, 350, 500];
 const inventoryProducts: ProductCode[] = ["MISU_N_PLUS", "MISU_DX_PLUS"];
+const DEFAULT_WATER_TARGET_ML = 2000;
+const DEFAULT_NUTRITION_TARGETS = { calories: 1500, protein: 90, fiber: 25 };
 
 export default function CustomerDashboardPage() {
-  const c = currentCustomer;
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
+  const { data: journey } = useJourneySummary(customerId);
   const { data: addedMeals } = useTodayMeals(customerId);
   const addedCalories = addedMeals.reduce((sum, m) => sum + m.calories, 0);
   const addedProtein = addedMeals.reduce((sum, m) => sum + m.protein, 0);
   const addedFiber = addedMeals.reduce((sum, m) => sum + m.fiber, 0);
 
-  const water = useWaterIntake(c.nutritionToday.water, c.nutritionToday.waterTarget);
+  const water = useWaterIntake(customerId, 0, DEFAULT_WATER_TARGET_ML);
   const [customWater, setCustomWater] = useState("");
-
-  const tasks = useTodayTasks(c, customerId);
-  const completionRate = Math.round((tasks.filter((t) => t.done).length / tasks.length) * 100);
 
   const { data: hasInventory } = useHasInventoryRecords(customerId);
   const { data: inventoryRows } = useCustomerInventory(customerId);
@@ -47,13 +45,17 @@ export default function CustomerDashboardPage() {
   const journeyProgress = [
     { label: "今日打卡", icon: "✅", done: Boolean(todayCheckIn) },
     { label: "今日211餐盘", icon: "🥗", done: addedMeals.length > 0 },
-    { label: "今日饮水", icon: "💧", done: water >= c.nutritionToday.waterTarget },
+    { label: "今日饮水", icon: "💧", done: water >= DEFAULT_WATER_TARGET_ML },
     { label: "今日运动", icon: "🏃", done: false },
     { label: "MISU产品", icon: "🥤", done: transactions.some((t) => t.createdAt.slice(0, 10) === today && (t.type === "MEAL_USAGE" || t.type === "CHECK_IN_USAGE")) },
   ];
   const journeyProgressPercent = Math.round((journeyProgress.filter((i) => i.done).length / journeyProgress.length) * 100);
 
   const latestWeight = checkIns[0]?.weight ?? null;
+  const displayWeight = latestWeight ?? journey?.startWeight ?? null;
+  const weightTrendData: TrendPoint[] = [...checkIns].reverse().map((ci) => ({ label: ci.date.slice(5), value: ci.weight }));
+  const currentDay = journey?.currentDay ?? 1;
+  const planLength = journey?.planLength ?? 30;
   const hasWeightGoal = Boolean(currentGoal) && currentGoal!.stageGoalWeightMin < currentGoal!.baseWeightKg;
   const remaining = hasWeightGoal && latestWeight !== null
     ? {
@@ -66,40 +68,39 @@ export default function CustomerDashboardPage() {
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 md:px-8">
       <PageHeader
-        title={`早安，${c.name} ${c.avatar}`}
-        subtitle={`Day ${c.currentDay} / ${c.planLength} · Every Day Is A New Journey`}
+        title={`早安，${journey?.name ?? ""} ${journey?.avatar ?? ""}`}
+        subtitle={`Day ${currentDay} / ${planLength} · Every Day Is A New Journey`}
         action={
           <Link
             href="/customer/profile"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-xl"
           >
-            {c.avatar}
+            {journey?.avatar ?? "🙂"}
           </Link>
         }
       />
 
       <div className="flex items-center gap-4 rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-sky-50 p-5">
-        <ScoreCircle value={c.todayMisuScore} label="MISU Score" colorClass="text-emerald-500" trackClass="text-white/70" />
+        <ScoreCircle value={journeyProgressPercent} label="今日进度" colorClass="text-emerald-500" trackClass="text-white/70" />
         <div className="flex flex-1 flex-col gap-2">
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-emerald-700">
-              🔥 连续打卡 {c.streakDays} 天
+              🔥 连续打卡 {journey?.streakDays ?? 0} 天
             </span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-white/70">
             <div
               className="h-full rounded-full bg-emerald-400"
-              style={{ width: `${Math.round((c.currentDay / c.planLength) * 100)}%` }}
+              style={{ width: `${Math.round((currentDay / planLength) * 100)}%` }}
             />
           </div>
-          <p className="text-xs text-slate-500">计划进度 {Math.round((c.currentDay / c.planLength) * 100)}%</p>
+          <p className="text-xs text-slate-500">计划进度 {Math.round((currentDay / planLength) * 100)}%</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard label="今日完成率" value={`${completionRate}%`} icon="✅" accent="bg-emerald-50 text-emerald-600" />
-        <StatCard label="连续打卡" value={c.streakDays} unit="天" icon="🔥" accent="bg-amber-50 text-amber-600" />
-        <StatCard label="当前体重" value={latestWeight ?? c.currentWeight} unit="kg" icon="⚖️" accent="bg-sky-50 text-sky-600" />
+      <div className="grid grid-cols-2 gap-3">
+        <StatCard label="连续打卡" value={journey?.streakDays ?? 0} unit="天" icon="🔥" accent="bg-amber-50 text-amber-600" />
+        <StatCard label="当前体重" value={displayWeight ?? "—"} unit={displayWeight !== null ? "kg" : undefined} icon="⚖️" accent="bg-sky-50 text-sky-600" />
       </div>
 
       {currentGoal && (
@@ -194,24 +195,24 @@ export default function CustomerDashboardPage() {
         <div className="grid grid-cols-3 gap-3">
           <NutritionCard
             label="热量"
-            value={c.nutritionToday.calories + addedCalories}
-            target={c.nutritionTargets.calories}
+            value={addedCalories}
+            target={DEFAULT_NUTRITION_TARGETS.calories}
             unit="kcal"
             icon="🔥"
             color="bg-amber-400"
           />
           <NutritionCard
             label="蛋白质"
-            value={c.nutritionToday.protein + addedProtein}
-            target={c.nutritionTargets.protein}
+            value={addedProtein}
+            target={DEFAULT_NUTRITION_TARGETS.protein}
             unit="g"
             icon="🥚"
             color="bg-sky-400"
           />
           <NutritionCard
             label="纤维"
-            value={c.nutritionToday.fiber + addedFiber}
-            target={c.nutritionTargets.fiber}
+            value={addedFiber}
+            target={DEFAULT_NUTRITION_TARGETS.fiber}
             unit="g"
             icon="🥦"
             color="bg-emerald-400"
@@ -236,14 +237,14 @@ export default function CustomerDashboardPage() {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-slate-800">今天喝水量</p>
             <p className="text-xs text-slate-400">
-              今日 {water} / {c.nutritionToday.waterTarget}ml
+              今日 {water} / {DEFAULT_WATER_TARGET_ML}ml
             </p>
           </div>
         </div>
         <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-sky-50">
           <div
             className="h-full rounded-full bg-sky-400 transition-all"
-            style={{ width: `${Math.round((water / c.nutritionToday.waterTarget) * 100)}%` }}
+            style={{ width: `${Math.round((water / DEFAULT_WATER_TARGET_ML) * 100)}%` }}
           />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -251,7 +252,7 @@ export default function CustomerDashboardPage() {
             <button
               key={amount}
               type="button"
-              onClick={() => addWater(amount, c.nutritionToday.water, c.nutritionToday.waterTarget)}
+              onClick={() => addWater(customerId, amount, 0, DEFAULT_WATER_TARGET_ML)}
               className="rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-xs font-medium text-sky-700 transition hover:border-sky-300 active:scale-95"
             >
               +{amount}ml
@@ -273,7 +274,7 @@ export default function CustomerDashboardPage() {
             onClick={() => {
               const amount = Number(customWater);
               if (amount > 0) {
-                addWater(amount, c.nutritionToday.water, c.nutritionToday.waterTarget);
+                addWater(customerId, amount, 0, DEFAULT_WATER_TARGET_ML);
                 setCustomWater("");
               }
             }}
@@ -302,27 +303,10 @@ export default function CustomerDashboardPage() {
           <span className="text-xl">📚</span>
           <div>
             <p className="text-sm font-semibold">今日学习</p>
-            <p className="text-xs text-sky-50">第 18 课：应对聚餐</p>
+            <p className="text-xs text-sky-50">继续你的学习进度 →</p>
           </div>
         </Link>
       </div>
-
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">今日任务</p>
-          <span className="text-xs text-slate-400">
-            {tasks.filter((t) => t.done).length}/{tasks.length} 已完成
-          </span>
-        </div>
-        <div className="flex flex-col gap-2">
-          {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </div>
-        <p className="mt-2 text-xs text-slate-400">任务会随实际打卡、喝水、拍照记录自动完成，无需手动勾选</p>
-      </div>
-
-      <ProgressCard label="今日完成率" percent={completionRate} icon="📋" sublabel="继续完成剩余任务，保持连续打卡" />
 
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
         <div className="mb-1 flex items-center justify-between">
@@ -331,19 +315,21 @@ export default function CustomerDashboardPage() {
             查看完整进度 →
           </Link>
         </div>
-        <TrendChart data={c.weightTrend} unit="kg" strokeClass="text-emerald-500" fillId="dash-weight" />
+        {weightTrendData.length > 0 ? (
+          <TrendChart data={weightTrendData} unit="kg" strokeClass="text-emerald-500" fillId="dash-weight" />
+        ) : (
+          <p className="py-6 text-center text-sm text-slate-400">还没有体重记录，完成第一次打卡后开始记录趋势</p>
+        )}
       </div>
 
       <Link
         href="/customer/coach"
         className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-emerald-200"
       >
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-xl">
-          {currentCoach.avatar}
-        </span>
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-xl">🌿</span>
         <div className="flex-1">
           <p className="text-sm font-semibold text-slate-800">联系 Journey Coach</p>
-          <p className="text-xs text-slate-400">{currentCoach.name} · {currentCoach.title}</p>
+          <p className="text-xs text-slate-400">有任何问题，随时联系你的专属教练团队</p>
         </div>
         <span className="text-slate-300">→</span>
       </Link>

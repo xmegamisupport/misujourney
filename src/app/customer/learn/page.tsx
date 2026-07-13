@@ -1,15 +1,20 @@
+"use client";
+
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ProgressCard } from "@/components/ui/ProgressCard";
-import { currentCustomer } from "@/lib/mock-data";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useJourneySummary } from "@/lib/journey";
 import { cn } from "@/lib/utils";
 
-const courseList = [
-  { title: "第 1 课：认识你的身体", duration: "8 分钟", status: "done" as const },
-  { title: "第 12 课：外食怎么选", duration: "6 分钟", status: "done" as const },
-  { title: "第 18 课：如何应对聚餐", duration: "6 分钟", status: "current" as const },
-  { title: "第 25 课：突破停滞期", duration: "10 分钟", status: "locked" as const },
-  { title: "第 30 课：维持期的心态调整", duration: "7 分钟", status: "locked" as const },
+type CourseStatus = "done" | "current" | "locked";
+
+const courseList: { title: string; duration: string; status: CourseStatus }[] = [
+  { title: "第 1 课：认识你的身体", duration: "8 分钟", status: "current" },
+  { title: "第 2 课：外食怎么选", duration: "6 分钟", status: "locked" },
+  { title: "第 3 课：如何应对聚餐", duration: "6 分钟", status: "locked" },
+  { title: "第 4 课：突破停滞期", duration: "10 分钟", status: "locked" },
+  { title: "第 5 课：维持期的心态调整", duration: "7 分钟", status: "locked" },
 ];
 
 const statusMap = {
@@ -19,12 +24,13 @@ const statusMap = {
 };
 
 export default function LearnPage() {
-  const c = currentCustomer;
+  const { user } = useAuthUser();
+  const { data: journey } = useJourneySummary(user?.id ?? "");
   const doneCount = courseList.filter((l) => l.status === "done").length;
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
-      <PageHeader title="学习中心" subtitle={`Day ${c.currentDay} · 持续学习，持续进步`} />
+      <PageHeader title="学习中心" subtitle={`Day ${journey?.currentDay ?? 1} · 持续学习，持续进步`} />
 
       <ProgressCard
         label="课程完成进度"
@@ -56,8 +62,8 @@ export default function LearnPage() {
 
       <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-emerald-50 p-4">
         <p className="mb-1 text-xs font-medium text-sky-600">今日推荐</p>
-        <p className="text-base font-semibold text-slate-900">第 18 课：如何应对聚餐</p>
-        <p className="mt-1 text-sm text-slate-500">学会在社交场合也能坚持健康饮食的小技巧</p>
+        <p className="text-base font-semibold text-slate-900">{courseList.find((l) => l.status !== "done")?.title ?? courseList[0].title}</p>
+        <p className="mt-1 text-sm text-slate-500">从这里开始，逐步建立健康习惯</p>
         <button
           type="button"
           className="mt-3 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600"

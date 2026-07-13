@@ -1,54 +1,75 @@
+"use client";
+
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { TrendChart } from "@/components/ui/TrendChart";
 import { ProgressCard } from "@/components/ui/ProgressCard";
-import { currentCustomer } from "@/lib/mock-data";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useJourneySummary } from "@/lib/journey";
+import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
+import { useCustomerCheckIns } from "@/lib/inventory/hooks";
+import type { TrendPoint } from "@/lib/types";
 
 export default function ProgressPage() {
-  const c = currentCustomer;
-  const weightLost = +(c.startWeight - c.currentWeight).toFixed(1);
-  const waistLost = +(c.startWaist - c.currentWaist).toFixed(1);
-  const totalToLose = +(c.startWeight - c.targetWeight).toFixed(1);
-  const goalPercent = Math.round((weightLost / totalToLose) * 100);
+  const { user } = useAuthUser();
+  const customerId = user?.id ?? "";
+  const { data: journey } = useJourneySummary(customerId);
+  const { data: currentGoal } = useCurrentCustomerGoal(customerId);
+  const { data: checkIns } = useCustomerCheckIns(customerId);
+
+  const currentDay = journey?.currentDay ?? 1;
+  const planLength = journey?.planLength ?? 30;
+  const startWeight = journey?.startWeight ?? null;
+  const currentWeight = journey?.latestWeight ?? startWeight;
+  const weightTrendData: TrendPoint[] = [...checkIns].reverse().map((ci) => ({ label: ci.date.slice(5), value: ci.weight }));
+  const checkinRate = currentDay > 0 ? Math.min(100, Math.round((checkIns.length / currentDay) * 100)) : 0;
+
+  const hasWeightGoal = Boolean(currentGoal) && currentGoal!.stageGoalWeightMin < currentGoal!.baseWeightKg;
+  const stageGoalMid = hasWeightGoal ? (currentGoal!.stageGoalWeightMin + currentGoal!.stageGoalWeightMax) / 2 : null;
+  const weightLost = startWeight !== null && currentWeight !== null ? +(startWeight - currentWeight).toFixed(1) : null;
+  const totalToLose = startWeight !== null && stageGoalMid !== null ? +(startWeight - stageGoalMid).toFixed(1) : null;
+  const goalPercent = weightLost !== null && totalToLose !== null && totalToLose > 0 ? Math.max(0, Math.min(100, Math.round((weightLost / totalToLose) * 100))) : null;
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
-      <PageHeader title="我的成长" subtitle={`Day ${c.currentDay} / ${c.planLength}`} />
+      <PageHeader title="我的成长" subtitle={`Day ${currentDay} / ${planLength}`} />
 
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label="起始体重" value={c.startWeight} unit="kg" accent="bg-slate-100 text-slate-500" />
-        <StatCard label="当前体重" value={c.currentWeight} unit="kg" accent="bg-emerald-50 text-emerald-600" />
-        <StatCard label="目标体重" value={c.targetWeight} unit="kg" accent="bg-sky-50 text-sky-600" />
+        <StatCard label="起始体重" value={startWeight ?? "—"} unit={startWeight !== null ? "kg" : undefined} accent="bg-slate-100 text-slate-500" />
+        <StatCard label="当前体重" value={currentWeight ?? "—"} unit={currentWeight !== null ? "kg" : undefined} accent="bg-emerald-50 text-emerald-600" />
+        <StatCard
+          label="阶段目标"
+          value={hasWeightGoal ? (currentGoal!.stageGoalWeightMin === currentGoal!.stageGoalWeightMax ? currentGoal!.stageGoalWeightMin : `${currentGoal!.stageGoalWeightMin}~${currentGoal!.stageGoalWeightMax}`) : "—"}
+          unit={hasWeightGoal ? "kg" : undefined}
+          accent="bg-sky-50 text-sky-600"
+        />
       </div>
 
-      <ProgressCard
-        label="目标达成进度"
-        percent={goalPercent}
-        icon="🎯"
-        sublabel={`已减重 ${weightLost}kg，距离目标还差 ${(c.currentWeight - c.targetWeight).toFixed(1)}kg`}
-      />
+      {hasWeightGoal && goalPercent !== null ? (
+        <ProgressCard
+          label="目标达成进度"
+          percent={goalPercent}
+          icon="🎯"
+          sublabel={weightLost !== null && weightLost > 0 ? `已减重 ${weightLost}kg` : "刚刚开始，加油！"}
+        />
+      ) : (
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-500 shadow-sm">
+          目前专注在习惯养成，暂无体重目标。每一个阶段完成以后，再重新评估下一阶段目标。
+        </div>
+      )}
 
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
         <p className="mb-1 text-sm font-semibold text-slate-700">体重趋势</p>
-        <TrendChart data={c.weightTrend} unit="kg" strokeClass="text-emerald-500" fillId="progress-weight" />
-      </div>
-
-      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">腰围趋势</p>
-          <span className="text-xs text-emerald-600">已减少 {waistLost}cm</span>
-        </div>
-        <TrendChart data={c.waistTrend} unit="cm" strokeClass="text-sky-500" fillId="progress-waist" />
-      </div>
-
-      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-        <p className="mb-1 text-sm font-semibold text-slate-700">MISU Score 趋势</p>
-        <TrendChart data={c.scoreTrend} strokeClass="text-amber-500" fillId="progress-score" />
+        {weightTrendData.length > 0 ? (
+          <TrendChart data={weightTrendData} unit="kg" strokeClass="text-emerald-500" fillId="progress-weight" />
+        ) : (
+          <p className="py-6 text-center text-sm text-slate-400">还没有体重记录，完成第一次打卡后开始记录趋势</p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="打卡率" value={`${c.checkinRate}%`} icon="✅" accent="bg-emerald-50 text-emerald-600" />
-        <StatCard label="连续打卡" value={c.streakDays} unit="天" icon="🔥" accent="bg-amber-50 text-amber-600" />
+        <StatCard label="打卡率" value={`${checkinRate}%`} icon="✅" accent="bg-emerald-50 text-emerald-600" />
+        <StatCard label="连续打卡" value={journey?.streakDays ?? 0} unit="天" icon="🔥" accent="bg-amber-50 text-amber-600" />
       </div>
     </div>
   );

@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { AccountSettingsSection } from "@/components/AccountSettingsSection";
 import { SignOutButton } from "@/components/SignOutButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { currentCustomer, currentCoach } from "@/lib/mock-data";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useJourneySummary } from "@/lib/journey";
 
 const linkItems = [
   { href: "/customer/progress", label: "我的成长", icon: "📈" },
@@ -18,7 +21,9 @@ const staticItems = [
 ];
 
 export default function CustomerProfilePage() {
-  const c = currentCustomer;
+  const { user } = useAuthUser();
+  const { data: journey } = useJourneySummary(user?.id ?? "");
+  const currentWeight = journey?.latestWeight ?? journey?.startWeight ?? null;
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
@@ -26,27 +31,27 @@ export default function CustomerProfilePage() {
 
       <div className="flex items-center gap-4 rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-sky-50 p-5">
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-sm">
-          {c.avatar}
+          {journey?.avatar ?? "🙂"}
         </span>
         <div>
-          <p className="text-lg font-semibold text-slate-900">{c.name}</p>
+          <p className="text-lg font-semibold text-slate-900">{journey?.name ?? ""}</p>
           <p className="text-sm text-slate-500">
-            Day {c.currentDay} / {c.planLength} · 教练：{currentCoach.name}
+            Day {journey?.currentDay ?? 1} / {journey?.planLength ?? 30}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-2xl border border-slate-100 bg-white p-3 text-center shadow-sm">
-          <p className="text-base font-semibold text-slate-900">{c.age}</p>
+          <p className="text-base font-semibold text-slate-900">{journey?.age ?? "—"}</p>
           <p className="text-xs text-slate-400">年龄</p>
         </div>
         <div className="rounded-2xl border border-slate-100 bg-white p-3 text-center shadow-sm">
-          <p className="text-base font-semibold text-slate-900">{c.height}cm</p>
+          <p className="text-base font-semibold text-slate-900">{journey?.height ?? "—"}cm</p>
           <p className="text-xs text-slate-400">身高</p>
         </div>
         <div className="rounded-2xl border border-slate-100 bg-white p-3 text-center shadow-sm">
-          <p className="text-base font-semibold text-slate-900">{c.currentWeight}kg</p>
+          <p className="text-base font-semibold text-slate-900">{currentWeight ?? "—"}kg</p>
           <p className="text-xs text-slate-400">当前体重</p>
         </div>
       </div>

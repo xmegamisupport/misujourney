@@ -3,9 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { currentCustomer } from "@/lib/mock-data";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
-import { setCheckinDone } from "@/lib/daily-progress";
+import { useJourneySummary } from "@/lib/journey";
+import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import { cn } from "@/lib/utils";
 import { useHasInventoryRecords, useTodayCheckIn } from "@/lib/inventory/hooks";
 import { initializeLegacyBalance, submitCheckIn, editCheckIn, deleteCheckIn, todayDateStr } from "@/lib/inventory/engine";
@@ -33,11 +33,20 @@ function formatSleepDuration(bedtime: string, wakeTime: string): string {
 }
 
 export default function DailyCheckinPage() {
-  const c = currentCustomer;
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
+  const { data: journey } = useJourneySummary(customerId);
+  const { data: currentGoal } = useCurrentCustomerGoal(customerId);
   const { data: hasInventory, loading: hasInventoryLoading } = useHasInventoryRecords(customerId);
   const { data: todayCheckIn, loading: todayCheckInLoading } = useTodayCheckIn(customerId);
+
+  const lastWeight = journey?.latestWeight ?? journey?.startWeight ?? null;
+  const stageGoalLabel =
+    currentGoal && currentGoal.stageGoalWeightMin < currentGoal.baseWeightKg
+      ? currentGoal.stageGoalWeightMin === currentGoal.stageGoalWeightMax
+        ? `${currentGoal.stageGoalWeightMin}kg`
+        : `${currentGoal.stageGoalWeightMin}~${currentGoal.stageGoalWeightMax}kg`
+      : null;
 
   // ---------- Legacy customer: no inventory records yet ----------
   const [legacyN, setLegacyN] = useState("0");
@@ -122,11 +131,11 @@ export default function DailyCheckinPage() {
   return (
     <CheckInForm
       customerId={customerId}
-      streakDays={c.streakDays}
-      currentDay={c.currentDay}
-      planLength={c.planLength}
-      currentWeight={c.currentWeight}
-      targetWeight={c.targetWeight}
+      streakDays={journey?.streakDays ?? 0}
+      currentDay={journey?.currentDay ?? 1}
+      planLength={journey?.planLength ?? 30}
+      lastWeight={lastWeight}
+      stageGoalLabel={stageGoalLabel}
       todayCheckIn={todayCheckIn}
     />
   );
@@ -137,16 +146,16 @@ function CheckInForm({
   streakDays,
   currentDay,
   planLength,
-  currentWeight,
-  targetWeight,
+  lastWeight,
+  stageGoalLabel,
   todayCheckIn,
 }: {
   customerId: string;
   streakDays: number;
   currentDay: number;
   planLength: number;
-  currentWeight: number;
-  targetWeight: number;
+  lastWeight: number | null;
+  stageGoalLabel: string | null;
   todayCheckIn: DailyCheckIn | undefined;
 }) {
   const [editing, setEditing] = useState(false);
@@ -155,7 +164,7 @@ function CheckInForm({
 
   const record = todayCheckIn;
 
-  const [weight, setWeight] = useState(record?.weight.toString() ?? currentWeight.toString());
+  const [weight, setWeight] = useState(record?.weight.toString() ?? lastWeight?.toString() ?? "");
   const [poopCount, setPoopCount] = useState<PoopCount>(record?.poopCount ?? "1");
   const [bedtime, setBedtime] = useState(record?.bedtime ?? "23:00");
   const [wakeTime, setWakeTime] = useState(record?.wakeTime ?? "07:00");
@@ -204,7 +213,6 @@ function CheckInForm({
       setError(result.error ?? "打卡失败，请重试");
       return;
     }
-    setCheckinDone();
     setJustSubmitted(true);
   }
 
@@ -326,9 +334,13 @@ function CheckInForm({
               className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
             />
           </label>
-          <p className="mt-2 text-xs text-slate-400">
-            上次记录 {currentWeight}kg · 目标 {targetWeight}kg
-          </p>
+          {(lastWeight !== null || stageGoalLabel) && (
+            <p className="mt-2 text-xs text-slate-400">
+              {lastWeight !== null && `上次记录 ${lastWeight}kg`}
+              {lastWeight !== null && stageGoalLabel && " · "}
+              {stageGoalLabel && `目标 ${stageGoalLabel}`}
+            </p>
+          )}
         </div>
 
         <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
