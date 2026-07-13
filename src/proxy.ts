@@ -10,6 +10,7 @@ const ROLE_HOME: Record<string, string> = {
 
 const AUTH_PAGES = ["/login", "/register"];
 const PROTECTED_PREFIXES = ["/customer", "/coach", "/admin"];
+const ONBOARDING_PATH = "/onboarding";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -42,41 +43,57 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   const isAuthPage = AUTH_PAGES.some((page) => pathname.startsWith(page));
+  const isOnboarding = pathname === ONBOARDING_PATH || pathname.startsWith(`${ONBOARDING_PATH}/`);
 
-  if (!user && isProtected) {
+  if (!user && (isProtected || isOnboarding)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(url);
   }
 
-  if (user && (isAuthPage || pathname === "/")) {
+  if (user && (isAuthPage || pathname === "/" || isProtected || isOnboarding)) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, onboarding_completed_at")
       .eq("id", user.id)
       .single();
 
     const home = (profile && ROLE_HOME[profile.role]) || "/login";
-    if (pathname !== home) {
-      const url = request.nextUrl.clone();
-      url.pathname = home;
-      return NextResponse.redirect(url);
+
+    if (isAuthPage || pathname === "/") {
+      if (pathname !== home) {
+        const url = request.nextUrl.clone();
+        url.pathname = home;
+        return NextResponse.redirect(url);
+      }
     }
-  }
 
-  if (user && isProtected) {
-    const roleForPrefix = PROTECTED_PREFIXES.find((prefix) => pathname.startsWith(prefix))?.slice(1);
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    if (isProtected) {
+      const roleForPrefix = PROTECTED_PREFIXES.find((prefix) => pathname.startsWith(prefix))?.slice(1);
+      if (profile && profile.role !== roleForPrefix) {
+        const url = request.nextUrl.clone();
+        url.pathname = ROLE_HOME[profile.role] ?? "/login";
+        return NextResponse.redirect(url);
+      }
+      if (profile?.role === "customer" && !profile.onboarding_completed_at) {
+        const url = request.nextUrl.clone();
+        url.pathname = ONBOARDING_PATH;
+        return NextResponse.redirect(url);
+      }
+    }
 
-    if (profile && profile.role !== roleForPrefix) {
-      const url = request.nextUrl.clone();
-      url.pathname = ROLE_HOME[profile.role] ?? "/login";
-      return NextResponse.redirect(url);
+    if (isOnboarding) {
+      if (profile?.role !== "customer") {
+        const url = request.nextUrl.clone();
+        url.pathname = home;
+        return NextResponse.redirect(url);
+      }
+      if (profile.onboarding_completed_at) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/customer";
+        return NextResponse.redirect(url);
+      }
     }
   }
 

@@ -12,9 +12,10 @@ import { TrendChart } from "@/components/ui/TrendChart";
 import { currentCustomer, currentCoach } from "@/lib/mock-data";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { addWater, useWaterIntake, useTodayTasks } from "@/lib/daily-progress";
-import { useCustomerInventory, useHasInventoryRecords, useCustomerTransactions, useTodayMeals } from "@/lib/inventory/hooks";
-import { calcAverageDailyUsage, calcEstimatedDaysRemaining } from "@/lib/inventory/engine";
+import { useCustomerInventory, useHasInventoryRecords, useCustomerTransactions, useTodayMeals, useTodayCheckIn } from "@/lib/inventory/hooks";
+import { calcAverageDailyUsage, calcEstimatedDaysRemaining, todayDateStr } from "@/lib/inventory/engine";
 import { InventoryStatusCard } from "@/components/inventory/InventoryStatusCard";
+import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import type { ProductCode } from "@/lib/inventory/types";
 
 const waterPresets = [100, 200, 350, 500];
@@ -24,7 +25,6 @@ export default function CustomerDashboardPage() {
   const c = currentCustomer;
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
-  const toGoalWeight = Math.max(0, +(c.currentWeight - c.targetWeight).toFixed(1));
   const { data: addedMeals } = useTodayMeals(customerId);
   const addedCalories = addedMeals.reduce((sum, m) => sum + m.calories, 0);
   const addedProtein = addedMeals.reduce((sum, m) => sum + m.protein, 0);
@@ -39,6 +39,18 @@ export default function CustomerDashboardPage() {
   const { data: hasInventory } = useHasInventoryRecords(customerId);
   const { data: inventoryRows } = useCustomerInventory(customerId);
   const { data: transactions } = useCustomerTransactions(customerId);
+  const { data: currentGoal } = useCurrentCustomerGoal(customerId);
+  const { data: todayCheckIn } = useTodayCheckIn(customerId);
+
+  const today = todayDateStr();
+  const journeyProgress = [
+    { label: "今日打卡", icon: "✅", done: Boolean(todayCheckIn) },
+    { label: "今日211餐盘", icon: "🥗", done: addedMeals.length > 0 },
+    { label: "今日饮水", icon: "💧", done: water >= c.nutritionToday.waterTarget },
+    { label: "今日运动", icon: "🏃", done: false },
+    { label: "MISU产品", icon: "🥤", done: transactions.some((t) => t.createdAt.slice(0, 10) === today && (t.type === "MEAL_USAGE" || t.type === "CHECK_IN_USAGE")) },
+  ];
+  const journeyProgressPercent = Math.round((journeyProgress.filter((i) => i.done).length / journeyProgress.length) * 100);
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 md:px-8">
@@ -73,11 +85,34 @@ export default function CustomerDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-3 gap-3">
         <StatCard label="今日完成率" value={`${completionRate}%`} icon="✅" accent="bg-emerald-50 text-emerald-600" />
         <StatCard label="连续打卡" value={c.streakDays} unit="天" icon="🔥" accent="bg-amber-50 text-amber-600" />
         <StatCard label="当前体重" value={c.currentWeight} unit="kg" icon="⚖️" accent="bg-sky-50 text-sky-600" />
-        <StatCard label="距离目标体重" value={toGoalWeight} unit="kg" icon="🎯" accent="bg-rose-50 text-rose-500" />
+      </div>
+
+      <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-slate-400">🎯 第一阶段目标</p>
+            <p className="text-2xl font-semibold text-slate-900">
+              {currentGoal ? `${currentGoal.stageGoalWeight}kg` : "—"}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-slate-400">Progress</p>
+            <p className="text-2xl font-semibold text-emerald-600">{journeyProgressPercent}%</p>
+          </div>
+        </div>
+        <p className="mt-3 mb-2 text-xs font-medium text-slate-500">Today&apos;s Progress</p>
+        <div className="grid grid-cols-2 gap-2">
+          {journeyProgress.map((item) => (
+            <div key={item.label} className="flex items-center gap-2 text-sm">
+              <span>{item.done ? "✅" : "⬜"}</span>
+              <span className={item.done ? "text-slate-700" : "text-slate-400"}>{item.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div>

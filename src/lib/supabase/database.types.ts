@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_goals: {
+        Row: {
+          created_at: string
+          current_stage: number
+          customer_id: string
+          goal_status: Database["public"]["Enums"]["goal_status"]
+          id: string
+          long_term_goal_weight: number | null
+          stage_goal_weight: number
+        }
+        Insert: {
+          created_at?: string
+          current_stage?: number
+          customer_id: string
+          goal_status: Database["public"]["Enums"]["goal_status"]
+          id?: string
+          long_term_goal_weight?: number | null
+          stage_goal_weight: number
+        }
+        Update: {
+          created_at?: string
+          current_stage?: number
+          customer_id?: string
+          goal_status?: Database["public"]["Enums"]["goal_status"]
+          id?: string
+          long_term_goal_weight?: number | null
+          stage_goal_weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_goals_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_inventory: {
         Row: {
           boxes_purchased: number
@@ -101,6 +139,88 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "daily_checkins_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_assessments: {
+        Row: {
+          bmi: number
+          bmi_category: Database["public"]["Enums"]["bmi_category"]
+          created_at: string
+          customer_id: string
+          goal_status: Database["public"]["Enums"]["goal_status"]
+          id: string
+          long_term_goal: number | null
+          suggested_stage_goal: number
+        }
+        Insert: {
+          bmi: number
+          bmi_category: Database["public"]["Enums"]["bmi_category"]
+          created_at?: string
+          customer_id: string
+          goal_status: Database["public"]["Enums"]["goal_status"]
+          id?: string
+          long_term_goal?: number | null
+          suggested_stage_goal: number
+        }
+        Update: {
+          bmi?: number
+          bmi_category?: Database["public"]["Enums"]["bmi_category"]
+          created_at?: string
+          customer_id?: string
+          goal_status?: Database["public"]["Enums"]["goal_status"]
+          id?: string
+          long_term_goal?: number | null
+          suggested_stage_goal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_assessments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_plans: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          journey_days: number
+          target_211_meals: number
+          target_check_in_days: number
+          target_misu_days: number
+          target_water_days: number
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          journey_days: number
+          target_211_meals: number
+          target_check_in_days: number
+          target_misu_days: number
+          target_water_days: number
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          journey_days?: number
+          target_211_meals?: number
+          target_check_in_days?: number
+          target_misu_days?: number
+          target_water_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_plans_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -228,30 +348,60 @@ export type Database = {
       }
       profiles: {
         Row: {
+          activity_level: Database["public"]["Enums"]["activity_level"] | null
+          age: number | null
           avatar: string | null
           coach_id: string | null
           created_at: string
+          diet_type: Database["public"]["Enums"]["diet_type"] | null
+          gender: string | null
+          height: number | null
           id: string
           name: string
+          onboarding_completed_at: string | null
+          phone: string | null
+          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
+          start_date: string | null
+          start_weight: number | null
           updated_at: string
         }
         Insert: {
+          activity_level?: Database["public"]["Enums"]["activity_level"] | null
+          age?: number | null
           avatar?: string | null
           coach_id?: string | null
           created_at?: string
+          diet_type?: Database["public"]["Enums"]["diet_type"] | null
+          gender?: string | null
+          height?: number | null
           id: string
           name: string
+          onboarding_completed_at?: string | null
+          phone?: string | null
+          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          start_date?: string | null
+          start_weight?: number | null
           updated_at?: string
         }
         Update: {
+          activity_level?: Database["public"]["Enums"]["activity_level"] | null
+          age?: number | null
           avatar?: string | null
           coach_id?: string | null
           created_at?: string
+          diet_type?: Database["public"]["Enums"]["diet_type"] | null
+          gender?: string | null
+          height?: number | null
           id?: string
           name?: string
+          onboarding_completed_at?: string | null
+          phone?: string | null
+          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          start_date?: string | null
+          start_weight?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -341,6 +491,24 @@ export type Database = {
         }
         Returns: undefined
       }
+      complete_registration_goals: {
+        Args: {
+          p_activity_level: Database["public"]["Enums"]["activity_level"]
+          p_age: number
+          p_current_weight: number
+          p_customer_id: string
+          p_diet_type: Database["public"]["Enums"]["diet_type"]
+          p_gender: string
+          p_goal_type: Database["public"]["Enums"]["goal_type"]
+          p_height: number
+          p_journey_days: number
+          p_long_term_goal_weight?: number
+          p_name: string
+          p_phone: string
+          p_referral_code?: string
+        }
+        Returns: Json
+      }
       current_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -415,6 +583,20 @@ export type Database = {
       }
     }
     Enums: {
+      activity_level: "sedentary" | "light" | "moderate" | "high"
+      bmi_category: "underweight" | "normal" | "overweight" | "obese"
+      diet_type:
+        | "regular"
+        | "vegetarian"
+        | "ovo_lacto_vegetarian"
+        | "vegan"
+        | "other"
+      goal_status: "auto_approved" | "auto_adjusted" | "goal_restricted"
+      goal_type:
+        | "improve_diet"
+        | "lose_weight"
+        | "improve_routine"
+        | "maintain_weight"
       inventory_transaction_type:
         | "INITIAL_PURCHASE"
         | "CHECK_IN_USAGE"
@@ -560,6 +742,22 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activity_level: ["sedentary", "light", "moderate", "high"],
+      bmi_category: ["underweight", "normal", "overweight", "obese"],
+      diet_type: [
+        "regular",
+        "vegetarian",
+        "ovo_lacto_vegetarian",
+        "vegan",
+        "other",
+      ],
+      goal_status: ["auto_approved", "auto_adjusted", "goal_restricted"],
+      goal_type: [
+        "improve_diet",
+        "lose_weight",
+        "improve_routine",
+        "maintain_weight",
+      ],
       inventory_transaction_type: [
         "INITIAL_PURCHASE",
         "CHECK_IN_USAGE",
