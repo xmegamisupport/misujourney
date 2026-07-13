@@ -29,6 +29,55 @@ export async function getMyCustomers(coachId: string): Promise<CoachCustomerSumm
   return (data ?? []).map((row) => ({ id: row.id, name: row.name, avatar: row.avatar, startDate: row.start_date }));
 }
 
+export interface AdminCoachSummary {
+  id: string;
+  name: string;
+  avatar: string | null;
+  email: string | null;
+  referralCode: string | null;
+  whatsappNumber: string | null;
+  customerCount: number;
+  createdAt: string;
+}
+
+/** Admin-only — goes through /api/admin/coaches since email lives on
+ * auth.users (not readable via the normal RLS-scoped client) and listing it
+ * needs the service-role Admin API. */
+export async function getAllCoaches(): Promise<AdminCoachSummary[]> {
+  const res = await fetch("/api/admin/coaches");
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error ?? "加载教练列表失败");
+  return body.coaches as AdminCoachSummary[];
+}
+
+export interface CreateCoachInput {
+  name: string;
+  email: string;
+  password: string;
+  whatsappNumber?: string;
+  referralCode?: string;
+}
+
+export interface CreateCoachResult {
+  ok: boolean;
+  error?: string;
+  coach?: { id: string; name: string; email: string; referralCode: string; whatsappNumber: string | null };
+}
+
+/** The only way to create a Coach account — auth.users can't be written via
+ * a plain RPC, so this goes through the service-role Admin API on the
+ * server (/api/admin/coaches), gated on the caller already being an admin. */
+export async function createCoachAccount(input: CreateCoachInput): Promise<CreateCoachResult> {
+  const res = await fetch("/api/admin/coaches", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const body = await res.json();
+  if (!res.ok) return { ok: false, error: body.error ?? "创建失败" };
+  return { ok: true, coach: body.coach };
+}
+
 export async function getCustomerProfile(customerId: string): Promise<CoachCustomerProfile | undefined> {
   const supabase = createClient();
   const { data, error } = await supabase.from("profiles").select("*").eq("id", customerId).maybeSingle();
