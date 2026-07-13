@@ -9,18 +9,24 @@ import {
   calculateWeightGoalRange,
   canSuggestWeightLoss,
   evaluateGoalStatus,
-  getBMICategory,
-  isAbnormalInput,
   isCustomLossWithinRange,
   validateLongTermGoal,
-  buildJourneyPlan,
 } from "@/lib/goals/goal-calculator";
-import { DIET_TYPE_LABELS, ACTIVITY_LEVEL_LABELS, GOAL_TYPE_LABELS, GOAL_TYPE_ICONS, JOURNEY_PLAN_OPTIONS, BMI_CATEGORY_LABELS } from "@/lib/goals/constants";
+import { DIET_TYPE_LABELS, ACTIVITY_LEVEL_LABELS, GOAL_TYPE_LABELS, GOAL_TYPE_ICONS, JOURNEY_PLAN_OPTIONS } from "@/lib/goals/constants";
 import { completeRegistrationGoals, type CompleteRegistrationGoalsResult } from "@/lib/goals/engine";
 import { useWeightGoalRules } from "@/lib/goals/hooks";
 import type { ActivityLevel, DietType, GoalStatus, GoalType, JourneyDays, WeightGoalRange } from "@/lib/goals/types";
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 5;
+
+/** goal_type is stored as a single enum column, but the wizard now lets the
+ * customer pick more than one — lose_weight always wins (it's the only
+ * selection that drives a numeric target), otherwise the first pick applies
+ * since every other goal type behaves identically (habit-based maintain). */
+function deriveEffectiveGoalType(goalTypes: GoalType[]): GoalType | "" {
+  if (goalTypes.includes("lose_weight")) return "lose_weight";
+  return goalTypes[0] ?? "";
+}
 
 interface WizardDraft {
   name: string;
@@ -32,7 +38,7 @@ interface WizardDraft {
   currentWeight: string;
   dietType: DietType | "";
   activityLevel: ActivityLevel | "";
-  goalType: GoalType | "";
+  goalTypes: GoalType[];
   journeyDays: JourneyDays | 0;
   longTermGoalWeight: string;
   useCustomGoal: boolean;
@@ -49,7 +55,7 @@ const EMPTY_DRAFT: WizardDraft = {
   currentWeight: "",
   dietType: "",
   activityLevel: "",
-  goalType: "",
+  goalTypes: [],
   journeyDays: 0,
   longTermGoalWeight: "",
   useCustomGoal: false,
@@ -127,25 +133,24 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
   const hasBasicNumbers = height > 0 && currentWeight > 0 && age > 0;
 
   const bmi = hasBasicNumbers ? calculateBMI(height, currentWeight) : null;
-  const bmiCategory = bmi !== null ? getBMICategory(bmi) : null;
-  const abnormal = hasBasicNumbers ? isAbnormalInput(height, currentWeight, age) : false;
+  const effectiveGoalType = deriveEffectiveGoalType(draft.goalTypes);
 
   const longTermGoalWeight = draft.longTermGoalWeight.trim() ? Number(draft.longTermGoalWeight) : null;
   const longTermGoalValid = longTermGoalWeight === null || (height > 0 && validateLongTermGoal(longTermGoalWeight, height));
 
   const goalStatus: GoalStatus | null = useMemo(() => {
-    if (bmi === null || !draft.goalType) return null;
+    if (bmi === null || !effectiveGoalType) return null;
     return evaluateGoalStatus({
       heightCm: height,
       currentWeightKg: currentWeight,
       age,
       bmi,
-      goalType: draft.goalType,
+      goalType: effectiveGoalType,
       longTermGoalWeightKg: longTermGoalWeight,
     });
-  }, [bmi, currentWeight, height, age, draft.goalType, longTermGoalWeight]);
+  }, [bmi, currentWeight, height, age, effectiveGoalType, longTermGoalWeight]);
 
-  const canSuggestLoss = bmi !== null && goalStatus !== null && draft.goalType === "lose_weight" && canSuggestWeightLoss({ bmi, goalType: draft.goalType, goalStatus });
+  const canSuggestLoss = bmi !== null && goalStatus !== null && effectiveGoalType === "lose_weight" && canSuggestWeightLoss({ bmi, goalType: effectiveGoalType, goalStatus });
 
   const weightGoalRange: WeightGoalRange | null = useMemo(() => {
     if (!canSuggestLoss || !draft.journeyDays) return null;
@@ -175,8 +180,8 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
       if (!draft.dietType) return "请选择饮食类型";
       if (!draft.activityLevel) return "请选择活动量";
     }
-    if (step === 3 && !draft.goalType) return "请选择主要目标";
-    if (step === 5 && !draft.journeyDays) return "请选择 MISU JOURNEY 计划";
+    if (step === 2 && draft.goalTypes.length === 0) return "请选择主要目标";
+    if (step === 4 && !draft.journeyDays) return "请选择 MISU JOURNEY 计划";
     return null;
   }
 
@@ -212,7 +217,7 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
       phone: draft.phone.trim(),
       dietType: draft.dietType as DietType,
       activityLevel: draft.activityLevel as ActivityLevel,
-      goalType: draft.goalType as GoalType,
+      goalType: effectiveGoalType as GoalType,
       journeyDays: draft.journeyDays as JourneyDays,
       longTermGoalWeight: longTermGoalWeight ?? undefined,
       referralCode: draft.referralCode.trim() || undefined,
@@ -245,17 +250,16 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
           <StepIndicator step={step} />
 
           {step === 1 && <StepBasicInfo draft={draft} update={update} />}
-          {step === 2 && <StepBmi bmi={bmi} bmiCategory={bmiCategory} abnormal={abnormal} />}
-          {step === 3 && <StepGoalType draft={draft} update={update} />}
-          {step === 4 && (
+          {step === 2 && <StepGoalType draft={draft} update={update} />}
+          {step === 3 && (
             <StepLongTermGoal
               value={draft.longTermGoalWeight}
               onChange={(v) => update("longTermGoalWeight", v)}
               valid={longTermGoalValid}
             />
           )}
-          {step === 5 && <StepJourneyPlan draft={draft} update={update} />}
-          {step === 6 && (
+          {step === 4 && <StepJourneyPlan draft={draft} update={update} />}
+          {step === 5 && (
             <StepStageGoal
               currentWeight={currentWeight}
               canSuggestLoss={canSuggestLoss}
@@ -374,43 +378,23 @@ function StepBasicInfo({ draft, update }: { draft: WizardDraft; update: <K exten
   );
 }
 
-function StepBmi({ bmi, bmiCategory, abnormal }: { bmi: number | null; bmiCategory: ReturnType<typeof getBMICategory> | null; abnormal: boolean }) {
-  return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 2 · 你的 BMI</h2>
-      {bmi !== null && bmiCategory ? (
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-6 text-center">
-          <p className="text-4xl font-semibold text-slate-900">{bmi}</p>
-          <p className="mt-1 text-sm font-medium text-emerald-700">{BMI_CATEGORY_LABELS[bmiCategory]}</p>
-        </div>
-      ) : (
-        <p className="text-sm text-slate-400">请先完成上一步的身高体重</p>
-      )}
-      {abnormal && (
-        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          你填写的身高/体重/年龄数值超出常见范围，我们会把你的第一阶段目标设为习惯养成，而不是体重目标。
-        </div>
-      )}
-      <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-        ⚠️ BMI 不是完整健康评估，仅作为一般参考。
-      </div>
-    </div>
-  );
-}
-
 function StepGoalType({ draft, update }: { draft: WizardDraft; update: <K extends keyof WizardDraft>(key: K, value: WizardDraft[K]) => void }) {
+  function toggle(value: GoalType) {
+    update("goalTypes", draft.goalTypes.includes(value) ? draft.goalTypes.filter((g) => g !== value) : [...draft.goalTypes, value]);
+  }
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 3 · 选择主要目标</h2>
+      <h2 className="text-base font-semibold text-slate-900">Step 2 · 选择主要目标</h2>
+      <p className="text-xs text-slate-400">可以选择一个或多个目标</p>
       <div className="grid grid-cols-2 gap-3">
         {(Object.entries(GOAL_TYPE_LABELS) as [GoalType, string][]).map(([value, label]) => (
           <button
             key={value}
             type="button"
-            onClick={() => update("goalType", value)}
+            onClick={() => toggle(value)}
             className={cn(
               "flex flex-col items-center gap-2 rounded-2xl border px-3 py-5 text-center text-sm font-medium transition",
-              draft.goalType === value ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-100 text-slate-500 hover:border-slate-200",
+              draft.goalTypes.includes(value) ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-100 text-slate-500 hover:border-slate-200",
             )}
           >
             <span className="text-2xl">{GOAL_TYPE_ICONS[value]}</span>
@@ -425,7 +409,7 @@ function StepGoalType({ draft, update }: { draft: WizardDraft; update: <K extend
 function StepJourneyPlan({ draft, update }: { draft: WizardDraft; update: <K extends keyof WizardDraft>(key: K, value: WizardDraft[K]) => void }) {
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 5 · 选择 MISU JOURNEY 计划</h2>
+      <h2 className="text-base font-semibold text-slate-900">Step 4 · 选择 MISU JOURNEY 计划</h2>
       <div className="flex flex-col gap-3">
         {JOURNEY_PLAN_OPTIONS.map((option) => (
           <button
@@ -471,14 +455,13 @@ function StepStageGoal({
   customWithinRange: boolean | null;
   journeyDays: JourneyDays | 0;
 }) {
-  const plan = journeyDays ? buildJourneyPlan(journeyDays) : null;
   const [warningDismissed, setWarningDismissed] = useState(false);
   const showWarning = customWithinRange === false && !warningDismissed;
 
   if (!currentWeight || !journeyDays) {
     return (
       <div className="flex flex-col gap-4">
-        <h2 className="text-base font-semibold text-slate-900">Step 6 · 第一阶段目标建议</h2>
+        <h2 className="text-base font-semibold text-slate-900">Step 5 · 第一阶段目标建议</h2>
         <p className="text-sm text-slate-400">请先完成前面几步</p>
       </div>
     );
@@ -486,7 +469,7 @@ function StepStageGoal({
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 6 · 第一阶段目标建议</h2>
+      <h2 className="text-base font-semibold text-slate-900">Step 5 · 第一阶段目标建议</h2>
 
       {!canSuggestLoss ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 text-center">
@@ -534,7 +517,7 @@ function StepStageGoal({
           {draft.useCustomGoal && (
             <div className="flex flex-col gap-3">
               <FieldLabel>
-                自订减重目标 (kg)
+                自订减重目标(kg)-第一阶段
                 <input
                   type="number"
                   inputMode="decimal"
@@ -584,14 +567,6 @@ function StepStageGoal({
       )}
 
       <p className="text-xs text-slate-400">建议先完成第一阶段，再继续下一阶段。</p>
-      {plan && (
-        <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600">
-          <p>✓ {plan.targetCheckInDays} 天打卡</p>
-          <p>✓ {plan.target211Meals} 餐 211 餐盘</p>
-          <p>✓ {plan.targetWaterDays} 天饮水达标</p>
-          <p>✓ {plan.targetMisuDays} 天 MISU 打卡</p>
-        </div>
-      )}
     </div>
   );
 }
@@ -604,7 +579,7 @@ function customLossKgValid(value: string): boolean {
 function StepLongTermGoal({ value, onChange, valid }: { value: string; onChange: (v: string) => void; valid: boolean }) {
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 4 · 最终目标（可选）</h2>
+      <h2 className="text-base font-semibold text-slate-900">Step 3 · 最终目标（可选）</h2>
       <p className="text-sm text-slate-500">如果你希望填写最终理想体重，可以填写。这不会直接成为当前执行目标，会在你完成第一阶段后重新规划。</p>
       <FieldLabel>
         最终目标体重 (kg)
