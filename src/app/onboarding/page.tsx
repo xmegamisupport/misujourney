@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { SignOutButton } from "@/components/SignOutButton";
 import { cn } from "@/lib/utils";
 import {
   calculateBMI,
@@ -244,6 +245,13 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
           <span className="text-4xl">🌱</span>
           <h1 className="text-xl font-semibold text-slate-900">开启你的 Journey</h1>
           <p className="text-sm text-emerald-600">Every Day Is A New Journey</p>
+        </div>
+
+        <div className="mb-4 text-center">
+          <p className="text-xs text-slate-400">
+            不是你的账号？
+            <SignOutButton className="ml-1 font-medium text-emerald-600 hover:underline" />
+          </p>
         </div>
 
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
