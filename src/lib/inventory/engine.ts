@@ -29,10 +29,7 @@ export function subscribeInventory(callback: () => void) {
 
 /** Local calendar date (device timezone), not UTC — "today" for a Malaysia
  * customer at 11pm must not roll over to tomorrow just because it's already
- * past midnight UTC. The server independently re-derives "today" from
- * profiles.timezone (see customer_local_date()) for anything gating-relevant;
- * this is only ever used client-side to match what the customer actually sees
- * on their own clock. */
+ * past midnight UTC. */
 function localDateStr(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -40,12 +37,28 @@ function localDateStr(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+/** The Journey Day rolls over at 04:00 local, not midnight — 00:00-03:59
+ * still belongs to the day that's just ending, matching customer_journey_date()
+ * server-side (also 4h-shifted off profiles.timezone). Every caller of
+ * todayDateStr()/yesterdayDateStr() in this app already means "today's Journey
+ * Day", not the literal calendar date, so the shift is applied here once
+ * rather than at each call site. */
+const JOURNEY_DAY_START_HOUR = 4;
+
+function journeyShiftedDate(): Date {
+  const d = new Date();
+  if (d.getHours() < JOURNEY_DAY_START_HOUR) {
+    d.setDate(d.getDate() - 1);
+  }
+  return d;
+}
+
 export function todayDateStr(): string {
-  return localDateStr(new Date());
+  return localDateStr(journeyShiftedDate());
 }
 
 export function yesterdayDateStr(): string {
-  const d = new Date();
+  const d = journeyShiftedDate();
   d.setDate(d.getDate() - 1);
   return localDateStr(d);
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ProgressCard } from "@/components/ui/ProgressCard";
 import { NutritionCard } from "@/components/ui/NutritionCard";
+import { LockedTaskCard } from "@/components/ui/LockedTaskCard";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
 import { addWater, useWaterIntake } from "@/lib/daily-progress";
@@ -22,10 +23,13 @@ const waterPresets = [100, 200, 300];
 const FALLBACK_WATER_TARGET_ML = 2000;
 const DEFAULT_NUTRITION_TARGETS = { calories: 1500, protein: 90, fiber: 25 };
 /** Morning weigh-in window (24h, local time): before the start hour it's
- * still "night" (don't offer weigh-in yet); from start to cutoff it's the
- * real window; past the cutoff with no check-in, offer skipping instead. */
+ * still "night" (locked, no action offered yet); from start to cutoff is the
+ * real window (weigh-in offered); past the cutoff with no check-in, offer
+ * skipping instead. Matches the 4am Journey Day rollover used server-side. */
 const MORNING_WINDOW_START_HOUR = 4;
 const WEIGH_IN_CUTOFF_HOUR = 12;
+const LOCKED_HINT_TOO_EARLY = "明早 4:00 开放";
+const LOCKED_HINT_PENDING_MORNING = "完成晨重后开放";
 
 function getGreeting(hour: number): string {
   if (hour >= 5 && hour < 12) return "早安";
@@ -73,7 +77,6 @@ export default function CustomerDashboardPage() {
   const yesterday = yesterdayDateStr();
   const { data: todayCheckout } = useCheckoutForDate(customerId, today);
   const { data: yesterdayCheckout, loading: yesterdayCheckoutLoading } = useCheckoutForDate(customerId, yesterday);
-  const [catchupDismissed, setCatchupDismissed] = useState(false);
 
   const { data: todayJourney, loading: todayJourneyLoading, refresh: refreshJourney } = useTodayJourneyDay(customerId, today);
   const journeyActive = (todayJourney?.status ?? "waiting_for_morning") === "active";
@@ -90,6 +93,7 @@ export default function CustomerDashboardPage() {
   const pastWeighInWindow = currentHour >= WEIGH_IN_CUTOFF_HOUR;
   const inMorningWindow = !tooEarlyForMorning && !pastWeighInWindow;
   const greeting = getGreeting(currentHour);
+  const lockedHint = tooEarlyForMorning ? LOCKED_HINT_TOO_EARLY : LOCKED_HINT_PENDING_MORNING;
 
   async function handleSkipMorning() {
     setSkipping(true);
@@ -117,36 +121,13 @@ export default function CustomerDashboardPage() {
 
   // Only nudge for a missed checkout if "yesterday" was actually a Journey
   // day for this customer (not before they registered) — otherwise a brand
-  // new customer would get a bogus "make up yesterday" prompt on day 1.
-  const needsCatchup = currentDay > 1 && !yesterdayCheckoutLoading && !yesterdayCheckout && !catchupDismissed;
+  // new customer would get a bogus "make up yesterday" prompt on day 1. This
+  // is a non-blocking inline card, not a modal — it must never hide the rest
+  // of the dashboard.
+  const needsCatchup = currentDay > 1 && !yesterdayCheckoutLoading && !yesterdayCheckout;
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 md:px-8">
-      {needsCatchup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-6">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-lg">
-            <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-3xl">🌙</span>
-            <p className="text-lg font-semibold text-slate-900">昨天还差最后一步 🌙</p>
-            <p className="mt-2 text-sm text-slate-500">花30秒完成昨天的睡前回顾，再开始今天的Journey。</p>
-            <div className="mt-5 flex flex-col gap-2">
-              <Link
-                href={`/customer/checkout?date=${yesterday}`}
-                className="rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
-              >
-                完成昨天回顾
-              </Link>
-              <button
-                type="button"
-                onClick={() => setCatchupDismissed(true)}
-                className="rounded-xl py-3 text-sm font-medium text-slate-400 transition hover:text-slate-600"
-              >
-                稍后提醒
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <PageHeader
         title={`${greeting}，${journey?.name ?? ""} ${journey?.avatar ?? ""}`}
         subtitle={`Day ${currentDay} / ${planLength} · Every Day Is A New Journey`}
@@ -160,49 +141,27 @@ export default function CustomerDashboardPage() {
         }
       />
 
-      {!todayJourneyLoading && !journeyActive && (
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-sm">
-          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-3xl">🌱</span>
-          {tooEarlyForMorning ? (
-            <>
-              <p className="text-base font-semibold text-slate-800">新一天会在你明早完成晨重后开始。</p>
-              {!yesterdayCheckoutLoading && currentDay > 1 && !yesterdayCheckout ? (
-                <p className="mt-2 text-sm text-amber-600">昨天的睡前回顾还未完成。</p>
-              ) : (
-                <p className="mt-2 text-sm text-slate-400">好好休息，明早完成晨重后再开始新的 Journey。</p>
-              )}
-            </>
-          ) : inMorningWindow ? (
-            <>
-              <p className="text-base font-semibold text-slate-800">准备好开始新的一天了吗？</p>
-              <p className="mt-1 text-sm text-slate-500">完成今日晨重，正式开始今天的 Journey。</p>
-              <Link
-                href="/customer/checkin"
-                className="mt-4 inline-block rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
-              >
-                开始今日晨重
-              </Link>
-            </>
-          ) : (
-            <>
-              <p className="text-base font-semibold text-slate-800">今天错过晨重也没关系</p>
-              <p className="mt-1 text-sm text-slate-500">你可以选择直接开始今天的 Journey，但今天不会有晨重记录。</p>
-              {skipError && <p className="mt-2 text-sm text-rose-500">{skipError}</p>}
-              <button
-                type="button"
-                disabled={skipping}
-                onClick={handleSkipMorning}
-                className="mt-4 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
-              >
-                {skipping ? "处理中..." : "今天不记录晨重，继续 Journey"}
-              </button>
-            </>
-          )}
+      {!todayJourneyLoading && !journeyActive && tooEarlyForMorning && (
+        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
+          明早 4:00 后开放新的 Journey 任务。
         </div>
       )}
 
-      {journeyActive && (
-        <>
+      {needsCatchup && (
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-4 shadow-sm">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl">🌙</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-slate-800">昨天的睡前回顾还未完成</p>
+          </div>
+          <Link
+            href={`/customer/checkout?date=${yesterday}`}
+            className="shrink-0 rounded-full bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
+          >
+            完成昨天回顾
+          </Link>
+        </div>
+      )}
+
       <ProgressCard label="今日 Journey 完成度" percent={journeyProgressPercent} icon="🌱" sublabel="完成今天的任务，保持你的 Journey" />
 
       {currentGoal && (
@@ -264,98 +223,119 @@ export default function CustomerDashboardPage() {
                 <p className="text-xs text-slate-400">今天选择不记录晨重</p>
               </div>
             </div>
-          ) : (
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5">
+          ) : tooEarlyForMorning ? (
+            <LockedTaskCard icon="⚖️" label="今日晨重" hint={LOCKED_HINT_TOO_EARLY} />
+          ) : inMorningWindow ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/40 p-3.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">⚖️</span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-slate-800">今日晨重</p>
-                <p className="text-xs text-slate-400">
-                  {pastWeighInWindow ? "今天已经错过晨重，明天早上继续记录就可以 ❤️" : "今天还没有记录晨重"}
-                </p>
+                <p className="text-xs text-slate-400">完成晨重，正式开始今天的 Journey</p>
               </div>
-              {!pastWeighInWindow && (
-                <Link
-                  href="/customer/checkin"
-                  className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
-                >
-                  记录晨重
-                </Link>
-              )}
-              {pastWeighInWindow && <span className="shrink-0 text-lg">❤️</span>}
+              <Link
+                href="/customer/checkin"
+                className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
+              >
+                开始今日晨重
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/40 p-3.5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">⚖️</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-800">今日晨重</p>
+                <p className="text-xs text-slate-400">{skipError ?? "今天错过晨重也没关系，可以直接开始今天的 Journey"}</p>
+              </div>
+              <button
+                type="button"
+                disabled={skipping}
+                onClick={handleSkipMorning}
+                className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
+              >
+                {skipping ? "处理中..." : "跳过晨重"}
+              </button>
             </div>
           )}
 
-          <Link
-            href="/customer/meals/add"
-            className={`flex items-center gap-3 rounded-2xl border p-3.5 transition ${mealDone ? "border-emerald-100 bg-emerald-50/60" : "border-slate-100 bg-white hover:border-emerald-200"}`}
-          >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">🥗</span>
-            <div className="min-w-0 flex-1">
-              <p className={`text-sm font-medium ${mealDone ? "text-slate-500 line-through" : "text-slate-800"}`}>饮食打卡</p>
-              <p className="text-xs text-slate-400">{mealDone ? `已记录 ${addedMeals.length} 餐` : "拍照记录你的 211 餐盘"}</p>
-            </div>
-            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${mealDone ? "border-emerald-400 bg-emerald-400 text-white" : "border-slate-300 text-transparent"}`}>✓</span>
-          </Link>
-        </div>
-      </div>
-
-      <div className={`rounded-2xl border p-4 shadow-sm ${waterDone ? "border-emerald-100 bg-emerald-50/60" : "border-sky-100 bg-white"}`}>
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">💧</span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-slate-800">饮水打卡</p>
-            <p className="text-2xl font-bold leading-tight text-sky-600">
-              {water}
-              <span className="ml-1 text-sm font-normal text-slate-400">/ {waterTarget}ml</span>
-            </p>
-          </div>
-          <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${waterDone ? "border-emerald-400 bg-emerald-400 text-white" : "border-slate-300 text-transparent"}`}>✓</span>
-        </div>
-
-        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-sky-50">
-          <div
-            className="h-full rounded-full bg-sky-400 transition-all"
-            style={{ width: `${Math.min(100, Math.round((water / waterTarget) * 100))}%` }}
-          />
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          {waterPresets.map((amount) => (
-            <button
-              key={amount}
-              type="button"
-              onClick={() => addWater(customerId, amount, 0)}
-              className="rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-xs font-medium text-sky-700 transition hover:border-sky-300 active:scale-95"
+          {journeyActive ? (
+            <Link
+              href="/customer/meals/add"
+              className={`flex items-center gap-3 rounded-2xl border p-3.5 transition ${mealDone ? "border-emerald-100 bg-emerald-50/60" : "border-slate-100 bg-white hover:border-emerald-200"}`}
             >
-              +{amount}ml
-            </button>
-          ))}
-        </div>
-        <div className="mt-2 flex items-center gap-2">
-          <input
-            type="number"
-            min={1}
-            inputMode="numeric"
-            value={customWater}
-            onChange={(e) => setCustomWater(e.target.value)}
-            placeholder="自定义 ml"
-            className="w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const amount = Number(customWater);
-              if (amount > 0) {
-                addWater(customerId, amount, 0);
-                setCustomWater("");
-              }
-            }}
-            className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600"
-          >
-            添加
-          </button>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">🥗</span>
+              <div className="min-w-0 flex-1">
+                <p className={`text-sm font-medium ${mealDone ? "text-slate-500 line-through" : "text-slate-800"}`}>饮食打卡</p>
+                <p className="text-xs text-slate-400">{mealDone ? `已记录 ${addedMeals.length} 餐` : "拍照记录你的 211 餐盘"}</p>
+              </div>
+              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${mealDone ? "border-emerald-400 bg-emerald-400 text-white" : "border-slate-300 text-transparent"}`}>✓</span>
+            </Link>
+          ) : (
+            <LockedTaskCard icon="🥗" label="饮食打卡" hint={lockedHint} />
+          )}
         </div>
       </div>
+
+      {journeyActive ? (
+        <div className={`rounded-2xl border p-4 shadow-sm ${waterDone ? "border-emerald-100 bg-emerald-50/60" : "border-sky-100 bg-white"}`}>
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">💧</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-slate-800">饮水打卡</p>
+              <p className="text-2xl font-bold leading-tight text-sky-600">
+                {water}
+                <span className="ml-1 text-sm font-normal text-slate-400">/ {waterTarget}ml</span>
+              </p>
+            </div>
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${waterDone ? "border-emerald-400 bg-emerald-400 text-white" : "border-slate-300 text-transparent"}`}>✓</span>
+          </div>
+
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-sky-50">
+            <div
+              className="h-full rounded-full bg-sky-400 transition-all"
+              style={{ width: `${Math.min(100, Math.round((water / waterTarget) * 100))}%` }}
+            />
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {waterPresets.map((amount) => (
+              <button
+                key={amount}
+                type="button"
+                onClick={() => addWater(customerId, amount, 0)}
+                className="rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-xs font-medium text-sky-700 transition hover:border-sky-300 active:scale-95"
+              >
+                +{amount}ml
+              </button>
+            ))}
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              type="number"
+              min={1}
+              inputMode="numeric"
+              value={customWater}
+              onChange={(e) => setCustomWater(e.target.value)}
+              placeholder="自定义 ml"
+              className="w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const amount = Number(customWater);
+                if (amount > 0) {
+                  addWater(customerId, amount, 0);
+                  setCustomWater("");
+                }
+              }}
+              className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600"
+            >
+              添加
+            </button>
+          </div>
+        </div>
+      ) : (
+        <LockedTaskCard icon="💧" label="饮水打卡" hint={lockedHint} />
+      )}
 
       <div>
         <p className="mb-2 text-sm font-semibold text-slate-700">今日营养</p>
@@ -410,25 +390,29 @@ export default function CustomerDashboardPage() {
         <span className="text-slate-300">→</span>
       </Link>
 
-      {todayCheckout ? (
-        <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 shadow-sm">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl">✅</span>
-          <p className="text-sm font-semibold text-slate-700">今日回顾已完成</p>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">🌙</span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-slate-800">睡前回顾</p>
-            <p className="text-xs text-slate-400">今天还没有完成今天的回顾。</p>
+      {journeyActive ? (
+        todayCheckout ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 shadow-sm">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl">✅</span>
+            <p className="text-sm font-semibold text-slate-700">今日回顾已完成</p>
           </div>
-          <Link
-            href="/customer/checkout"
-            className="shrink-0 rounded-full bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
-          >
-            立即填写
-          </Link>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">🌙</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-slate-800">睡前回顾</p>
+              <p className="text-xs text-slate-400">今天还没有完成今天的回顾。</p>
+            </div>
+            <Link
+              href="/customer/checkout"
+              className="shrink-0 rounded-full bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
+            >
+              立即填写
+            </Link>
+          </div>
+        )
+      ) : (
+        <LockedTaskCard icon="🌙" label="睡前回顾" hint={lockedHint} />
       )}
 
       <Link
@@ -437,8 +421,6 @@ export default function CustomerDashboardPage() {
       >
         完成今日总结
       </Link>
-        </>
-      )}
     </div>
   );
 }
