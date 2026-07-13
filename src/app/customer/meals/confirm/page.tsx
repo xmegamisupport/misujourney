@@ -142,7 +142,7 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
       if (!res.ok) throw new Error(data.error ?? "生成建议失败，请重试");
 
       const scored: MealScoredDraft = {
-        mealId: `meal_${crypto.randomUUID()}`,
+        mealId: crypto.randomUUID(),
         mealType: initial.mealType,
         photo: initial.photo,
         misuTags,
