@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { ProgressCard } from "@/components/ui/ProgressCard";
 import { NutritionCard } from "@/components/ui/NutritionCard";
 import { LockedTaskCard } from "@/components/ui/LockedTaskCard";
+import { CoachContactSheet } from "@/components/CoachContactSheet";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
 import { addWater, useWaterIntake } from "@/lib/daily-progress";
@@ -69,6 +70,7 @@ export default function CustomerDashboardPage() {
   const waterTarget = currentGoal?.waterTargetMl ?? (journey?.startWeight ? calculateWaterTargetMl(journey.startWeight) : FALLBACK_WATER_TARGET_ML);
   const water = useWaterIntake(customerId, 0);
   const [customWater, setCustomWater] = useState("");
+  const [coachSheetOpen, setCoachSheetOpen] = useState(false);
 
   const { data: todayCheckIn } = useTodayCheckIn(customerId);
   const { data: checkIns } = useCustomerCheckIns(customerId);
@@ -132,14 +134,26 @@ export default function CustomerDashboardPage() {
         title={`${greeting}，${journey?.name ?? ""} ${journey?.avatar ?? ""}`}
         subtitle={`Day ${currentDay} / ${planLength} · Every Day Is A New Journey`}
         action={
-          <Link
-            href="/customer/profile"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-xl"
-          >
-            {journey?.avatar ?? "🙂"}
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCoachSheetOpen(true)}
+              aria-label="联系 Journey Coach"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-lg"
+            >
+              🌿
+            </button>
+            <Link
+              href="/customer/profile"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-xl"
+            >
+              {journey?.avatar ?? "🙂"}
+            </Link>
+          </div>
         }
       />
+
+      <CoachContactSheet open={coachSheetOpen} onClose={() => setCoachSheetOpen(false)} />
 
       {!todayJourneyLoading && !journeyActive && tooEarlyForMorning && (
         <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
@@ -376,18 +390,6 @@ export default function CustomerDashboardPage() {
           <p className="text-sm font-semibold">今日学习</p>
           <p className="text-xs text-sky-50">继续你的学习进度 →</p>
         </div>
-      </Link>
-
-      <Link
-        href="/customer/coach"
-        className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-emerald-200"
-      >
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-xl">🌿</span>
-        <div className="flex-1">
-          <p className="text-sm font-semibold text-slate-800">联系 Journey Coach</p>
-          <p className="text-xs text-slate-400">有任何问题，随时联系你的专属教练团队</p>
-        </div>
-        <span className="text-slate-300">→</span>
       </Link>
 
       {journeyActive ? (
