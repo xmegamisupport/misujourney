@@ -8,6 +8,7 @@ import { getTemplate, validateFields } from "@/lib/cms/templates";
 import { CATEGORY_LABELS } from "@/lib/cms/types";
 import type { CmsContentCategory, CmsContentFields, CmsContentItem, CmsTemplateType } from "@/lib/cms/types";
 import { ContentCardViewer } from "./ContentCardViewer";
+import { ImageUploadField } from "./ImageUploadField";
 
 const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABELS) as [CmsContentCategory, string][];
 
@@ -123,16 +124,7 @@ export function ContentForm({ templateType, existing }: ContentFormProps) {
           </select>
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm text-slate-600">
-          封面图片网址（选填，Dashboard 会显示）
-          <input
-            value={coverImageUrl}
-            onChange={(e) => setCoverImageUrl(e.target.value)}
-            disabled={!canEdit}
-            placeholder="https://..."
-            className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50 disabled:text-slate-400"
-          />
-        </label>
+        <ImageUploadField label="封面图片（选填，Dashboard 会显示）" value={coverImageUrl} onChange={setCoverImageUrl} disabled={!canEdit} />
 
         <label className="flex flex-col gap-1.5 text-sm text-slate-600">
           预计阅读时间（秒，建议 30~60）
@@ -150,28 +142,32 @@ export function ContentForm({ templateType, existing }: ContentFormProps) {
 
       <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
         <p className="text-sm font-semibold text-slate-700">内容版型栏位</p>
-        {template.fields.map((f) => (
-          <label key={f.key} className="flex flex-col gap-1.5 text-sm text-slate-600">
-            {f.label}
-            {f.type === "textarea" ? (
-              <textarea
-                value={fields[f.key] ?? ""}
-                onChange={(e) => updateFieldValue(f.key, e.target.value)}
-                disabled={!canEdit}
-                rows={2}
-                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50 disabled:text-slate-400"
-              />
-            ) : (
-              <input
-                value={fields[f.key] ?? ""}
-                onChange={(e) => updateFieldValue(f.key, e.target.value)}
-                disabled={!canEdit}
-                placeholder={f.type === "image" ? "https://..." : f.placeholder}
-                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50 disabled:text-slate-400"
-              />
-            )}
-          </label>
-        ))}
+        {template.fields.map((f) =>
+          f.type === "image" ? (
+            <ImageUploadField key={f.key} label={f.label} value={fields[f.key] ?? ""} onChange={(url) => updateFieldValue(f.key, url)} disabled={!canEdit} />
+          ) : (
+            <label key={f.key} className="flex flex-col gap-1.5 text-sm text-slate-600">
+              {f.label}
+              {f.type === "textarea" ? (
+                <textarea
+                  value={fields[f.key] ?? ""}
+                  onChange={(e) => updateFieldValue(f.key, e.target.value)}
+                  disabled={!canEdit}
+                  rows={2}
+                  className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50 disabled:text-slate-400"
+                />
+              ) : (
+                <input
+                  value={fields[f.key] ?? ""}
+                  onChange={(e) => updateFieldValue(f.key, e.target.value)}
+                  disabled={!canEdit}
+                  placeholder={f.placeholder}
+                  className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50 disabled:text-slate-400"
+                />
+              )}
+            </label>
+          ),
+        )}
       </div>
 
       {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
