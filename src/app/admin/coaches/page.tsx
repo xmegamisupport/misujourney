@@ -168,17 +168,19 @@ export default function CoachManagementPage() {
             return (
               <div key={coach.id} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
                 <div className="flex items-center gap-4">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-50 text-2xl">
-                    {coach.avatar ?? "🌿"}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-slate-800">{coach.name}</p>
-                    <p className="truncate text-xs text-slate-400">{coach.email ?? "—"}</p>
-                    <p className="mt-1 text-xs text-slate-400">
-                      {coach.customerCount} 位顾客 · 推荐码 {coach.referralCode ?? "—"} · WhatsApp{" "}
-                      {coach.hasWhatsAppContact ? "已设置" : coach.whatsappNeedsReview ? "待确认（旧资料）" : "未设置"}
-                    </p>
-                  </div>
+                  <Link href={`/admin/coaches/${coach.id}`} className="flex min-w-0 flex-1 items-center gap-4">
+                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-50 text-2xl">
+                      {coach.avatar ?? "🌿"}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-800 hover:text-violet-600">{coach.name}</p>
+                      <p className="truncate text-xs text-slate-400">{coach.email ?? "—"}</p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        {coach.customerCount} 位顾客 · 推荐码 {coach.referralCode ?? "—"} · WhatsApp{" "}
+                        {coach.hasWhatsAppContact ? "已设置" : coach.whatsappNeedsReview ? "待确认（旧资料）" : "未设置"}
+                      </p>
+                    </div>
+                  </Link>
                   <button
                     type="button"
                     onClick={() => setEditingCoachId(isEditing ? null : coach.id)}

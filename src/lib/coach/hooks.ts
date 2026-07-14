@@ -25,7 +25,7 @@ export function useMyCustomers(coachId: string): { data: CoachCustomerSummary[];
   return { data, loading };
 }
 
-export function useAllCustomersForAdmin(): { data: AdminCustomerSummary[]; loading: boolean; refresh: () => void } {
+export function useAllCustomersForAdmin(coachId?: string): { data: AdminCustomerSummary[]; loading: boolean; refresh: () => void } {
   const [data, setData] = useState<AdminCustomerSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
@@ -33,7 +33,7 @@ export function useAllCustomersForAdmin(): { data: AdminCustomerSummary[]; loadi
 
   useEffect(() => {
     let cancelled = false;
-    getAllCustomersForAdmin()
+    getAllCustomersForAdmin(coachId)
       .then((result) => {
         if (!cancelled) setData(result);
       })
@@ -43,7 +43,7 @@ export function useAllCustomersForAdmin(): { data: AdminCustomerSummary[]; loadi
     return () => {
       cancelled = true;
     };
-  }, [tick]);
+  }, [coachId, tick]);
 
   return { data, loading, refresh };
 }

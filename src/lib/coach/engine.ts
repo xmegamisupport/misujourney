@@ -134,19 +134,22 @@ export interface AdminCustomerSummary {
 }
 
 /** Admin-wide roster (every customer, not just one coach's) — used by
- * /admin/customers and /admin/binding. RLS (profiles_select_as_admin)
- * already scopes every query below to what an admin is allowed to see.
+ * /admin/customers, /admin/binding, and (filtered to one coachId)
+ * /admin/coaches/[id]. RLS (profiles_select_as_admin) already scopes every
+ * query below to what an admin is allowed to see.
  * onboarding_completed_at excludes registrations that were never finished —
  * an abandoned signup shouldn't show up as a real customer until the 5-step
  * onboarding wizard actually completes. */
-export async function getAllCustomersForAdmin(): Promise<AdminCustomerSummary[]> {
+export async function getAllCustomersForAdmin(coachId?: string): Promise<AdminCustomerSummary[]> {
   const supabase = createClient();
-  const { data: customers, error } = await supabase
+  let query = supabase
     .from("profiles")
     .select("id, name, avatar, start_date, coach_id")
     .eq("role", "customer")
     .not("onboarding_completed_at", "is", null)
     .order("name", { ascending: true });
+  if (coachId) query = query.eq("coach_id", coachId);
+  const { data: customers, error } = await query;
   if (error) throw error;
   if (!customers || customers.length === 0) return [];
 
