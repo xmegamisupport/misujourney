@@ -7,6 +7,7 @@ import { ProgressCard } from "@/components/ui/ProgressCard";
 import { NutritionCard } from "@/components/ui/NutritionCard";
 import { LockedTaskCard } from "@/components/ui/LockedTaskCard";
 import { CoachContactSheet } from "@/components/CoachContactSheet";
+import { TodayContentCard } from "@/components/cms/TodayContentCard";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
 import { addWater, useWaterIntake } from "@/lib/daily-progress";
@@ -392,6 +393,8 @@ export default function CustomerDashboardPage() {
           </div>
         </div>
       )}
+
+      {journeyActive ? <TodayContentCard /> : <LockedTaskCard icon="📚" label="今日小知识" hint={lockedHint} />}
 
       <Link
         href="/customer/learn"

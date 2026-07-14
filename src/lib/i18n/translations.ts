@@ -4,8 +4,8 @@ export const translations = {
   zh: {
     nav: {
       customer: { home: "首页", checkin: "打卡", meals: "饮食", learn: "学习", progress: "成长", profile: "我的" },
-      coach: { dashboard: "概览", customers: "顾客", alerts: "提醒", messages: "联系顾客", referral: "推荐", profile: "我的" },
-      admin: { dashboard: "概览", users: "用户", coaches: "教练", customers: "顾客", content: "内容", settings: "设置" },
+      coach: { dashboard: "概览", customers: "顾客", alerts: "提醒", messages: "联系顾客", referral: "推荐", cms: "知识 CMS", profile: "我的" },
+      admin: { dashboard: "概览", users: "用户", coaches: "教练", customers: "顾客", content: "内容", cms: "知识 CMS", settings: "设置" },
     },
     roleLabel: { customer: "顾客", coach: "Journey Coach", admin: "XMEGAMI 管理员" },
     account: {
@@ -50,8 +50,8 @@ export const translations = {
   en: {
     nav: {
       customer: { home: "Home", checkin: "Check-in", meals: "Meals", learn: "Learn", progress: "Progress", profile: "Profile" },
-      coach: { dashboard: "Dashboard", customers: "Customers", alerts: "Alerts", messages: "Contact", referral: "Referral", profile: "Profile" },
-      admin: { dashboard: "Dashboard", users: "Users", coaches: "Coaches", customers: "Customers", content: "Content", settings: "Settings" },
+      coach: { dashboard: "Dashboard", customers: "Customers", alerts: "Alerts", messages: "Contact", referral: "Referral", cms: "Knowledge CMS", profile: "Profile" },
+      admin: { dashboard: "Dashboard", users: "Users", coaches: "Coaches", customers: "Customers", content: "Content", cms: "Knowledge CMS", settings: "Settings" },
     },
     roleLabel: { customer: "Customer", coach: "Journey Coach", admin: "XMEGAMI Admin" },
     account: {

@@ -6,10 +6,19 @@ const ROLE_HOME: Record<string, string> = {
   customer: "/customer",
   coach: "/coach",
   admin: "/admin",
+  nutritionist: "/cms",
+  trainer: "/cms",
 };
 
 const AUTH_PAGES = ["/login", "/register"];
-const PROTECTED_PREFIXES = ["/customer", "/coach", "/admin"];
+/** Most prefixes are exact-role-only; /cms is shared by every CMS-facing
+ * role (Coach gets read-only access, enforced by RLS — not by this list). */
+const PROTECTED_PREFIXES: { prefix: string; roles: string[] }[] = [
+  { prefix: "/customer", roles: ["customer"] },
+  { prefix: "/coach", roles: ["coach"] },
+  { prefix: "/admin", roles: ["admin"] },
+  { prefix: "/cms", roles: ["admin", "nutritionist", "trainer", "coach"] },
+];
 const ONBOARDING_PATH = "/onboarding";
 
 export async function proxy(request: NextRequest) {
@@ -41,7 +50,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p.prefix));
   const isAuthPage = AUTH_PAGES.some((page) => pathname.startsWith(page));
   const isOnboarding = pathname === ONBOARDING_PATH || pathname.startsWith(`${ONBOARDING_PATH}/`);
 
@@ -70,8 +79,8 @@ export async function proxy(request: NextRequest) {
     }
 
     if (isProtected) {
-      const roleForPrefix = PROTECTED_PREFIXES.find((prefix) => pathname.startsWith(prefix))?.slice(1);
-      if (profile && profile.role !== roleForPrefix) {
+      const matched = PROTECTED_PREFIXES.find((p) => pathname.startsWith(p.prefix));
+      if (profile && matched && !matched.roles.includes(profile.role)) {
         const url = request.nextUrl.clone();
         url.pathname = ROLE_HOME[profile.role] ?? "/login";
         return NextResponse.redirect(url);

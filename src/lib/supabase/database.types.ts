@@ -14,6 +14,193 @@ export type Database = {
   }
   public: {
     Tables: {
+      cms_content_items: {
+        Row: {
+          category: Database["public"]["Enums"]["cms_content_category"]
+          cover_image_url: string | null
+          created_at: string
+          created_by: string
+          estimated_seconds: number
+          fields: Json
+          id: string
+          published_at: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["cms_content_status"]
+          template_type: Database["public"]["Enums"]["cms_template_type"]
+          title: string
+          unpublished_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["cms_content_category"]
+          cover_image_url?: string | null
+          created_at?: string
+          created_by: string
+          estimated_seconds?: number
+          fields?: Json
+          id?: string
+          published_at?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["cms_content_status"]
+          template_type: Database["public"]["Enums"]["cms_template_type"]
+          title: string
+          unpublished_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["cms_content_category"]
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string
+          estimated_seconds?: number
+          fields?: Json
+          id?: string
+          published_at?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["cms_content_status"]
+          template_type?: Database["public"]["Enums"]["cms_template_type"]
+          title?: string
+          unpublished_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_content_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cms_content_items_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cms_customer_content_progress: {
+        Row: {
+          completed_at: string
+          content_id: string
+          content_title_snapshot: string
+          customer_id: string
+          day_number: number
+          id: string
+          template_type_snapshot: Database["public"]["Enums"]["cms_template_type"]
+        }
+        Insert: {
+          completed_at?: string
+          content_id: string
+          content_title_snapshot: string
+          customer_id: string
+          day_number: number
+          id?: string
+          template_type_snapshot: Database["public"]["Enums"]["cms_template_type"]
+        }
+        Update: {
+          completed_at?: string
+          content_id?: string
+          content_title_snapshot?: string
+          customer_id?: string
+          day_number?: number
+          id?: string
+          template_type_snapshot?: Database["public"]["Enums"]["cms_template_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_customer_content_progress_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "cms_content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cms_customer_content_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cms_journey_schedule: {
+        Row: {
+          content_id: string
+          created_at: string
+          day_number: number
+          id: string
+          sort_order: number
+        }
+        Insert: {
+          content_id: string
+          created_at?: string
+          day_number: number
+          id?: string
+          sort_order?: number
+        }
+        Update: {
+          content_id?: string
+          created_at?: string
+          day_number?: number
+          id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_journey_schedule_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "cms_content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cms_journey_settings: {
+        Row: {
+          daily_content_enabled: boolean
+          daily_content_limit: number
+          id: string
+          journey_days: number
+          journey_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          daily_content_enabled?: boolean
+          daily_content_limit?: number
+          id?: string
+          journey_days?: number
+          journey_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          daily_content_enabled?: boolean
+          daily_content_limit?: number
+          id?: string
+          journey_days?: number
+          journey_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_journey_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_ai_insights: {
         Row: {
           analysis_type: string
@@ -996,9 +1183,17 @@ export type Database = {
         }
         Returns: Json
       }
+      complete_today_content: {
+        Args: { p_content_id: string }
+        Returns: undefined
+      }
       current_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      customer_current_journey_day: {
+        Args: { p_customer_id: string }
+        Returns: number
       }
       customer_journey_date: {
         Args: { p_customer_id: string }
@@ -1033,6 +1228,21 @@ export type Database = {
           whatsapp_contact_method: string
           whatsapp_custom_link: string
           whatsapp_normalized_number: string
+        }[]
+      }
+      get_my_today_content: {
+        Args: never
+        Returns: {
+          category: Database["public"]["Enums"]["cms_content_category"]
+          completed: boolean
+          content_id: string
+          cover_image_url: string
+          estimated_seconds: number
+          fields: Json
+          position_in_day: number
+          template_type: Database["public"]["Enums"]["cms_template_type"]
+          title: string
+          total_today: number
         }[]
       }
       init_customer_inventory: {
@@ -1113,9 +1323,29 @@ export type Database = {
         }
         Returns: undefined
       }
+      review_content: {
+        Args: {
+          p_approve: boolean
+          p_content_id: string
+          p_rejection_reason?: string
+        }
+        Returns: undefined
+      }
+      set_content_published: {
+        Args: { p_content_id: string; p_published: boolean }
+        Returns: undefined
+      }
+      set_day_schedule: {
+        Args: { p_content_ids: string[]; p_day_number: number }
+        Returns: undefined
+      }
       skip_morning_checkin: {
         Args: { p_customer_id: string; p_date: string }
         Returns: Json
+      }
+      submit_content_for_review: {
+        Args: { p_content_id: string }
+        Returns: undefined
       }
       update_coach_whatsapp_contact: {
         Args: {
@@ -1128,11 +1358,39 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_journey_settings: {
+        Args: {
+          p_daily_content_enabled: boolean
+          p_daily_content_limit: number
+          p_journey_days: number
+          p_journey_name: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       activity_level: "sedentary" | "light" | "moderate" | "high"
       bmi_category: "underweight" | "normal" | "overweight" | "obese"
       bowel_movement_level: "none" | "once" | "two_or_more"
+      cms_content_category:
+        | "nutrition_knowledge"
+        | "life_tips"
+        | "misu_usage"
+        | "daily_challenge"
+      cms_content_status:
+        | "draft"
+        | "pending_review"
+        | "published"
+        | "rejected"
+        | "unpublished"
+      cms_template_type:
+        | "image_knowledge"
+        | "supermarket_pick"
+        | "eating_out_guide"
+        | "product_tutorial"
+        | "quiz"
+        | "true_false"
+        | "daily_challenge"
       diet_type:
         | "regular"
         | "vegetarian"
@@ -1162,7 +1420,7 @@ export type Database = {
         | "FOLLOWED_UP"
         | "COMPLETED"
         | "DISMISSED"
-      user_role: "customer" | "coach" | "admin"
+      user_role: "customer" | "coach" | "admin" | "nutritionist" | "trainer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1293,6 +1551,28 @@ export const Constants = {
       activity_level: ["sedentary", "light", "moderate", "high"],
       bmi_category: ["underweight", "normal", "overweight", "obese"],
       bowel_movement_level: ["none", "once", "two_or_more"],
+      cms_content_category: [
+        "nutrition_knowledge",
+        "life_tips",
+        "misu_usage",
+        "daily_challenge",
+      ],
+      cms_content_status: [
+        "draft",
+        "pending_review",
+        "published",
+        "rejected",
+        "unpublished",
+      ],
+      cms_template_type: [
+        "image_knowledge",
+        "supermarket_pick",
+        "eating_out_guide",
+        "product_tutorial",
+        "quiz",
+        "true_false",
+        "daily_challenge",
+      ],
       diet_type: [
         "regular",
         "vegetarian",
@@ -1326,7 +1606,7 @@ export const Constants = {
         "COMPLETED",
         "DISMISSED",
       ],
-      user_role: ["customer", "coach", "admin"],
+      user_role: ["customer", "coach", "admin", "nutritionist", "trainer"],
     },
   },
 } as const
