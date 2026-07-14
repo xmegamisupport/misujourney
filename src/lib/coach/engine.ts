@@ -134,22 +134,19 @@ export interface AdminCustomerSummary {
 }
 
 /** Admin-wide roster (every customer, not just one coach's) — used by
- * /admin/customers, /admin/binding, and (filtered to one coachId)
- * /admin/coaches/[id]. RLS (profiles_select_as_admin) already scopes every
- * query below to what an admin is allowed to see.
+ * /admin/customers and /admin/binding. RLS (profiles_select_as_admin)
+ * already scopes every query below to what an admin is allowed to see.
  * onboarding_completed_at excludes registrations that were never finished —
  * an abandoned signup shouldn't show up as a real customer until the 5-step
  * onboarding wizard actually completes. */
-export async function getAllCustomersForAdmin(coachId?: string): Promise<AdminCustomerSummary[]> {
+export async function getAllCustomersForAdmin(): Promise<AdminCustomerSummary[]> {
   const supabase = createClient();
-  let query = supabase
+  const { data: customers, error } = await supabase
     .from("profiles")
     .select("id, name, avatar, start_date, coach_id")
     .eq("role", "customer")
     .not("onboarding_completed_at", "is", null)
     .order("name", { ascending: true });
-  if (coachId) query = query.eq("coach_id", coachId);
-  const { data: customers, error } = await query;
   if (error) throw error;
   if (!customers || customers.length === 0) return [];
 
@@ -232,6 +229,23 @@ export async function getAllCoaches(): Promise<AdminCoachSummary[]> {
   const body = await res.json();
   if (!res.ok) throw new Error(body.error ?? "加载教练列表失败");
   return body.coaches as AdminCoachSummary[];
+}
+
+export interface CoachBoundCustomer {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+}
+
+/** The "教练的顾客" list only needs contact info — name/phone/email — not
+ * the full progress roster. Admin-only, goes through /api/admin/coaches/[id]/
+ * customers since email lives on auth.users. */
+export async function getCoachBoundCustomers(coachId: string): Promise<CoachBoundCustomer[]> {
+  const res = await fetch(`/api/admin/coaches/${coachId}/customers`);
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error ?? "加载顾客名单失败");
+  return body.customers as CoachBoundCustomer[];
 }
 
 export interface CreateCoachInput {

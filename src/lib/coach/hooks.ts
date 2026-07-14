@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getCustomerProfile, getMyCustomers, getAllCoaches, getMyCoachProfile, getAllCustomersForAdmin } from "./engine";
-import type { CoachCustomerProfile, CoachCustomerSummary, AdminCoachSummary, AdminCustomerSummary, MyCoachProfile } from "./engine";
+import { getCustomerProfile, getMyCustomers, getAllCoaches, getMyCoachProfile, getAllCustomersForAdmin, getCoachBoundCustomers } from "./engine";
+import type { CoachCustomerProfile, CoachCustomerSummary, AdminCoachSummary, AdminCustomerSummary, MyCoachProfile, CoachBoundCustomer } from "./engine";
 
 export function useMyCustomers(coachId: string): { data: CoachCustomerSummary[]; loading: boolean } {
   const [data, setData] = useState<CoachCustomerSummary[]>([]);
@@ -25,7 +25,7 @@ export function useMyCustomers(coachId: string): { data: CoachCustomerSummary[];
   return { data, loading };
 }
 
-export function useAllCustomersForAdmin(coachId?: string): { data: AdminCustomerSummary[]; loading: boolean; refresh: () => void } {
+export function useAllCustomersForAdmin(): { data: AdminCustomerSummary[]; loading: boolean; refresh: () => void } {
   const [data, setData] = useState<AdminCustomerSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
@@ -33,7 +33,7 @@ export function useAllCustomersForAdmin(coachId?: string): { data: AdminCustomer
 
   useEffect(() => {
     let cancelled = false;
-    getAllCustomersForAdmin(coachId)
+    getAllCustomersForAdmin()
       .then((result) => {
         if (!cancelled) setData(result);
       })
@@ -43,7 +43,7 @@ export function useAllCustomersForAdmin(coachId?: string): { data: AdminCustomer
     return () => {
       cancelled = true;
     };
-  }, [coachId, tick]);
+  }, [tick]);
 
   return { data, loading, refresh };
 }
@@ -96,6 +96,27 @@ export function useMyCoachProfile(coachId: string): { data: MyCoachProfile | und
   }, [coachId, tick]);
 
   return { data, loading, refresh };
+}
+
+export function useCoachBoundCustomers(coachId: string): { data: CoachBoundCustomer[]; loading: boolean } {
+  const [data, setData] = useState<CoachBoundCustomer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getCoachBoundCustomers(coachId)
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [coachId]);
+
+  return { data, loading };
 }
 
 export function useCustomerProfile(customerId: string): { data: CoachCustomerProfile | undefined; loading: boolean } {
