@@ -102,10 +102,20 @@ export interface CoachCustomerProfile extends CoachCustomerSummary {
 
 /** RLS (profiles_select_as_coach: coach_id = auth.uid()) already scopes this
  * to exactly the customers assigned to the caller — no extra filtering
- * needed beyond role, since a coach can't see anyone else's profiles here. */
+ * needed beyond role, since a coach can't see anyone else's profiles here.
+ * onboarding_completed_at excludes registrations that were never finished —
+ * coach_id itself is only set by complete_registration_goals(), so this is
+ * mostly defensive, but keeps the rule in one place regardless of how a
+ * customer ended up with a coach_id. */
 export async function getMyCustomers(coachId: string): Promise<CoachCustomerSummary[]> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("profiles").select("id, name, avatar, start_date, phone").eq("coach_id", coachId).eq("role", "customer").order("name", { ascending: true });
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, name, avatar, start_date, phone")
+    .eq("coach_id", coachId)
+    .eq("role", "customer")
+    .not("onboarding_completed_at", "is", null)
+    .order("name", { ascending: true });
   if (error) throw error;
   return (data ?? []).map((row) => ({ id: row.id, name: row.name, avatar: row.avatar, startDate: row.start_date, phone: row.phone }));
 }
@@ -124,15 +134,18 @@ export interface AdminCustomerSummary {
 }
 
 /** Admin-wide roster (every customer, not just one coach's) — used by
- * /admin/customers. RLS (profiles_select_as_admin) already scopes every
- * query below to what an admin is allowed to see; no extra filtering
- * needed beyond role='customer' on the initial fetch. */
+ * /admin/customers and /admin/binding. RLS (profiles_select_as_admin)
+ * already scopes every query below to what an admin is allowed to see.
+ * onboarding_completed_at excludes registrations that were never finished —
+ * an abandoned signup shouldn't show up as a real customer until the 5-step
+ * onboarding wizard actually completes. */
 export async function getAllCustomersForAdmin(): Promise<AdminCustomerSummary[]> {
   const supabase = createClient();
   const { data: customers, error } = await supabase
     .from("profiles")
     .select("id, name, avatar, start_date, coach_id")
     .eq("role", "customer")
+    .not("onboarding_completed_at", "is", null)
     .order("name", { ascending: true });
   if (error) throw error;
   if (!customers || customers.length === 0) return [];

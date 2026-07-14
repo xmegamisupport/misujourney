@@ -36,13 +36,16 @@ function completionRate(rows: { currentDay: number; planLength: number }[], plan
 
 /** Platform-wide stats for the Admin overview page — getActiveAlerts() goes
  * through the normal RLS-scoped client, which (as an admin) resolves to
- * every open alert via alerts_select_as_admin, not just one coach's. */
+ * every open alert via alerts_select_as_admin, not just one coach's.
+ * Customers who never finished the onboarding wizard (onboarding_completed_at
+ * is null) are excluded from every count — an abandoned registration isn't
+ * a real customer yet. */
 export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
   const supabase = createClient();
   const today = todayDateStr();
 
   const [{ data: customers, error: custError }, { count: totalCoaches, error: coachError }, activeAlerts] = await Promise.all([
-    supabase.from("profiles").select("id, start_date").eq("role", "customer"),
+    supabase.from("profiles").select("id, start_date").eq("role", "customer").not("onboarding_completed_at", "is", null),
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "coach"),
     getActiveAlerts(),
   ]);

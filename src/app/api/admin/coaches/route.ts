@@ -57,7 +57,7 @@ export async function GET() {
       )
       .eq("role", "coach")
       .order("created_at", { ascending: false }),
-    admin.from("profiles").select("coach_id").eq("role", "customer").not("coach_id", "is", null),
+    admin.from("profiles").select("coach_id").eq("role", "customer").not("coach_id", "is", null).not("onboarding_completed_at", "is", null),
     admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
   if (coachError) return NextResponse.json({ error: coachError.message }, { status: 500 });

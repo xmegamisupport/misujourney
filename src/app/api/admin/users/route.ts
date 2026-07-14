@@ -33,7 +33,7 @@ export async function GET() {
   }
 
   const [{ data: profiles, error: profileError }, { data: userList, error: userListError }] = await Promise.all([
-    admin.from("profiles").select("id, name, avatar, role, created_at").in("role", LISTED_ROLES).order("created_at", { ascending: false }),
+    admin.from("profiles").select("id, name, avatar, role, created_at, onboarding_completed_at").in("role", LISTED_ROLES).order("created_at", { ascending: false }),
     admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
@@ -41,23 +41,28 @@ export async function GET() {
 
   const authUserById = new Map(userList.users.map((u) => [u.id, u]));
 
-  const result = (profiles ?? []).map((p) => {
-    const authUser = authUserById.get(p.id);
-    // No suspend/ban feature exists yet, so "inactive" only reflects a real
-    // banned_until in the future; "pending" means the email was never
-    // confirmed (e.g. an invite that was never completed).
-    const bannedUntil = authUser?.banned_until ? new Date(authUser.banned_until).getTime() : null;
-    const status = bannedUntil && bannedUntil > Date.now() ? "inactive" : !authUser?.email_confirmed_at ? "pending" : "active";
-    return {
-      id: p.id,
-      name: p.name,
-      avatar: p.avatar,
-      email: authUser?.email ?? null,
-      role: p.role,
-      status,
-      joinedAt: p.created_at,
-    };
-  });
+  // A customer who never finished the onboarding wizard isn't a real
+  // customer yet — don't list them alongside actually-registered accounts.
+  // Coach/Admin have no onboarding step, so this only ever excludes customers.
+  const result = (profiles ?? [])
+    .filter((p) => p.role !== "customer" || p.onboarding_completed_at !== null)
+    .map((p) => {
+      const authUser = authUserById.get(p.id);
+      // No suspend/ban feature exists yet, so "inactive" only reflects a real
+      // banned_until in the future; "pending" means the email was never
+      // confirmed (e.g. an invite that was never completed).
+      const bannedUntil = authUser?.banned_until ? new Date(authUser.banned_until).getTime() : null;
+      const status = bannedUntil && bannedUntil > Date.now() ? "inactive" : !authUser?.email_confirmed_at ? "pending" : "active";
+      return {
+        id: p.id,
+        name: p.name,
+        avatar: p.avatar,
+        email: authUser?.email ?? null,
+        role: p.role,
+        status,
+        joinedAt: p.created_at,
+      };
+    });
 
   return NextResponse.json({ users: result });
 }
