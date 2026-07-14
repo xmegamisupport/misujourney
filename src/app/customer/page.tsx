@@ -10,7 +10,7 @@ import { CoachContactSheet } from "@/components/CoachContactSheet";
 import { TodayContentCard } from "@/components/cms/TodayContentCard";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
-import { addWater, useWaterIntake } from "@/lib/daily-progress";
+import { useWaterIntake } from "@/lib/daily-progress";
 import { useTodayMeals, useTodayCheckIn, useCustomerCheckIns } from "@/lib/inventory/hooks";
 import { todayDateStr, yesterdayDateStr } from "@/lib/inventory/engine";
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
@@ -72,7 +72,7 @@ export default function CustomerDashboardPage() {
   const vegServingsDone = countVegetableServings(addedMeals);
 
   const waterTarget = currentGoal?.waterTargetMl ?? (journey?.startWeight ? calculateWaterTargetMl(journey.startWeight) : FALLBACK_WATER_TARGET_ML);
-  const water = useWaterIntake(customerId, 0);
+  const { water, addWater } = useWaterIntake(customerId);
   const [customWater, setCustomWater] = useState("");
   const [coachSheetOpen, setCoachSheetOpen] = useState(false);
 
@@ -319,7 +319,7 @@ export default function CustomerDashboardPage() {
               <button
                 key={amount}
                 type="button"
-                onClick={() => addWater(customerId, amount, 0)}
+                onClick={() => addWater(amount)}
                 className="rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-xs font-medium text-sky-700 transition hover:border-sky-300 active:scale-95"
               >
                 +{amount}ml
@@ -341,7 +341,7 @@ export default function CustomerDashboardPage() {
               onClick={() => {
                 const amount = Number(customWater);
                 if (amount > 0) {
-                  addWater(customerId, amount, 0);
+                  addWater(amount);
                   setCustomWater("");
                 }
               }}

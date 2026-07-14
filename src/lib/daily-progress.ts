@@ -1,70 +1,86 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { todayDateStr } from "@/lib/inventory/engine";
 
-const WATER_KEY = "misu-water-intake";
-const CHANGE_EVENT = "misu-daily-progress-change";
-
-function emitChange() {
-  window.dispatchEvent(new Event(CHANGE_EVENT));
+async function fetchTodayWater(customerId: string): Promise<number> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("daily_water_logs")
+    .select("total_ml")
+    .eq("customer_id", customerId)
+    .eq("log_date", todayDateStr())
+    .maybeSingle();
+  if (error) throw error;
+  return data?.total_ml ?? 0;
 }
 
-function subscribe(callback: () => void) {
-  window.addEventListener(CHANGE_EVENT, callback);
-  window.addEventListener("storage", callback);
-  return () => {
-    window.removeEventListener(CHANGE_EVENT, callback);
-    window.removeEventListener("storage", callback);
-  };
-}
-
-/** Keyed by customerId so switching accounts on the same browser (or a
- * fresh registration right after testing another account) never carries
- * over a previous account's water total. */
-function waterKey(customerId: string): string {
-  return `${WATER_KEY}:${customerId}`;
-}
-
-/** Fire-and-forget so this never blocks or changes the UI's existing
- * synchronous behavior — water intake was previously localStorage-only,
- * never queryable server-side. Persisting it (in addition to, not instead
- * of, the localStorage value the UI already reads) is what makes "饮水完成
- * 情况" a real AI-analysis input instead of a fabricated one. */
-async function persistWaterLog(customerId: string, totalMl: number) {
-  if (!customerId) return;
+async function persistWaterLog(customerId: string, totalMl: number): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("daily_water_logs").upsert({ customer_id: customerId, log_date: todayDateStr(), total_ml: totalMl }, { onConflict: "customer_id,log_date" });
-  if (error) console.error("Failed to persist water log", error);
+  if (error) throw error;
 }
 
-/** No upper cap at `target` — customers can keep logging water past their
- * daily goal instead of the button silently doing nothing once "done". */
-export function addWater(customerId: string, amountMl: number, baseline: number) {
-  const key = waterKey(customerId);
-  const raw = localStorage.getItem(key);
-  const current = raw !== null ? Number(raw) : baseline;
-  const next = Math.max(0, current + amountMl);
-  localStorage.setItem(key, String(next));
-  emitChange();
-  void persistWaterLog(customerId, next);
-}
+/** daily_water_logs (today's row) is the one source of truth across every
+ * device — this used to be tracked in localStorage instead, which is why
+ * the same customer could see a completely different total on their phone
+ * vs desktop vs iPad: each browser kept its own independent counter, and
+ * none of them ever reset at the day boundary (the key wasn't even scoped
+ * by date), so a stale value could just keep growing across days on
+ * whichever device was left open. Local state here is only an optimistic
+ * cache over that one server-side number, not a second copy of it. */
+export function useWaterIntake(customerId: string): { water: number; loading: boolean; addWater: (amountMl: number) => Promise<void> } {
+  const [water, setWater] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const waterRef = useRef(0);
 
-export function useWaterIntake(customerId: string, baseline: number): number {
-  const key = waterKey(customerId);
-  const raw = useSyncExternalStore(
-    subscribe,
-    () => localStorage.getItem(key),
-    () => null,
+  useEffect(() => {
+    let cancelled = false;
+    const promise = customerId ? fetchTodayWater(customerId) : Promise.resolve(0);
+    promise
+      .then((total) => {
+        if (cancelled) return;
+        waterRef.current = total;
+        setWater(total);
+      })
+      .catch((error) => {
+        console.error("Failed to load water intake", error);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [customerId]);
+
+  // Reads/writes waterRef (not the `water` state) so back-to-back clicks in
+  // the same tick each add on top of the previous click's total instead of
+  // all computing from the same stale render's `water` value.
+  const addWater = useCallback(
+    async (amountMl: number) => {
+      if (!customerId) return;
+      const next = Math.max(0, waterRef.current + amountMl);
+      const previous = waterRef.current;
+      waterRef.current = next;
+      setWater(next);
+      try {
+        await persistWaterLog(customerId, next);
+      } catch (error) {
+        console.error("Failed to persist water log", error);
+        waterRef.current = previous;
+        setWater(previous);
+      }
+    },
+    [customerId],
   );
-  const value = raw !== null ? Number(raw) : baseline;
-  return Math.max(0, value);
+
+  return { water, loading, addWater };
 }
 
-/** A Coach reads a customer's water intake from another browser, so the
- * localStorage-first value above doesn't apply — this reads the persisted
- * daily_water_logs mirror instead (batched, for the customer roster). */
+/** A Coach reads a customer's water intake from another browser — same
+ * daily_water_logs table the customer's own useWaterIntake() reads from. */
 export async function getWaterLogsForCustomers(customerIds: string[], date: string): Promise<Record<string, number>> {
   if (customerIds.length === 0) return {};
   const supabase = createClient();
