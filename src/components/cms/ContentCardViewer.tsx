@@ -10,12 +10,16 @@ interface ContentCardViewerProps {
   fields: CmsContentFields;
   onComplete?: () => void;
   completing?: boolean;
+  /** "sm" (default) matches the real customer card size. "lg" is for staff
+   * review modals (待审核/已发布/编辑预览) where Admin needs to actually
+   * inspect photo quality, not just simulate the customer's phone size. */
+  imageSize?: "sm" | "lg";
 }
 
 /** Card1 图片+一句重点 → Card2 ... → 互动 → 完成 — one component drives both
  * the CMS "预览" (onComplete is a no-op that just closes the modal) and the
  * real customer-facing viewer (onComplete calls complete_today_content). */
-export function ContentCardViewer({ templateType, fields, onComplete, completing }: ContentCardViewerProps) {
+export function ContentCardViewer({ templateType, fields, onComplete, completing, imageSize = "sm" }: ContentCardViewerProps) {
   const cards = useMemo(() => buildCards(templateType, fields), [templateType, fields]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -46,7 +50,14 @@ export function ContentCardViewer({ templateType, fields, onComplete, completing
       <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-sm">
         {card.image && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={card.image} alt="" className="h-32 w-32 rounded-2xl object-cover" />
+          <img
+            src={card.image}
+            alt=""
+            className={cn(
+              "rounded-2xl",
+              imageSize === "lg" ? "max-h-80 w-full object-contain bg-slate-50" : "h-32 w-32 object-cover",
+            )}
+          />
         )}
         {card.lines.map((l, i) => (
           <p key={i} className={i === 0 && !card.interactive ? "text-base font-semibold text-slate-900" : "text-sm text-slate-600"}>

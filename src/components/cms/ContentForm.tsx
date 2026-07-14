@@ -265,19 +265,19 @@ export function ContentForm({ templateType, existing }: ContentFormProps) {
       {previewOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={() => setPreviewOpen(false)}>
           <div
-            className="flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-[2.5rem] border-8 border-slate-900 bg-slate-50 shadow-2xl"
+            className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3">
-              <p className="text-sm font-semibold text-slate-800">顾客画面预览</p>
+              <p className="text-sm font-semibold text-slate-800">内容预览</p>
               <button type="button" onClick={() => setPreviewOpen(false)} className="text-slate-400">
                 ✕
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-5">
               <p className="mb-3 text-center text-xs font-medium text-slate-400">今日小知识</p>
               <p className="mb-4 text-center text-base font-semibold text-slate-900">{title || "（未命名）"}</p>
-              <ContentCardViewer templateType={templateType} fields={fields} onComplete={() => setPreviewOpen(false)} />
+              <ContentCardViewer templateType={templateType} fields={fields} imageSize="lg" onComplete={() => setPreviewOpen(false)} />
             </div>
           </div>
         </div>
