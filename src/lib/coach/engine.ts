@@ -16,14 +16,30 @@ export interface MyCoachProfile {
   name: string;
   avatar: string | null;
   referralCode: string | null;
+  whatsappNumber: string | null;
 }
 
 export async function getMyCoachProfile(coachId: string): Promise<MyCoachProfile | undefined> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("profiles").select("id, name, avatar, referral_code").eq("id", coachId).maybeSingle();
+  const { data, error } = await supabase.from("profiles").select("id, name, avatar, referral_code, whatsapp_number").eq("id", coachId).maybeSingle();
   if (error) throw error;
   if (!data) return undefined;
-  return { id: data.id, name: data.name, avatar: data.avatar, referralCode: data.referral_code };
+  return { id: data.id, name: data.name, avatar: data.avatar, referralCode: data.referral_code, whatsappNumber: data.whatsapp_number };
+}
+
+export interface UpdateWhatsAppResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** The only way to change your own whatsapp_number — profiles has no direct
+ * UPDATE grant for authenticated, so this goes through a narrow RPC that
+ * only ever touches the caller's own row. */
+export async function updateMyWhatsAppNumber(whatsappNumber: string): Promise<UpdateWhatsAppResult> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("update_my_whatsapp_number", { p_whatsapp_number: whatsappNumber });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 }
 
 export interface CoachCustomerProfile extends CoachCustomerSummary {

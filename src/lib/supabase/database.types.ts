@@ -1090,6 +1090,10 @@ export type Database = {
         Args: { p_customer_id: string; p_date: string }
         Returns: Json
       }
+      update_my_whatsapp_number: {
+        Args: { p_whatsapp_number: string }
+        Returns: undefined
+      }
     }
     Enums: {
       activity_level: "sedentary" | "light" | "moderate" | "high"
