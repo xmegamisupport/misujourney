@@ -160,7 +160,7 @@ function CheckInForm({
 }) {
   const [editing, setEditing] = useState(false);
   const [justSubmitted, setJustSubmitted] = useState(false);
-  const [checkInId] = useState(() => `checkin_${crypto.randomUUID()}`);
+  const [checkInId] = useState(() => crypto.randomUUID());
 
   const record = todayCheckIn;
 
