@@ -45,7 +45,9 @@ export async function GET() {
 
   const { data: coaches, error: coachError } = await admin
     .from("profiles")
-    .select("id, name, avatar, referral_code, whatsapp_contact_method, whatsapp_normalized_number, whatsapp_custom_link, whatsapp_needs_review, created_at")
+    .select(
+      "id, name, avatar, referral_code, whatsapp_country_code, whatsapp_country_iso, whatsapp_local_number, whatsapp_contact_method, whatsapp_normalized_number, whatsapp_custom_link, whatsapp_needs_review, created_at",
+    )
     .eq("role", "coach")
     .order("created_at", { ascending: false });
   if (coachError) return NextResponse.json({ error: coachError.message }, { status: 500 });
@@ -76,6 +78,10 @@ export async function GET() {
         email: userData.user?.email ?? null,
         referralCode: c.referral_code,
         hasWhatsAppContact,
+        whatsappCountryIso: c.whatsapp_country_iso,
+        whatsappLocalNumber: c.whatsapp_local_number,
+        whatsappCustomLink: c.whatsapp_custom_link,
+        whatsappContactMethod: c.whatsapp_contact_method,
         whatsappNeedsReview: c.whatsapp_needs_review,
         customerCount: counts[c.id] ?? 0,
         createdAt: c.created_at,

@@ -110,6 +110,10 @@ export interface AdminCoachSummary {
   email: string | null;
   referralCode: string | null;
   hasWhatsAppContact: boolean;
+  whatsappCountryIso: string | null;
+  whatsappLocalNumber: string | null;
+  whatsappCustomLink: string | null;
+  whatsappContactMethod: WhatsAppContactMethod;
   whatsappNeedsReview: boolean;
   customerCount: number;
   createdAt: string;

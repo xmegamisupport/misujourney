@@ -4,11 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { WhatsAppContactEditor } from "@/components/WhatsAppContactEditor";
 import { useAllCoaches } from "@/lib/coach/hooks";
 import { createCoachAccount } from "@/lib/coach/engine";
 
 export default function CoachManagementPage() {
   const { data: coaches, loading, refresh } = useAllCoaches();
+  const [editingCoachId, setEditingCoachId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -88,7 +90,7 @@ export default function CoachManagementPage() {
       {formOpen && (
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
           <p className="text-sm font-semibold text-slate-800">新增教练账号</p>
-          <p className="text-xs text-slate-400">WhatsApp 联络资料由教练登录后自行到「我的」页面设置（需要选择国家/地区）</p>
+          <p className="text-xs text-slate-400">WhatsApp 联络资料创建后可在下方列表点击「编辑 WhatsApp」设置，教练本人也可以登录后自行到「我的」页面设置</p>
           <div className="grid gap-3 md:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm text-slate-600">
               姓名
@@ -146,21 +148,47 @@ export default function CoachManagementPage() {
         <EmptyState icon="🌿" title="还没有教练账号" description="点击右上角「+ 新增教练」创建第一位教练" />
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
-          {coaches.map((coach) => (
-            <div key={coach.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-50 text-2xl">
-                {coach.avatar ?? "🌿"}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-800">{coach.name}</p>
-                <p className="truncate text-xs text-slate-400">{coach.email ?? "—"}</p>
-                <p className="mt-1 text-xs text-slate-400">
-                  {coach.customerCount} 位顾客 · 推荐码 {coach.referralCode ?? "—"} · WhatsApp{" "}
-                  {coach.hasWhatsAppContact ? "已设置" : coach.whatsappNeedsReview ? "待确认（旧资料）" : "未设置"}
-                </p>
+          {coaches.map((coach) => {
+            const isEditing = editingCoachId === coach.id;
+            return (
+              <div key={coach.id} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-50 text-2xl">
+                    {coach.avatar ?? "🌿"}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-800">{coach.name}</p>
+                    <p className="truncate text-xs text-slate-400">{coach.email ?? "—"}</p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {coach.customerCount} 位顾客 · 推荐码 {coach.referralCode ?? "—"} · WhatsApp{" "}
+                      {coach.hasWhatsAppContact ? "已设置" : coach.whatsappNeedsReview ? "待确认（旧资料）" : "未设置"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditingCoachId(isEditing ? null : coach.id)}
+                    className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-300 hover:text-sky-600"
+                  >
+                    {isEditing ? "收起" : "编辑 WhatsApp"}
+                  </button>
+                </div>
+
+                {isEditing && (
+                  <WhatsAppContactEditor
+                    coachId={coach.id}
+                    initial={{
+                      countryIso: coach.whatsappCountryIso,
+                      localNumber: coach.whatsappLocalNumber,
+                      customLink: coach.whatsappCustomLink,
+                      contactMethod: coach.whatsappContactMethod,
+                      needsReview: coach.whatsappNeedsReview,
+                    }}
+                    onSaved={refresh}
+                  />
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
