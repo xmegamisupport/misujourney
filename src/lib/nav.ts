@@ -23,7 +23,6 @@ export const coachNav: NavItem[] = [
   { href: "/coach/alerts", label: "提醒", icon: "🔔", key: "alerts" },
   { href: "/coach/messages", label: "联系顾客", icon: "💬", key: "messages" },
   { href: "/coach/referral", label: "推荐", icon: "🔗", key: "referral" },
-  { href: "/cms", label: "知识 CMS", icon: "📚", key: "cms" },
   { href: "/coach/profile", label: "我的", icon: "👤", key: "profile" },
 ];
 

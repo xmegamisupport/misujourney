@@ -15,7 +15,7 @@ const ROLE_LABELS: Record<CmsRole, string> = {
   customer: "Customer",
 };
 
-const ASSIGNABLE_ROLES: CmsRole[] = ["admin", "nutritionist", "trainer", "coach"];
+const ASSIGNABLE_ROLES: CmsRole[] = ["admin", "nutritionist", "trainer"];
 
 export default function CmsPermissionsPage() {
   const { user } = useAuthUser();

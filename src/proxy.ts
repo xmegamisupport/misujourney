@@ -11,13 +11,14 @@ const ROLE_HOME: Record<string, string> = {
 };
 
 const AUTH_PAGES = ["/login", "/register"];
-/** Most prefixes are exact-role-only; /cms is shared by every CMS-facing
- * role (Coach gets read-only access, enforced by RLS — not by this list). */
+/** Most prefixes are exact-role-only; /cms is shared by Admin/Nutritionist/
+ * Trainer. Coach has no CMS access for now — may be opened up per-account
+ * later via an Admin-granted permission, not a blanket role grant. */
 const PROTECTED_PREFIXES: { prefix: string; roles: string[] }[] = [
   { prefix: "/customer", roles: ["customer"] },
   { prefix: "/coach", roles: ["coach"] },
   { prefix: "/admin", roles: ["admin"] },
-  { prefix: "/cms", roles: ["admin", "nutritionist", "trainer", "coach"] },
+  { prefix: "/cms", roles: ["admin", "nutritionist", "trainer"] },
 ];
 const ONBOARDING_PATH = "/onboarding";
 

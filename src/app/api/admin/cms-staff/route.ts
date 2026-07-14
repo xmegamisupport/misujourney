@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
-const CMS_ROLES = ["admin", "nutritionist", "trainer", "coach"] as const;
+const CMS_ROLES = ["admin", "nutritionist", "trainer"] as const;
 type CmsRole = (typeof CMS_ROLES)[number];
 
 interface CreateStaffBody {
