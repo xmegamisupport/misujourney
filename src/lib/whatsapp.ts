@@ -52,14 +52,24 @@ export function normalizeInternationalPhoneNumber(countryCallingCode: string, lo
 
 const ALLOWED_WHATSAPP_HOSTS = ["wa.me", "api.whatsapp.com", "whatsapp.com"];
 
+const HAS_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
+
 /** Only https:// links on wa.me / api.whatsapp.com / whatsapp.com (or a
  * subdomain of the latter, for WhatsApp Business short links) are accepted —
  * rejects arbitrary external domains and any non-https scheme (including
- * javascript:). Returns the normalized URL string, or null if invalid. */
+ * javascript:). Tolerates a bare domain+path with no scheme at all (e.g.
+ * "wa.me/60123456789", which is what you get copying just the link text out
+ * of WhatsApp) by assuming https:// — it never silently accepts a scheme the
+ * caller explicitly wrote as non-https. Returns the normalized URL string
+ * (always starting with https://), or null if invalid. */
 export function validateCustomWhatsAppLink(rawUrl: string): string | null {
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return null;
+  const candidate = HAS_SCHEME_PATTERN.test(trimmed) ? trimmed : `https://${trimmed}`;
+
   let parsed: URL;
   try {
-    parsed = new URL(rawUrl.trim());
+    parsed = new URL(candidate);
   } catch {
     return null;
   }
