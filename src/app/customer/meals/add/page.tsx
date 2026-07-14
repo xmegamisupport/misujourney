@@ -150,7 +150,7 @@ export default function AddMealPage() {
             </>
           )}
         </button>
-        <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhoto} />
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
       </div>
 
       {error && (
