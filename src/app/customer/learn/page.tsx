@@ -1,45 +1,35 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ProgressCard } from "@/components/ui/ProgressCard";
-import { useAuthUser } from "@/lib/supabase/useAuthUser";
-import { useJourneySummary } from "@/lib/journey";
-import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { useMyTodayContent } from "@/lib/cms/hooks";
+import { completeTodayContent } from "@/lib/cms/engine";
+import { ContentCardViewer } from "@/components/cms/ContentCardViewer";
 
-type CourseStatus = "done" | "current" | "locked";
-
-const courseList: { title: string; duration: string; status: CourseStatus }[] = [
-  { title: "第 1 课：认识你的身体", duration: "8 分钟", status: "current" },
-  { title: "第 2 课：外食怎么选", duration: "6 分钟", status: "locked" },
-  { title: "第 3 课：如何应对聚餐", duration: "6 分钟", status: "locked" },
-  { title: "第 4 课：突破停滞期", duration: "10 分钟", status: "locked" },
-  { title: "第 5 课：维持期的心态调整", duration: "7 分钟", status: "locked" },
-];
-
-const statusMap = {
-  done: { label: "已完成", cls: "bg-emerald-50 text-emerald-600" },
-  current: { label: "进行中", cls: "bg-sky-50 text-sky-600" },
-  locked: { label: "未开始", cls: "bg-slate-100 text-slate-400" },
-};
-
+/** Single source of truth: today's content comes entirely from the
+ * Knowledge CMS (get_my_today_content()/complete_today_content()) — the
+ * same RPCs the dashboard's "今日小知识" card uses, so there's exactly one
+ * data path, not a hardcoded course list plus a separate CMS feed. */
 export default function LearnPage() {
-  const { user } = useAuthUser();
-  const { data: journey } = useJourneySummary(user?.id ?? "");
-  const doneCount = courseList.filter((l) => l.status === "done").length;
+  const { data: items, loading, refresh } = useMyTodayContent();
+  const [completing, setCompleting] = useState(false);
+
+  const current = items.find((i) => !i.completed);
+  const allDone = items.length > 0 && !current;
+
+  async function handleComplete() {
+    if (!current) return;
+    setCompleting(true);
+    await completeTodayContent(current.contentId);
+    setCompleting(false);
+    refresh();
+  }
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
-      <PageHeader title="学习中心" subtitle={`Day ${journey?.currentDay ?? 1} · 持续学习，持续进步`} />
-
-      <ProgressCard
-        label="课程完成进度"
-        percent={Math.round((doneCount / courseList.length) * 100)}
-        icon="📚"
-        sublabel={`已完成 ${doneCount}/${courseList.length} 课`}
-        barColor="bg-sky-500"
-        trackColor="bg-sky-100"
-      />
+      <PageHeader title="今日学习" subtitle="每天一分钟，认识更好的自己" />
 
       <div className="grid grid-cols-2 gap-3">
         <Link
@@ -60,45 +50,32 @@ export default function LearnPage() {
         </Link>
       </div>
 
-      <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-emerald-50 p-4">
-        <p className="mb-1 text-xs font-medium text-sky-600">今日推荐</p>
-        <p className="text-base font-semibold text-slate-900">{courseList.find((l) => l.status !== "done")?.title ?? courseList[0].title}</p>
-        <p className="mt-1 text-sm text-slate-500">从这里开始，逐步建立健康习惯</p>
-        <button
-          type="button"
-          className="mt-3 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600"
-        >
-          开始学习
-        </button>
-      </div>
-
-      <div>
-        <p className="mb-2 text-sm font-semibold text-slate-700">全部课程</p>
-        <div className="flex flex-col gap-2">
-          {courseList.map((lesson) => (
-            <div
-              key={lesson.title}
-              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm"
-            >
-              <span
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm",
-                  statusMap[lesson.status].cls,
-                )}
-              >
-                {lesson.status === "done" ? "✓" : "▶"}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-slate-800">{lesson.title}</p>
-                <p className="text-xs text-slate-400">{lesson.duration}</p>
-              </div>
-              <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium", statusMap[lesson.status].cls)}>
-                {statusMap[lesson.status].label}
-              </span>
-            </div>
-          ))}
+      {loading ? null : items.length === 0 ? (
+        <EmptyState icon="📚" title="今天暂时没有新的小知识，继续完成你的Journey任务就好。" />
+      ) : allDone ? (
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-8 text-center">
+          <span className="text-3xl">✅</span>
+          <p className="text-sm font-medium text-emerald-700">今日内容已完成</p>
         </div>
-      </div>
+      ) : (
+        current && (
+          <div className="flex flex-col gap-3">
+            {items[0].totalToday > 1 && (
+              <p className="text-center text-xs text-slate-400">
+                今日内容 {current.positionInDay} / {current.totalToday}
+              </p>
+            )}
+            <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+              <ContentCardViewer
+                templateType={current.templateType}
+                fields={current.fields}
+                onComplete={handleComplete}
+                completing={completing}
+              />
+            </div>
+          </div>
+        )
+      )}
     </div>
   );
 }

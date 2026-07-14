@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { href: "/admin/content/lessons", label: "课程管理" },
   { href: "/admin/content/faq", label: "FAQ 管理" },
   { href: "/admin/content/guide", label: "产品指南管理" },
 ];

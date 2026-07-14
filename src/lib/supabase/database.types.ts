@@ -91,27 +91,33 @@ export type Database = {
           completed_at: string
           content_id: string
           content_title_snapshot: string
+          content_version: string | null
           customer_id: string
           day_number: number
           id: string
+          journey_id: string | null
           template_type_snapshot: Database["public"]["Enums"]["cms_template_type"]
         }
         Insert: {
           completed_at?: string
           content_id: string
           content_title_snapshot: string
+          content_version?: string | null
           customer_id: string
           day_number: number
           id?: string
+          journey_id?: string | null
           template_type_snapshot: Database["public"]["Enums"]["cms_template_type"]
         }
         Update: {
           completed_at?: string
           content_id?: string
           content_title_snapshot?: string
+          content_version?: string | null
           customer_id?: string
           day_number?: number
           id?: string
+          journey_id?: string | null
           template_type_snapshot?: Database["public"]["Enums"]["cms_template_type"]
         }
         Relationships: [
@@ -127,6 +133,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cms_customer_content_progress_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "cms_journey_settings"
             referencedColumns: ["id"]
           },
         ]

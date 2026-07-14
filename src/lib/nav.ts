@@ -31,7 +31,6 @@ export const adminNav: NavItem[] = [
   { href: "/admin/users", label: "用户", icon: "🧾", key: "users" },
   { href: "/admin/coaches", label: "教练", icon: "🌿", key: "coaches" },
   { href: "/admin/customers", label: "顾客", icon: "🧑‍🤝‍🧑", key: "customers" },
-  { href: "/admin/content/lessons", label: "内容", icon: "🗂️", key: "content" },
   { href: "/cms", label: "知识 CMS", icon: "📚", key: "cms" },
   { href: "/admin/settings", label: "设置", icon: "⚙️", key: "settings" },
 ];

@@ -7,7 +7,6 @@ import { ProgressCard } from "@/components/ui/ProgressCard";
 import { useAdminOverviewStats } from "@/lib/admin/overview";
 
 const contentShortcuts = [
-  { href: "/admin/content/lessons", label: "课程管理", icon: "🎓" },
   { href: "/admin/content/faq", label: "FAQ 管理", icon: "💬" },
   { href: "/admin/content/guide", label: "产品指南管理", icon: "📦" },
 ];
@@ -34,7 +33,7 @@ export default function AdminDashboardPage() {
 
       <div>
         <p className="mb-2 text-sm font-semibold text-slate-700">内容管理快捷入口</p>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {contentShortcuts.map((item) => (
             <Link
               key={item.href}

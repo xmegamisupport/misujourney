@@ -3,7 +3,6 @@ import type {
   CoachProfile,
   CustomerProfile,
   FaqItem,
-  LessonItem,
   MessageThread,
   ProductGuideItem,
 } from "./types";
@@ -309,13 +308,6 @@ export const adminCoaches = [
   { id: "coach-002", name: "郑家豪 Marcus", avatar: "🌊", customers: 31, activeThisWeek: 20, rating: 4.7, status: "active" as const },
   { id: "coach-003", name: "许佩珊 Grace", avatar: "🌺", customers: 26, activeThisWeek: 19, rating: 4.8, status: "active" as const },
   { id: "coach-004", name: "杨志明 Kevin", avatar: "🍃", customers: 12, activeThisWeek: 3, rating: 4.5, status: "inactive" as const },
-];
-
-export const lessons: LessonItem[] = [
-  { id: "l1", title: "第 1 课：认识你的身体", category: "基础知识", duration: "8 分钟", status: "published", views: 1204 },
-  { id: "l2", title: "第 18 课：如何应对聚餐", category: "生活场景", duration: "6 分钟", status: "published", views: 892 },
-  { id: "l3", title: "第 25 课：突破停滞期", category: "进阶技巧", duration: "10 分钟", status: "draft", views: 0 },
-  { id: "l4", title: "第 30 课：维持期的心态调整", category: "心理建设", duration: "7 分钟", status: "published", views: 634 },
 ];
 
 export const faqs: FaqItem[] = [

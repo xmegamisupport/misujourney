@@ -136,15 +136,6 @@ export interface MessageThread {
   unread: number;
 }
 
-export interface LessonItem {
-  id: string;
-  title: string;
-  category: string;
-  duration: string;
-  status: "published" | "draft";
-  views: number;
-}
-
 export interface FaqItem {
   id: string;
   question: string;
