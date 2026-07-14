@@ -16,7 +16,7 @@ export default function EditContentPage() {
       {!loading && !content ? (
         <EmptyState icon="🔍" title="找不到这篇内容" />
       ) : content ? (
-        <ContentForm templateType={content.templateType} existing={content} />
+        <ContentForm templateType={content.templateType ?? undefined} existing={content} />
       ) : null}
     </div>
   );

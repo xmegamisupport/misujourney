@@ -6,7 +6,7 @@ import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySettings, useSchedule, useContentLibrary } from "@/lib/cms/hooks";
 import { updateJourneySettings, setDaySchedule } from "@/lib/cms/engine";
 import { TEMPLATE_LIST } from "@/lib/cms/templates";
-import { STATUS_LABELS, STATUS_STYLES } from "@/lib/cms/types";
+import { CREATION_MODE_LABELS, CREATION_MODE_STYLES, STATUS_LABELS, STATUS_STYLES } from "@/lib/cms/types";
 import { cn } from "@/lib/utils";
 
 function JourneySettingsPanel({ isAdmin }: { isAdmin: boolean }) {
@@ -181,13 +181,18 @@ export default function JourneySchedulePage() {
               const template = TEMPLATE_LIST.find((t) => t.type === entry.content?.templateType);
               return (
                 <div key={entry.id} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                  <span className="text-lg">{template?.icon ?? "📄"}</span>
+                  <span className="text-lg">{entry.content?.contentCreationMode === "poster_upload" ? "🖼️" : (template?.icon ?? "📄")}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-800">{entry.content?.title ?? "（内容已删除）"}</p>
                     {entry.content && (
-                      <span className={cn("mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium", STATUS_STYLES[entry.content.status])}>
-                        {STATUS_LABELS[entry.content.status]}
-                      </span>
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        <span className={cn("inline-block rounded-full px-2 py-0.5 text-[10px] font-medium", STATUS_STYLES[entry.content.status])}>
+                          {STATUS_LABELS[entry.content.status]}
+                        </span>
+                        <span className={cn("inline-block rounded-full px-2 py-0.5 text-[10px] font-medium", CREATION_MODE_STYLES[entry.content.contentCreationMode])}>
+                          {CREATION_MODE_LABELS[entry.content.contentCreationMode]}
+                        </span>
+                      </div>
                     )}
                   </div>
                   {isAdmin && (
@@ -222,9 +227,12 @@ export default function JourneySchedulePage() {
                       onClick={() => handleAdd(item.id)}
                       className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 text-left transition hover:border-emerald-300"
                     >
-                      <span className="text-lg">{template?.icon}</span>
+                      <span className="text-lg">{item.contentCreationMode === "poster_upload" ? "🖼️" : template?.icon}</span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-slate-800">{item.title}</p>
+                        <span className={cn("mt-0.5 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium", CREATION_MODE_STYLES[item.contentCreationMode])}>
+                          {CREATION_MODE_LABELS[item.contentCreationMode]}
+                        </span>
                       </div>
                     </button>
                   );

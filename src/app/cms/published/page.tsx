@@ -5,12 +5,14 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ContentCardViewer } from "@/components/cms/ContentCardViewer";
+import { PosterCardViewer } from "@/components/cms/PosterCardViewer";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { usePublishedContent, useSchedule } from "@/lib/cms/hooks";
 import { setContentPublished } from "@/lib/cms/engine";
-import { CATEGORY_LABELS } from "@/lib/cms/types";
+import { CATEGORY_LABELS, CREATION_MODE_LABELS, CREATION_MODE_STYLES } from "@/lib/cms/types";
 import { TEMPLATE_LIST } from "@/lib/cms/templates";
 import type { CmsContentItem } from "@/lib/cms/types";
+import { cn } from "@/lib/utils";
 
 export default function PublishedContentPage() {
   const { user } = useAuthUser();
@@ -44,13 +46,26 @@ export default function PublishedContentPage() {
         <div className="grid gap-3 md:grid-cols-2">
           {items.map((item) => {
             const template = TEMPLATE_LIST.find((t) => t.type === item.templateType);
+            const thumbnail = item.coverImageUrl ?? item.posterMedia[0]?.fileUrl ?? null;
             const days = scheduledDays.get(item.id);
             return (
               <div key={item.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-xl">{template?.icon ?? "📄"}</span>
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-50 text-xl">
+                  {thumbnail ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={thumbnail} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    (template?.icon ?? "🖼️")
+                  )}
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-800">{item.title}</p>
-                  <p className="mt-0.5 text-xs text-slate-400">{CATEGORY_LABELS[item.category]} · {template?.label}</p>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
+                    {CATEGORY_LABELS[item.category]} · {item.contentCreationMode === "poster_upload" ? "海报上传" : template?.label}
+                    <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-medium", CREATION_MODE_STYLES[item.contentCreationMode])}>
+                      {CREATION_MODE_LABELS[item.contentCreationMode]}
+                    </span>
+                  </p>
                   <p className="mt-0.5 text-xs text-slate-400">
                     建立者：{item.createdByName ?? "—"} · 发布于 {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString("zh-CN") : "—"}
                   </p>
@@ -100,7 +115,11 @@ export default function PublishedContentPage() {
             <div className="flex-1 overflow-y-auto p-5">
               <p className="mb-3 text-center text-xs font-medium text-slate-400">今日小知识</p>
               <p className="mb-4 text-center text-base font-semibold text-slate-900">{previewItem.title}</p>
-              <ContentCardViewer templateType={previewItem.templateType} fields={previewItem.fields} imageSize="lg" onComplete={() => setPreviewItem(null)} />
+              {previewItem.contentCreationMode === "poster_upload" ? (
+                <PosterCardViewer media={previewItem.posterMedia} description={previewItem.posterDescription} altText={previewItem.posterAltText} onComplete={() => setPreviewItem(null)} />
+              ) : (
+                <ContentCardViewer templateType={previewItem.templateType!} fields={previewItem.fields} imageSize="lg" onComplete={() => setPreviewItem(null)} />
+              )}
             </div>
           </div>
         </div>

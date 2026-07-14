@@ -4,12 +4,14 @@ import { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ContentCardViewer } from "@/components/cms/ContentCardViewer";
+import { PosterCardViewer } from "@/components/cms/PosterCardViewer";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { usePendingContent } from "@/lib/cms/hooks";
 import { reviewContent } from "@/lib/cms/engine";
-import { CATEGORY_LABELS } from "@/lib/cms/types";
+import { CATEGORY_LABELS, CREATION_MODE_LABELS, CREATION_MODE_STYLES } from "@/lib/cms/types";
 import { TEMPLATE_LIST } from "@/lib/cms/templates";
 import type { CmsContentItem } from "@/lib/cms/types";
+import { cn } from "@/lib/utils";
 
 function PendingCard({ item, onDone }: { item: CmsContentItem; onDone: () => void }) {
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -19,6 +21,7 @@ function PendingCard({ item, onDone }: { item: CmsContentItem; onDone: () => voi
   const [error, setError] = useState<string | null>(null);
   const [publishedMessage, setPublishedMessage] = useState(false);
   const template = TEMPLATE_LIST.find((t) => t.type === item.templateType);
+  const thumbnail = item.coverImageUrl ?? item.posterMedia[0]?.fileUrl ?? null;
 
   async function handlePublish() {
     setBusy(true);
@@ -61,21 +64,24 @@ function PendingCard({ item, onDone }: { item: CmsContentItem; onDone: () => voi
     <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 text-xl">
-          {item.coverImageUrl ? (
+          {thumbnail ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.coverImageUrl} alt="" className="h-full w-full object-cover" />
+            <img src={thumbnail} alt="" className="h-full w-full object-cover" />
           ) : (
-            template?.icon
+            (template?.icon ?? "🖼️")
           )}
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-800">{item.title}</p>
           <p className="mt-0.5 text-xs text-slate-400">
-            {CATEGORY_LABELS[item.category]} · {template?.label} · 约 {item.estimatedSeconds} 秒
+            {CATEGORY_LABELS[item.category]} · {item.contentCreationMode === "poster_upload" ? "海报上传" : template?.label} · 约 {item.estimatedSeconds} 秒
           </p>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
             建立者：{item.createdByName ?? "—"} · 提交于{" "}
             {item.submittedForReviewAt ? new Date(item.submittedForReviewAt).toLocaleString("zh-CN") : "—"}
+            <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-medium", CREATION_MODE_STYLES[item.contentCreationMode])}>
+              {CREATION_MODE_LABELS[item.contentCreationMode]}
+            </span>
           </p>
         </div>
         <button type="button" onClick={() => setPreviewOpen(true)} className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-emerald-300">
@@ -129,7 +135,11 @@ function PendingCard({ item, onDone }: { item: CmsContentItem; onDone: () => voi
             <div className="flex-1 overflow-y-auto p-5">
               <p className="mb-3 text-center text-xs font-medium text-slate-400">今日小知识</p>
               <p className="mb-4 text-center text-base font-semibold text-slate-900">{item.title}</p>
-              <ContentCardViewer templateType={item.templateType} fields={item.fields} imageSize="lg" onComplete={() => setPreviewOpen(false)} />
+              {item.contentCreationMode === "poster_upload" ? (
+                <PosterCardViewer media={item.posterMedia} description={item.posterDescription} altText={item.posterAltText} onComplete={() => setPreviewOpen(false)} />
+              ) : (
+                <ContentCardViewer templateType={item.templateType!} fields={item.fields} imageSize="lg" onComplete={() => setPreviewOpen(false)} />
+              )}
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useMyTodayContent } from "@/lib/cms/hooks";
 import { completeTodayContent } from "@/lib/cms/engine";
 import { ContentCardViewer } from "@/components/cms/ContentCardViewer";
+import { PosterCardViewer } from "@/components/cms/PosterCardViewer";
 
 /** Single source of truth: today's content comes entirely from the
  * Knowledge CMS (get_my_today_content()/complete_today_content()) — the
@@ -66,12 +67,22 @@ export default function LearnPage() {
               </p>
             )}
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
-              <ContentCardViewer
-                templateType={current.templateType}
-                fields={current.fields}
-                onComplete={handleComplete}
-                completing={completing}
-              />
+              {current.contentCreationMode === "poster_upload" ? (
+                <PosterCardViewer
+                  media={current.posterMedia}
+                  description={current.posterDescription}
+                  altText={current.posterAltText}
+                  onComplete={handleComplete}
+                  completing={completing}
+                />
+              ) : (
+                <ContentCardViewer
+                  templateType={current.templateType!}
+                  fields={current.fields}
+                  onComplete={handleComplete}
+                  completing={completing}
+                />
+              )}
             </div>
           </div>
         )

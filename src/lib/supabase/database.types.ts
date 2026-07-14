@@ -17,6 +17,7 @@ export type Database = {
       cms_content_items: {
         Row: {
           category: Database["public"]["Enums"]["cms_content_category"]
+          content_creation_mode: string
           content_version: number
           cover_image_url: string | null
           created_at: string
@@ -24,7 +25,10 @@ export type Database = {
           estimated_seconds: number
           fields: Json
           id: string
+          internal_note: string | null
           parent_content_id: string | null
+          poster_alt_text: string | null
+          poster_description: string | null
           published_at: string | null
           published_by: string | null
           review_note: string | null
@@ -33,7 +37,7 @@ export type Database = {
           status: Database["public"]["Enums"]["cms_content_status"]
           submitted_for_review_at: string | null
           submitted_for_review_by: string | null
-          template_type: Database["public"]["Enums"]["cms_template_type"]
+          template_type: Database["public"]["Enums"]["cms_template_type"] | null
           title: string
           unpublished_at: string | null
           updated_at: string
@@ -41,6 +45,7 @@ export type Database = {
         }
         Insert: {
           category: Database["public"]["Enums"]["cms_content_category"]
+          content_creation_mode?: string
           content_version?: number
           cover_image_url?: string | null
           created_at?: string
@@ -48,7 +53,10 @@ export type Database = {
           estimated_seconds?: number
           fields?: Json
           id?: string
+          internal_note?: string | null
           parent_content_id?: string | null
+          poster_alt_text?: string | null
+          poster_description?: string | null
           published_at?: string | null
           published_by?: string | null
           review_note?: string | null
@@ -57,7 +65,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["cms_content_status"]
           submitted_for_review_at?: string | null
           submitted_for_review_by?: string | null
-          template_type: Database["public"]["Enums"]["cms_template_type"]
+          template_type?:
+            | Database["public"]["Enums"]["cms_template_type"]
+            | null
           title: string
           unpublished_at?: string | null
           updated_at?: string
@@ -65,6 +75,7 @@ export type Database = {
         }
         Update: {
           category?: Database["public"]["Enums"]["cms_content_category"]
+          content_creation_mode?: string
           content_version?: number
           cover_image_url?: string | null
           created_at?: string
@@ -72,7 +83,10 @@ export type Database = {
           estimated_seconds?: number
           fields?: Json
           id?: string
+          internal_note?: string | null
           parent_content_id?: string | null
+          poster_alt_text?: string | null
+          poster_description?: string | null
           published_at?: string | null
           published_by?: string | null
           review_note?: string | null
@@ -81,7 +95,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["cms_content_status"]
           submitted_for_review_at?: string | null
           submitted_for_review_by?: string | null
-          template_type?: Database["public"]["Enums"]["cms_template_type"]
+          template_type?:
+            | Database["public"]["Enums"]["cms_template_type"]
+            | null
           title?: string
           unpublished_at?: string | null
           updated_at?: string
@@ -128,6 +144,53 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cms_content_media: {
+        Row: {
+          aspect_ratio: string | null
+          content_id: string
+          created_at: string
+          file_size: number | null
+          file_url: string
+          height: number | null
+          id: string
+          media_type: string
+          sort_order: number
+          width: number | null
+        }
+        Insert: {
+          aspect_ratio?: string | null
+          content_id: string
+          created_at?: string
+          file_size?: number | null
+          file_url: string
+          height?: number | null
+          id?: string
+          media_type?: string
+          sort_order?: number
+          width?: number | null
+        }
+        Update: {
+          aspect_ratio?: string | null
+          content_id?: string
+          created_at?: string
+          file_size?: number | null
+          file_url?: string
+          height?: number | null
+          id?: string
+          media_type?: string
+          sort_order?: number
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_content_media_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "cms_content_items"
             referencedColumns: ["id"]
           },
         ]
@@ -190,7 +253,9 @@ export type Database = {
           day_number: number
           id: string
           journey_id: string | null
-          template_type_snapshot: Database["public"]["Enums"]["cms_template_type"]
+          template_type_snapshot:
+            | Database["public"]["Enums"]["cms_template_type"]
+            | null
         }
         Insert: {
           completed_at?: string
@@ -201,7 +266,9 @@ export type Database = {
           day_number: number
           id?: string
           journey_id?: string | null
-          template_type_snapshot: Database["public"]["Enums"]["cms_template_type"]
+          template_type_snapshot?:
+            | Database["public"]["Enums"]["cms_template_type"]
+            | null
         }
         Update: {
           completed_at?: string
@@ -212,7 +279,9 @@ export type Database = {
           day_number?: number
           id?: string
           journey_id?: string | null
-          template_type_snapshot?: Database["public"]["Enums"]["cms_template_type"]
+          template_type_snapshot?:
+            | Database["public"]["Enums"]["cms_template_type"]
+            | null
         }
         Relationships: [
           {
@@ -1449,11 +1518,15 @@ export type Database = {
         Returns: {
           category: Database["public"]["Enums"]["cms_content_category"]
           completed: boolean
+          content_creation_mode: string
           content_id: string
           cover_image_url: string
           estimated_seconds: number
           fields: Json
           position_in_day: number
+          poster_alt_text: string
+          poster_description: string
+          poster_media: Json
           template_type: Database["public"]["Enums"]["cms_template_type"]
           title: string
           total_today: number

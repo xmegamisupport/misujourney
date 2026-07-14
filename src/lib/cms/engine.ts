@@ -2,19 +2,50 @@
 
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
-import type { CmsContentCategory, CmsContentFields, CmsContentItem, CmsJourneySettings, CmsScheduleEntry, CmsTemplateType, TodayContentItem } from "./types";
+import type {
+  CmsContentCategory,
+  CmsContentCreationMode,
+  CmsContentFields,
+  CmsContentItem,
+  CmsJourneySettings,
+  CmsPosterMediaItem,
+  CmsScheduleEntry,
+  CmsTemplateType,
+  TodayContentItem,
+} from "./types";
 
-type ContentRow = Database["public"]["Tables"]["cms_content_items"]["Row"] & { creator?: { name: string } | null };
+type MediaRow = Database["public"]["Tables"]["cms_content_media"]["Row"];
+type ContentRow = Database["public"]["Tables"]["cms_content_items"]["Row"] & {
+  creator?: { name: string } | null;
+  poster_media?: MediaRow[] | null;
+};
+
+function mapMediaRow(row: MediaRow): CmsPosterMediaItem {
+  return {
+    id: row.id,
+    fileUrl: row.file_url,
+    sortOrder: row.sort_order,
+    width: row.width,
+    height: row.height,
+    aspectRatio: row.aspect_ratio,
+    fileSize: row.file_size,
+  };
+}
 
 function mapContentRow(row: ContentRow): CmsContentItem {
   return {
     id: row.id,
     title: row.title,
     category: row.category,
+    contentCreationMode: row.content_creation_mode as CmsContentCreationMode,
     templateType: row.template_type,
     fields: (row.fields as unknown as CmsContentFields) ?? {},
     coverImageUrl: row.cover_image_url,
     estimatedSeconds: row.estimated_seconds,
+    posterDescription: row.poster_description,
+    posterAltText: row.poster_alt_text,
+    internalNote: row.internal_note,
+    posterMedia: (row.poster_media ?? []).map(mapMediaRow).sort((a, b) => a.sortOrder - b.sortOrder),
     status: row.status,
     createdBy: row.created_by,
     createdByName: row.creator?.name,
@@ -34,7 +65,7 @@ function mapContentRow(row: ContentRow): CmsContentItem {
   };
 }
 
-const CONTENT_SELECT_WITH_CREATOR = "*, creator:profiles!created_by(name)";
+const CONTENT_SELECT_WITH_CREATOR = "*, creator:profiles!created_by(name), poster_media:cms_content_media(*)";
 
 export interface CmsResult<T = void> {
   ok: boolean;
@@ -93,6 +124,7 @@ export async function createContent(customerId: string, input: CreateContentInpu
     .insert({
       title: input.title,
       category: input.category,
+      content_creation_mode: "template",
       template_type: input.templateType,
       fields: input.fields as never,
       cover_image_url: input.coverImageUrl || null,
@@ -120,6 +152,104 @@ export async function updateContent(id: string, input: CreateContentInput, updat
     })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export interface PosterMediaInput {
+  fileUrl: string;
+  width: number | null;
+  height: number | null;
+  aspectRatio: string | null;
+  fileSize: number | null;
+}
+
+export interface CreatePosterContentInput {
+  title: string;
+  category: CmsContentCategory;
+  media: PosterMediaInput[];
+  posterDescription?: string;
+  posterAltText?: string;
+  internalNote?: string;
+  estimatedSeconds: number;
+}
+
+function mediaRowsFor(contentId: string, media: PosterMediaInput[]) {
+  return media.map((m, i) => ({
+    content_id: contentId,
+    media_type: "poster_image",
+    file_url: m.fileUrl,
+    sort_order: i,
+    width: m.width,
+    height: m.height,
+    aspect_ratio: m.aspectRatio,
+    file_size: m.fileSize,
+  }));
+}
+
+/** poster_upload's minimal form: title/category/poster images only — no
+ * Template Engine fields, no separate cover image (the poster itself is
+ * both). Two inserts (content row, then its media rows) since Postgres has
+ * no "insert parent + children" single statement; if the media insert fails
+ * the orphaned draft content row is harmless (still just an empty draft the
+ * creator can re-open and re-upload into). */
+export async function createPosterContent(customerId: string, input: CreatePosterContentInput): Promise<CmsResult<CmsContentItem>> {
+  const supabase = createClient();
+  const { data: content, error } = await supabase
+    .from("cms_content_items")
+    .insert({
+      title: input.title,
+      category: input.category,
+      content_creation_mode: "poster_upload",
+      template_type: null,
+      fields: {} as never,
+      cover_image_url: null,
+      estimated_seconds: input.estimatedSeconds,
+      poster_description: input.posterDescription || null,
+      poster_alt_text: input.posterAltText || null,
+      internal_note: input.internalNote || null,
+      created_by: customerId,
+    })
+    .select("*")
+    .single();
+  if (error) return { ok: false, error: error.message };
+
+  if (input.media.length > 0) {
+    const { error: mediaError } = await supabase.from("cms_content_media").insert(mediaRowsFor(content.id, input.media));
+    if (mediaError) return { ok: false, error: mediaError.message };
+  }
+
+  const created = await getContentById(content.id);
+  return created ? { ok: true, data: created } : { ok: true, data: mapContentRow(content) };
+}
+
+/** Replaces the poster's media list wholesale (delete-all-then-reinsert)
+ * rather than diffing — the V1 UI only supports appending/removing whole
+ * images, never reordering an existing row in place, so there's nothing a
+ * diff would preserve that a clean replace doesn't already give correctly. */
+export async function updatePosterContent(id: string, input: CreatePosterContentInput, updatedBy: string): Promise<CmsResult> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("cms_content_items")
+    .update({
+      title: input.title,
+      category: input.category,
+      estimated_seconds: input.estimatedSeconds,
+      poster_description: input.posterDescription || null,
+      poster_alt_text: input.posterAltText || null,
+      internal_note: input.internalNote || null,
+      updated_by: updatedBy,
+    })
+    .eq("id", id);
+  if (error) return { ok: false, error: error.message };
+
+  const { error: deleteError } = await supabase.from("cms_content_media").delete().eq("content_id", id);
+  if (deleteError) return { ok: false, error: deleteError.message };
+
+  if (input.media.length > 0) {
+    const { error: mediaError } = await supabase.from("cms_content_media").insert(mediaRowsFor(id, input.media));
+    if (mediaError) return { ok: false, error: mediaError.message };
+  }
+
   return { ok: true };
 }
 
@@ -220,10 +350,17 @@ export async function getMyTodayContent(): Promise<TodayContentItem[]> {
     contentId: row.content_id,
     title: row.title,
     category: row.category,
+    contentCreationMode: row.content_creation_mode as CmsContentCreationMode,
     templateType: row.template_type,
     fields: (row.fields as unknown as CmsContentFields) ?? {},
     coverImageUrl: row.cover_image_url,
     estimatedSeconds: row.estimated_seconds,
+    posterDescription: row.poster_description,
+    posterAltText: row.poster_alt_text,
+    // the RPC's poster_media jsonb is built with jsonb_build_object using
+    // these exact camelCase keys already — no snake_case mapping needed here
+    // (unlike mapContentRow's poster_media, which comes from a real table row).
+    posterMedia: ((row.poster_media as unknown as CmsPosterMediaItem[]) ?? []).sort((a, b) => a.sortOrder - b.sortOrder),
     positionInDay: row.position_in_day,
     totalToday: row.total_today,
     completed: row.completed,

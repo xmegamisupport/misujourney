@@ -5,6 +5,7 @@ import { useMyTodayContent } from "@/lib/cms/hooks";
 import { completeTodayContent } from "@/lib/cms/engine";
 import { TEMPLATE_LIST } from "@/lib/cms/templates";
 import { ContentCardViewer } from "./ContentCardViewer";
+import { PosterCardViewer } from "./PosterCardViewer";
 
 /** "今日小知识" — one card, one piece of content, ~30秒~1分钟. Not shown at
  * all if the day has nothing scheduled (empty-state text, never an error);
@@ -56,11 +57,11 @@ export function TodayContentCard() {
       ) : (
         <div className="flex items-center gap-3">
           <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 text-2xl">
-            {current.coverImageUrl ? (
+            {current.coverImageUrl || current.posterMedia[0]?.fileUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={current.coverImageUrl} alt="" className="h-full w-full object-cover" />
+              <img src={current.coverImageUrl ?? current.posterMedia[0].fileUrl} alt="" className="h-full w-full object-cover" />
             ) : (
-              template?.icon
+              template?.icon ?? "🖼️"
             )}
           </span>
           <div className="min-w-0 flex-1">
@@ -91,7 +92,11 @@ export function TodayContentCard() {
                 今日内容 {current.positionInDay} / {current.totalToday}
               </p>
             )}
-            <ContentCardViewer templateType={current.templateType} fields={current.fields} onComplete={handleComplete} completing={completing} />
+            {current.contentCreationMode === "poster_upload" ? (
+              <PosterCardViewer media={current.posterMedia} description={current.posterDescription} altText={current.posterAltText} onComplete={handleComplete} completing={completing} />
+            ) : (
+              <ContentCardViewer templateType={current.templateType!} fields={current.fields} onComplete={handleComplete} completing={completing} />
+            )}
           </div>
         </div>
       )}
