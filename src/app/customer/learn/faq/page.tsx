@@ -1,18 +1,20 @@
+"use client";
+
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { faqs } from "@/lib/mock-data";
+import { useFaqs } from "@/lib/staticContent/hooks";
 
 export default function FaqPage() {
-  const published = faqs.filter((f) => f.status === "published");
+  const { data: faqs, loading } = useFaqs();
 
   return (
     <div className="flex flex-col gap-3 px-4 pb-8 md:px-8">
       <PageHeader title="常见问题" subtitle="快速找到答案" backHref="/customer/learn" />
 
-      {published.length === 0 ? (
+      {!loading && faqs.length === 0 ? (
         <EmptyState icon="💬" title="暂无常见问题" />
       ) : (
-        published.map((faq) => (
+        faqs.map((faq) => (
           <details
             key={faq.id}
             className="group rounded-2xl border border-slate-100 bg-white p-4 shadow-sm open:border-emerald-200"

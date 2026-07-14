@@ -2,9 +2,7 @@ import type {
   AlertItem,
   CoachProfile,
   CustomerProfile,
-  FaqItem,
   MessageThread,
-  ProductGuideItem,
 } from "./types";
 
 export const currentCoach: CoachProfile = {
@@ -308,18 +306,6 @@ export const adminCoaches = [
   { id: "coach-002", name: "郑家豪 Marcus", avatar: "🌊", customers: 31, activeThisWeek: 20, rating: 4.7, status: "active" as const },
   { id: "coach-003", name: "许佩珊 Grace", avatar: "🌺", customers: 26, activeThisWeek: 19, rating: 4.8, status: "active" as const },
   { id: "coach-004", name: "杨志明 Kevin", avatar: "🍃", customers: 12, activeThisWeek: 3, rating: 4.5, status: "inactive" as const },
-];
-
-export const faqs: FaqItem[] = [
-  { id: "f1", question: "MISU Score 是怎么计算的？", answer: "综合饮食均衡度、打卡完成率与目标达成进度计算。", category: "使用说明", status: "published" },
-  { id: "f2", question: "可以更换 Journey Coach 吗？", answer: "可以，请联系客服协助安排更换。", category: "账户", status: "published" },
-  { id: "f3", question: "拍照记录食物不准确怎么办？", answer: "可以手动调整份量或选择「食物不对」重新拍摄。", category: "使用说明", status: "draft" },
-];
-
-export const productGuides: ProductGuideItem[] = [
-  { id: "p1", name: "MISU 代餐奶昔", category: "代餐", summary: "每份含 20g 优质蛋白，适合早餐或加餐使用", status: "published" },
-  { id: "p2", name: "MISU 纤维饮", category: "机能饮品", summary: "帮助补充膳食纤维，建议餐前 30 分钟饮用", status: "published" },
-  { id: "p3", name: "MISU 燃脂胶囊", category: "营养补充", summary: "搭配运动使用效果更佳", status: "draft" },
 ];
 
 export const adminOverview = {

@@ -693,6 +693,57 @@ export type Database = {
           },
         ]
       }
+      faq_items: {
+        Row: {
+          answer: string
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          question: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          answer: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          question: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          answer?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          question?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faq_items_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_portions: {
         Row: {
           calories: number
@@ -1016,6 +1067,57 @@ export type Database = {
           {
             foreignKeyName: "meals_customer_id_fkey"
             columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_guides: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          status: string
+          summary: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          status?: string
+          summary: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          status?: string
+          summary?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_guides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_guides_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

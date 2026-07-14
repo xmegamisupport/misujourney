@@ -1,15 +1,17 @@
+"use client";
+
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { productGuides } from "@/lib/mock-data";
+import { useProductGuides } from "@/lib/staticContent/hooks";
 
 export default function ProductGuidePage() {
-  const guides = productGuides.filter((g) => g.status === "published");
+  const { data: guides, loading } = useProductGuides();
 
   return (
     <div className="flex flex-col gap-4 px-4 pb-8 md:px-8">
       <PageHeader title="产品使用指南" subtitle="了解你的 MISU 产品" backHref="/customer/learn" />
 
-      {guides.length === 0 ? (
+      {!loading && guides.length === 0 ? (
         <EmptyState icon="📦" title="暂无产品指南" />
       ) : (
         guides.map((guide) => (

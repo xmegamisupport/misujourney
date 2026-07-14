@@ -135,19 +135,3 @@ export interface MessageThread {
   lastTime: string;
   unread: number;
 }
-
-export interface FaqItem {
-  id: string;
-  question: string;
-  answer: string;
-  category: string;
-  status: "published" | "draft";
-}
-
-export interface ProductGuideItem {
-  id: string;
-  name: string;
-  category: string;
-  summary: string;
-  status: "published" | "draft";
-}
