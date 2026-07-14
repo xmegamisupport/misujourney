@@ -1,8 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { ProgressCard } from "@/components/ui/ProgressCard";
-import { adminOverview } from "@/lib/mock-data";
+import { useAdminOverviewStats } from "@/lib/admin/overview";
 
 const contentShortcuts = [
   { href: "/admin/content/lessons", label: "课程管理", icon: "🎓" },
@@ -11,7 +13,7 @@ const contentShortcuts = [
 ];
 
 export default function AdminDashboardPage() {
-  const o = adminOverview;
+  const { data: o } = useAdminOverviewStats();
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
