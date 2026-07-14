@@ -42,6 +42,11 @@ export function CmsShell({ children }: { children: ReactNode }) {
         <div className="px-5 py-6">
           <p className="text-lg font-semibold text-slate-900">📚 Knowledge CMS</p>
           <p className="text-xs text-slate-400">MISU Journey</p>
+          {isAdmin && (
+            <Link href="/admin" className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600">
+              ← 返回 Admin 后台
+            </Link>
+          )}
         </div>
         <nav className="flex flex-1 flex-col gap-1 px-3">
           {items.map((item) => (
@@ -65,6 +70,11 @@ export function CmsShell({ children }: { children: ReactNode }) {
 
       <div className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-100 bg-white/90 px-4 py-3 backdrop-blur md:hidden">
         <p className="text-sm font-semibold text-slate-900">📚 Knowledge CMS</p>
+        {isAdmin && (
+          <Link href="/admin" className="text-xs font-medium text-slate-400 hover:text-slate-600">
+            ← 返回 Admin
+          </Link>
+        )}
       </div>
 
       <div className="md:pl-56">
