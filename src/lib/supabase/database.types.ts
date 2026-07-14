@@ -1123,6 +1123,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_set_customer_coach: {
+        Args: { p_coach_id: string; p_customer_id: string }
+        Returns: undefined
+      }
       calculate_bmr: {
         Args: {
           p_age: number

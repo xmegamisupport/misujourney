@@ -114,6 +114,7 @@ export interface AdminCustomerSummary {
   id: string;
   name: string;
   avatar: string | null;
+  coachId: string | null;
   coachName: string | null;
   currentDay: number;
   planLength: number;
@@ -162,6 +163,7 @@ export async function getAllCustomersForAdmin(): Promise<AdminCustomerSummary[]>
       id: c.id,
       name: c.name,
       avatar: c.avatar,
+      coachId: c.coach_id,
       coachName: c.coach_id ? (coachNameMap.get(c.coach_id) ?? null) : null,
       currentDay,
       planLength,
@@ -170,6 +172,24 @@ export async function getAllCustomersForAdmin(): Promise<AdminCustomerSummary[]>
       stockStatus,
     };
   });
+}
+
+export interface SetCustomerCoachResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** The only way to change a customer's negotiated coach — profiles has no
+ * admin-wide UPDATE grant, so this goes through admin_set_customer_coach(),
+ * which also validates the target is actually a customer/coach pair. */
+export async function setCustomerCoach(customerId: string, coachId: string | null): Promise<SetCustomerCoachResult> {
+  const supabase = createClient();
+  // The generator types p_coach_id as non-null uuid since Postgres doesn't
+  // expose nullability for plain params — it's genuinely nullable server-side
+  // (passing null clears the assignment), hence the cast.
+  const { error } = await supabase.rpc("admin_set_customer_coach", { p_customer_id: customerId, p_coach_id: coachId } as { p_customer_id: string; p_coach_id: string });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 }
 
 export interface AdminCoachSummary {
