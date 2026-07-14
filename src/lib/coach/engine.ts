@@ -3,6 +3,13 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
 import type { WhatsAppContactMethod } from "@/lib/whatsapp";
+import { calculateCurrentDay } from "@/lib/journey";
+import { getGoalPlansForCustomers } from "@/lib/goals/engine";
+import { getCheckInsForCustomers, getTodayMealsForCustomers, getInventoryForCustomers } from "@/lib/inventory/engine";
+import { getInventoryAlertStatus, combineAlertStatuses } from "@/lib/inventory/constants";
+import type { InventoryAlertStatus } from "@/lib/inventory/types";
+
+const DEFAULT_PLAN_LENGTH = 30;
 
 export interface CoachCustomerSummary {
   id: string;
@@ -101,6 +108,68 @@ export async function getMyCustomers(coachId: string): Promise<CoachCustomerSumm
   const { data, error } = await supabase.from("profiles").select("id, name, avatar, start_date, phone").eq("coach_id", coachId).eq("role", "customer").order("name", { ascending: true });
   if (error) throw error;
   return (data ?? []).map((row) => ({ id: row.id, name: row.name, avatar: row.avatar, startDate: row.start_date, phone: row.phone }));
+}
+
+export interface AdminCustomerSummary {
+  id: string;
+  name: string;
+  avatar: string | null;
+  coachName: string | null;
+  currentDay: number;
+  planLength: number;
+  checkinRate: number;
+  todayMisuScore: number;
+  stockStatus: InventoryAlertStatus | null;
+}
+
+/** Admin-wide roster (every customer, not just one coach's) — used by
+ * /admin/customers. RLS (profiles_select_as_admin) already scopes every
+ * query below to what an admin is allowed to see; no extra filtering
+ * needed beyond role='customer' on the initial fetch. */
+export async function getAllCustomersForAdmin(): Promise<AdminCustomerSummary[]> {
+  const supabase = createClient();
+  const { data: customers, error } = await supabase
+    .from("profiles")
+    .select("id, name, avatar, start_date, coach_id")
+    .eq("role", "customer")
+    .order("name", { ascending: true });
+  if (error) throw error;
+  if (!customers || customers.length === 0) return [];
+
+  const customerIds = customers.map((c) => c.id);
+  const coachIds = [...new Set(customers.map((c) => c.coach_id).filter((id): id is string => id !== null))];
+
+  const [coachRows, goalPlanMap, checkInMap, todayMealsMap, inventoryMap] = await Promise.all([
+    coachIds.length > 0 ? supabase.from("profiles").select("id, name").in("id", coachIds).then((r) => r.data ?? []) : Promise.resolve([]),
+    getGoalPlansForCustomers(customerIds),
+    getCheckInsForCustomers(customerIds),
+    getTodayMealsForCustomers(customerIds),
+    getInventoryForCustomers(customerIds),
+  ]);
+  const coachNameMap = new Map(coachRows.map((c) => [c.id, c.name]));
+
+  return customers.map((c) => {
+    const planLength = goalPlanMap[c.id]?.journeyDays ?? DEFAULT_PLAN_LENGTH;
+    const currentDay = Math.min(calculateCurrentDay(c.start_date), planLength);
+    const checkIns = checkInMap[c.id] ?? [];
+    const checkinRate = currentDay > 0 ? Math.min(100, Math.round((checkIns.length / currentDay) * 100)) : 0;
+    const todayMeals = todayMealsMap[c.id] ?? [];
+    const todayMisuScore = todayMeals.length > 0 ? Math.round(todayMeals.reduce((sum, m) => sum + m.misuScore, 0) / todayMeals.length) : 0;
+    const inventoryRows = inventoryMap[c.id] ?? [];
+    const stockStatus = inventoryRows.length > 0 ? combineAlertStatuses(inventoryRows.map((r) => getInventoryAlertStatus(r.productCode, r.remainingUnits))) : null;
+
+    return {
+      id: c.id,
+      name: c.name,
+      avatar: c.avatar,
+      coachName: c.coach_id ? (coachNameMap.get(c.coach_id) ?? null) : null,
+      currentDay,
+      planLength,
+      checkinRate,
+      todayMisuScore,
+      stockStatus,
+    };
+  });
 }
 
 export interface AdminCoachSummary {
