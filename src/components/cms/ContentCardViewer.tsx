@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { buildCards } from "@/lib/cms/templates";
 import type { CmsContentFields, CmsTemplateType } from "@/lib/cms/types";
 import { cn } from "@/lib/utils";
+import { ZoomableImage } from "./ZoomableImage";
 
 interface ContentCardViewerProps {
   templateType: CmsTemplateType;
@@ -48,17 +49,12 @@ export function ContentCardViewer({ templateType, fields, onComplete, completing
       </div>
 
       <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-sm">
-        {card.image && (
+        {card.image && (imageSize === "lg" ? (
+          <ZoomableImage key={index} src={card.image} />
+        ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={card.image}
-            alt=""
-            className={cn(
-              "rounded-2xl",
-              imageSize === "lg" ? "max-h-80 w-full object-contain bg-slate-50" : "h-32 w-32 object-cover",
-            )}
-          />
-        )}
+          <img src={card.image} alt="" className="h-32 w-32 rounded-2xl object-cover" />
+        ))}
         {card.lines.map((l, i) => (
           <p key={i} className={i === 0 && !card.interactive ? "text-base font-semibold text-slate-900" : "text-sm text-slate-600"}>
             {l}
