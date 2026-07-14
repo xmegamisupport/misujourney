@@ -136,15 +136,6 @@ export interface MessageThread {
   unread: number;
 }
 
-export interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-  status: "active" | "inactive" | "pending";
-  joinedAt: string;
-}
-
 export interface LessonItem {
   id: string;
   title: string;

@@ -1,5 +1,4 @@
 import type {
-  AdminUser,
   AlertItem,
   CoachProfile,
   CustomerProfile,
@@ -303,15 +302,6 @@ export const messageThreads: MessageThread[] = [
     lastTime: "周一",
     unread: 0,
   },
-];
-
-export const adminUsers: AdminUser[] = [
-  { id: "u1", name: "林知恩 Chloe", email: "chloe@xmegami.com", role: "coach", status: "active", joinedAt: "2024-02-10" },
-  { id: "u2", name: "王美琪", email: "meiqi@example.com", role: "customer", status: "active", joinedAt: "2026-06-24" },
-  { id: "u3", name: "陈嘉玲", email: "jialing@example.com", role: "customer", status: "active", joinedAt: "2026-05-30" },
-  { id: "u4", name: "Admin 主账号", email: "admin@xmegami.com", role: "admin", status: "active", joinedAt: "2023-11-01" },
-  { id: "u5", name: "李思敏", email: "simin@example.com", role: "customer", status: "pending", joinedAt: "2026-07-05" },
-  { id: "u6", name: "郑家豪 Marcus", email: "marcus@xmegami.com", role: "coach", status: "inactive", joinedAt: "2024-08-19" },
 ];
 
 export const adminCoaches = [
