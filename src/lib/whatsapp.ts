@@ -20,6 +20,10 @@ export function buildCoachContactMessage(customerName: string): string {
   return `Hi Coach，我是 ${customerName}，我想询问关于我的 MISU Journey 😊`;
 }
 
+export function buildCustomerContactMessage(customerName: string): string {
+  return `Hi ${customerName}，我是你的 MISU Journey Coach，想跟你聊聊你的进度 😊`;
+}
+
 /** `whatsappNumber` must already be normalized (digits only, with country
  * code) — this never touches raw/unformatted input. */
 export function buildWhatsAppLink(whatsappNumber: string, message: string): string {

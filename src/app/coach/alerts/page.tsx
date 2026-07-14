@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { AlertCard } from "@/components/ui/AlertCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { coachAlerts, allCustomers } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
-import type { AlertItem } from "@/lib/types";
+import type { FlagSeverity } from "@/lib/insights/types";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useMyCustomers } from "@/lib/coach/hooks";
+import type { CoachCustomerSummary } from "@/lib/coach/engine";
+import { useAttentionFlagsForCustomers } from "@/lib/insights/hooks";
+import { SEVERITY_STYLES } from "@/lib/insights/constants";
 import { useActiveAlerts, useInventoryForCustomers, useCheckInsForCustomers, useTransactionsForCustomers } from "@/lib/inventory/hooks";
 import { markAlertFollowedUp, calcAverageDailyUsage, calcEstimatedDaysRemaining } from "@/lib/inventory/engine";
 import {
@@ -20,12 +23,14 @@ import {
 } from "@/lib/inventory/constants";
 import type { CustomerInventory, DailyCheckIn, InventoryTransaction, RepurchaseAlert, RepurchaseAlertLevel } from "@/lib/inventory/types";
 
-const checkinFilters: { key: "all" | AlertItem["severity"]; label: string }[] = [
+const checkinFilters: { key: "all" | FlagSeverity; label: string }[] = [
   { key: "all", label: "全部" },
-  { key: "high", label: "紧急" },
-  { key: "medium", label: "关注" },
-  { key: "low", label: "提示" },
+  { key: "important", label: "紧急" },
+  { key: "attention", label: "关注" },
+  { key: "info", label: "提示" },
 ];
+
+const SEVERITY_LABELS: Record<FlagSeverity, string> = { important: "紧急", attention: "关注", info: "提示" };
 
 const levelOrder: RepurchaseAlertLevel[] = ["OUT_OF_STOCK", "URGENT", "REPURCHASE_SOON"];
 
@@ -39,11 +44,25 @@ function FollowUpAlertsContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") === "repurchase" ? "repurchase" : "checkin";
   const [tab, setTab] = useState<"checkin" | "repurchase">(initialTab);
-  const [filter, setFilter] = useState<"all" | AlertItem["severity"]>("all");
+  const [filter, setFilter] = useState<"all" | FlagSeverity>("all");
 
-  const checkinAlerts = useMemo(() => coachAlerts.filter((a) => filter === "all" || a.severity === filter), [filter]);
+  const { user } = useAuthUser();
+  const coachId = user?.id ?? "";
+  const { data: customers } = useMyCustomers(coachId);
+  const customersById = useMemo(() => {
+    const map: Record<string, CoachCustomerSummary> = {};
+    for (const c of customers) map[c.id] = c;
+    return map;
+  }, [customers]);
+  const customerIds = useMemo(() => customers.map((c) => c.id), [customers]);
 
-  const customerIds = useMemo(() => allCustomers.map((c) => c.id), []);
+  const { data: flagsMap } = useAttentionFlagsForCustomers(customerIds);
+  const checkinAlerts = useMemo(() => {
+    return customers
+      .flatMap((c) => (flagsMap[c.id] ?? []).map((flag) => ({ customer: c, flag })))
+      .filter((row) => filter === "all" || row.flag.severity === filter);
+  }, [customers, flagsMap, filter]);
+
   const { data: activeAlerts } = useActiveAlerts();
   const { data: inventoryMap } = useInventoryForCustomers(customerIds);
   const { data: checkInMap } = useCheckInsForCustomers(customerIds);
@@ -63,7 +82,7 @@ function FollowUpAlertsContent() {
     <div className="flex flex-col gap-4 px-4 pb-8 md:px-8">
       <PageHeader
         title="跟进提醒"
-        subtitle={tab === "checkin" ? `共 ${coachAlerts.length} 项提醒` : `共 ${activeAlerts.length} 项回购提醒`}
+        subtitle={tab === "checkin" ? `共 ${checkinAlerts.length} 项提醒` : `共 ${activeAlerts.length} 项回购提醒`}
       />
 
       <div className="flex gap-2">
@@ -108,8 +127,21 @@ function FollowUpAlertsContent() {
             <EmptyState icon="🎉" title="这个分类下没有提醒" />
           ) : (
             <div className="flex flex-col gap-2">
-              {checkinAlerts.map((alert) => (
-                <AlertCard key={alert.id} alert={alert} href={`/coach/customers/${alert.customerId}`} />
+              {checkinAlerts.map(({ customer, flag }) => (
+                <Link
+                  key={flag.id}
+                  href={`/coach/customers/${customer.id}`}
+                  className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-emerald-200"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-lg">{customer.avatar ?? "🙂"}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-800">{customer.name}</p>
+                    <p className="mt-0.5 text-sm text-slate-500">{flag.flagLabel}</p>
+                  </div>
+                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium", SEVERITY_STYLES[flag.severity])}>
+                    {SEVERITY_LABELS[flag.severity]}
+                  </span>
+                </Link>
               ))}
             </div>
           )}
@@ -134,6 +166,7 @@ function FollowUpAlertsContent() {
                     <RepurchaseAlertCard
                       key={alert.id}
                       alert={alert}
+                      customersById={customersById}
                       inventoryMap={inventoryMap}
                       checkInMap={checkInMap}
                       transactionMap={transactionMap}
@@ -151,16 +184,18 @@ function FollowUpAlertsContent() {
 
 function RepurchaseAlertCard({
   alert,
+  customersById,
   inventoryMap,
   checkInMap,
   transactionMap,
 }: {
   alert: RepurchaseAlert;
+  customersById: Record<string, CoachCustomerSummary>;
   inventoryMap: Record<string, CustomerInventory[]>;
   checkInMap: Record<string, DailyCheckIn[]>;
   transactionMap: Record<string, InventoryTransaction[]>;
 }) {
-  const customer = allCustomers.find((c) => c.id === alert.customerId);
+  const customer = customersById[alert.customerId];
   const remaining = inventoryMap[alert.customerId]?.find((r) => r.productCode === alert.productCode)?.remainingUnits ?? 0;
   const avgDailyUsage = calcAverageDailyUsage(transactionMap[alert.customerId] ?? [], alert.productCode);
   const estimatedDays = calcEstimatedDaysRemaining(remaining, avgDailyUsage);
@@ -172,7 +207,7 @@ function RepurchaseAlertCard({
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-            <span>{customer?.avatar}</span>
+            <span>{customer?.avatar ?? "🙂"}</span>
             {customer?.name ?? alert.customerId}
             <span className="text-xs font-normal text-slate-400">
               {PRODUCT_ICONS[alert.productCode]} {PRODUCT_LABELS[alert.productCode]}

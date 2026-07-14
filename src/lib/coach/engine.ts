@@ -8,6 +8,22 @@ export interface CoachCustomerSummary {
   name: string;
   avatar: string | null;
   startDate: string | null;
+  phone: string | null;
+}
+
+export interface MyCoachProfile {
+  id: string;
+  name: string;
+  avatar: string | null;
+  referralCode: string | null;
+}
+
+export async function getMyCoachProfile(coachId: string): Promise<MyCoachProfile | undefined> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("profiles").select("id, name, avatar, referral_code").eq("id", coachId).maybeSingle();
+  if (error) throw error;
+  if (!data) return undefined;
+  return { id: data.id, name: data.name, avatar: data.avatar, referralCode: data.referral_code };
 }
 
 export interface CoachCustomerProfile extends CoachCustomerSummary {
@@ -24,9 +40,9 @@ export interface CoachCustomerProfile extends CoachCustomerSummary {
  * needed beyond role, since a coach can't see anyone else's profiles here. */
 export async function getMyCustomers(coachId: string): Promise<CoachCustomerSummary[]> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("profiles").select("id, name, avatar, start_date").eq("coach_id", coachId).eq("role", "customer").order("name", { ascending: true });
+  const { data, error } = await supabase.from("profiles").select("id, name, avatar, start_date, phone").eq("coach_id", coachId).eq("role", "customer").order("name", { ascending: true });
   if (error) throw error;
-  return (data ?? []).map((row) => ({ id: row.id, name: row.name, avatar: row.avatar, startDate: row.start_date }));
+  return (data ?? []).map((row) => ({ id: row.id, name: row.name, avatar: row.avatar, startDate: row.start_date, phone: row.phone }));
 }
 
 export interface AdminCoachSummary {

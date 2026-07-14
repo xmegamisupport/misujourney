@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getCustomerProfile, getMyCustomers, getAllCoaches } from "./engine";
-import type { CoachCustomerProfile, CoachCustomerSummary, AdminCoachSummary } from "./engine";
+import { getCustomerProfile, getMyCustomers, getAllCoaches, getMyCoachProfile } from "./engine";
+import type { CoachCustomerProfile, CoachCustomerSummary, AdminCoachSummary, MyCoachProfile } from "./engine";
 
 export function useMyCustomers(coachId: string): { data: CoachCustomerSummary[]; loading: boolean } {
   const [data, setData] = useState<CoachCustomerSummary[]>([]);
@@ -46,6 +46,27 @@ export function useAllCoaches(): { data: AdminCoachSummary[]; loading: boolean; 
   }, [tick]);
 
   return { data, loading, refresh };
+}
+
+export function useMyCoachProfile(coachId: string): { data: MyCoachProfile | undefined; loading: boolean } {
+  const [data, setData] = useState<MyCoachProfile | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getMyCoachProfile(coachId)
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [coachId]);
+
+  return { data, loading };
 }
 
 export function useCustomerProfile(customerId: string): { data: CoachCustomerProfile | undefined; loading: boolean } {
