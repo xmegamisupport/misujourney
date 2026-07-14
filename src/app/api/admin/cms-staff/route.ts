@@ -45,19 +45,17 @@ export async function GET() {
     return NextResponse.json({ error: "服务器未配置 SUPABASE_SERVICE_ROLE_KEY" }, { status: 500 });
   }
 
-  const { data: profiles, error: profileError } = await admin
-    .from("profiles")
-    .select("id, name, avatar, role, created_at")
-    .in("role", CMS_ROLES)
-    .order("created_at", { ascending: false });
+  // One listUsers() call instead of one getUserById() round trip per row —
+  // the admin Auth API is noticeably slower than a plain Postgrest query.
+  const [{ data: profiles, error: profileError }, { data: userList, error: userListError }] = await Promise.all([
+    admin.from("profiles").select("id, name, avatar, role, created_at").in("role", CMS_ROLES).order("created_at", { ascending: false }),
+    admin.auth.admin.listUsers({ perPage: 1000 }),
+  ]);
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
+  if (userListError) return NextResponse.json({ error: userListError.message }, { status: 500 });
 
-  const result = await Promise.all(
-    (profiles ?? []).map(async (p) => {
-      const { data: userData } = await admin.auth.admin.getUserById(p.id);
-      return { id: p.id, name: p.name, avatar: p.avatar, role: p.role, email: userData.user?.email ?? null, createdAt: p.created_at };
-    }),
-  );
+  const emailById = new Map(userList.users.map((u) => [u.id, u.email ?? null]));
+  const result = (profiles ?? []).map((p) => ({ id: p.id, name: p.name, avatar: p.avatar, role: p.role, email: emailById.get(p.id) ?? null, createdAt: p.created_at }));
 
   return NextResponse.json({ users: result });
 }
