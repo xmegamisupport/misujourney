@@ -11,7 +11,7 @@ interface RegisterCoachBody {
   referralCode?: string;
 }
 
-const REFERRAL_CODE_PATTERN = /^[A-Z0-9]{3,20}$/;
+const REFERRAL_CODE_PATTERN = /^[a-z0-9]{3,20}$/;
 
 /** Deliberately public — no admin check, same trust level as customer
  * /register. Role still can't be client-forged: it's only ever set via
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const email = body.email?.trim() ?? "";
   const password = body.password ?? "";
   const phone = body.phone?.trim() ?? "";
-  const referralCode = body.referralCode?.trim().toUpperCase() ?? "";
+  const referralCode = body.referralCode?.trim().toLowerCase() ?? "";
 
   if (!name) return NextResponse.json({ error: "请输入姓名" }, { status: 400 });
   if (!email) return NextResponse.json({ error: "请输入邮箱" }, { status: 400 });

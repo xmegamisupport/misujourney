@@ -352,7 +352,7 @@ function StepBasicInfo({ draft, update }: { draft: WizardDraft; update: <K exten
       </FieldLabel>
       <FieldLabel>
         Referral Code（选填）
-        <input value={draft.referralCode} onChange={(e) => update("referralCode", e.target.value)} placeholder="CHLOE688" className={inputClass} />
+        <input value={draft.referralCode} onChange={(e) => update("referralCode", e.target.value)} placeholder="chloe688" className={inputClass} />
       </FieldLabel>
       <div className="grid grid-cols-2 gap-3">
         <FieldLabel>

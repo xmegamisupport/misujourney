@@ -343,7 +343,7 @@ function CoachRegisterForm({ onBack }: { onBack: () => void }) {
               Reseller Username
               <input
                 type="text"
-                placeholder="例如 CHLOE688"
+                placeholder="例如 chloe688"
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value)}
                 className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"

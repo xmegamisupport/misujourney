@@ -28,8 +28,8 @@ async function requireAdmin() {
 }
 
 function generateReferralCode(name: string): string {
-  const base = name.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6) || "COACH";
-  const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+  const base = name.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 6) || "coach";
+  const suffix = Math.random().toString(36).slice(2, 6);
   return `${base}${suffix}`;
 }
 
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
   const email = body.email?.trim() ?? "";
   const password = body.password ?? "";
   const whatsappNumber = body.whatsappNumber?.trim() || null;
-  let referralCode = body.referralCode?.trim().toUpperCase() || "";
+  let referralCode = body.referralCode?.trim().toLowerCase() || "";
 
   if (!name) return NextResponse.json({ error: "请输入教练姓名" }, { status: 400 });
   if (!email) return NextResponse.json({ error: "请输入邮箱" }, { status: 400 });
