@@ -48,11 +48,15 @@ export function useAllCustomersForAdmin(): { data: AdminCustomerSummary[]; loadi
   return { data, loading, refresh };
 }
 
-export function useAllCoaches(): { data: AdminCoachSummary[]; loading: boolean; refresh: () => void } {
+export function useAllCoaches(): { data: AdminCoachSummary[]; loading: boolean; refresh: () => void; prepend: (coach: AdminCoachSummary) => void } {
   const [data, setData] = useState<AdminCoachSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
   const refresh = useCallback(() => setTick((t) => t + 1), []);
+  // Lets a just-created coach show up immediately instead of waiting on a
+  // full re-fetch (session check + 2 queries + admin API lookup) — refresh()
+  // still runs in the background to reconcile.
+  const prepend = useCallback((coach: AdminCoachSummary) => setData((prev) => [coach, ...prev]), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,7 +72,7 @@ export function useAllCoaches(): { data: AdminCoachSummary[]; loading: boolean; 
     };
   }, [tick]);
 
-  return { data, loading, refresh };
+  return { data, loading, refresh, prepend };
 }
 
 export function useMyCoachProfile(coachId: string): { data: MyCoachProfile | undefined; loading: boolean; refresh: () => void } {

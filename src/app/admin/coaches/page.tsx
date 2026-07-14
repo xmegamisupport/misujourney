@@ -9,7 +9,7 @@ import { useAllCoaches } from "@/lib/coach/hooks";
 import { createCoachAccount } from "@/lib/coach/engine";
 
 export default function CoachManagementPage() {
-  const { data: coaches, loading, refresh } = useAllCoaches();
+  const { data: coaches, loading, refresh, prepend } = useAllCoaches();
   const [editingCoachId, setEditingCoachId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState("");
@@ -53,6 +53,21 @@ export default function CoachManagementPage() {
     setSuccess(`已创建教练账号「${result.coach.name}」，推荐码：${result.coach.referralCode}`);
     resetForm();
     setFormOpen(false);
+    prepend({
+      id: result.coach.id,
+      name: result.coach.name,
+      avatar: null,
+      email: result.coach.email,
+      referralCode: result.coach.referralCode,
+      hasWhatsAppContact: false,
+      whatsappCountryIso: null,
+      whatsappLocalNumber: null,
+      whatsappCustomLink: null,
+      whatsappContactMethod: "generated_number",
+      whatsappNeedsReview: false,
+      customerCount: 0,
+      createdAt: new Date().toISOString(),
+    });
     refresh();
   }
 
