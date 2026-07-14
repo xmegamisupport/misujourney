@@ -16,11 +16,18 @@ export interface CmsContentItem {
   estimatedSeconds: number;
   status: CmsContentStatus;
   createdBy: string;
-  rejectionReason: string | null;
+  createdByName?: string;
+  reviewNote: string | null;
+  submittedForReviewAt: string | null;
+  submittedForReviewBy: string | null;
   reviewedBy: string | null;
   reviewedAt: string | null;
   publishedAt: string | null;
+  publishedBy: string | null;
   unpublishedAt: string | null;
+  contentVersion: number;
+  parentContentId: string | null;
+  updatedBy: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -63,16 +70,16 @@ export const CATEGORY_LABELS: Record<CmsContentCategory, string> = {
 
 export const STATUS_LABELS: Record<CmsContentStatus, string> = {
   draft: "草稿",
-  pending_review: "待审核",
+  pending_review: "等待审核",
   published: "已发布",
-  rejected: "已退回修改",
-  unpublished: "已下架",
+  needs_revision: "需要修改",
+  unpublished: "已取消发布",
 };
 
 export const STATUS_STYLES: Record<CmsContentStatus, string> = {
   draft: "bg-slate-100 text-slate-500",
   pending_review: "bg-amber-50 text-amber-600",
   published: "bg-emerald-50 text-emerald-600",
-  rejected: "bg-rose-50 text-rose-600",
+  needs_revision: "bg-rose-50 text-rose-600",
   unpublished: "bg-slate-100 text-slate-400",
 };

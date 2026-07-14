@@ -17,57 +17,75 @@ export type Database = {
       cms_content_items: {
         Row: {
           category: Database["public"]["Enums"]["cms_content_category"]
+          content_version: number
           cover_image_url: string | null
           created_at: string
           created_by: string
           estimated_seconds: number
           fields: Json
           id: string
+          parent_content_id: string | null
           published_at: string | null
-          rejection_reason: string | null
+          published_by: string | null
+          review_note: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["cms_content_status"]
+          submitted_for_review_at: string | null
+          submitted_for_review_by: string | null
           template_type: Database["public"]["Enums"]["cms_template_type"]
           title: string
           unpublished_at: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           category: Database["public"]["Enums"]["cms_content_category"]
+          content_version?: number
           cover_image_url?: string | null
           created_at?: string
           created_by: string
           estimated_seconds?: number
           fields?: Json
           id?: string
+          parent_content_id?: string | null
           published_at?: string | null
-          rejection_reason?: string | null
+          published_by?: string | null
+          review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["cms_content_status"]
+          submitted_for_review_at?: string | null
+          submitted_for_review_by?: string | null
           template_type: Database["public"]["Enums"]["cms_template_type"]
           title: string
           unpublished_at?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           category?: Database["public"]["Enums"]["cms_content_category"]
+          content_version?: number
           cover_image_url?: string | null
           created_at?: string
           created_by?: string
           estimated_seconds?: number
           fields?: Json
           id?: string
+          parent_content_id?: string | null
           published_at?: string | null
-          rejection_reason?: string | null
+          published_by?: string | null
+          review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["cms_content_status"]
+          submitted_for_review_at?: string | null
+          submitted_for_review_by?: string | null
           template_type?: Database["public"]["Enums"]["cms_template_type"]
           title?: string
           unpublished_at?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -78,8 +96,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cms_content_items_parent_content_id_fkey"
+            columns: ["parent_content_id"]
+            isOneToOne: false
+            referencedRelation: "cms_content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cms_content_items_published_by_fkey"
+            columns: ["published_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cms_content_items_reviewed_by_fkey"
             columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cms_content_items_submitted_for_review_by_fkey"
+            columns: ["submitted_for_review_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cms_content_items_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cms_content_reviews: {
+        Row: {
+          action: string
+          content_id: string
+          created_at: string
+          from_status: Database["public"]["Enums"]["cms_content_status"] | null
+          id: string
+          note: string | null
+          reviewer_id: string | null
+          to_status: Database["public"]["Enums"]["cms_content_status"] | null
+        }
+        Insert: {
+          action: string
+          content_id: string
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["cms_content_status"] | null
+          id?: string
+          note?: string | null
+          reviewer_id?: string | null
+          to_status?: Database["public"]["Enums"]["cms_content_status"] | null
+        }
+        Update: {
+          action?: string
+          content_id?: string
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["cms_content_status"] | null
+          id?: string
+          note?: string | null
+          reviewer_id?: string | null
+          to_status?: Database["public"]["Enums"]["cms_content_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_content_reviews_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "cms_content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cms_content_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1204,6 +1298,7 @@ export type Database = {
         Args: { p_content_id: string }
         Returns: undefined
       }
+      create_revision_draft: { Args: { p_content_id: string }; Returns: string }
       current_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -1344,7 +1439,7 @@ export type Database = {
         Args: {
           p_approve: boolean
           p_content_id: string
-          p_rejection_reason?: string
+          p_review_note?: string
         }
         Returns: undefined
       }
@@ -1398,7 +1493,7 @@ export type Database = {
         | "draft"
         | "pending_review"
         | "published"
-        | "rejected"
+        | "needs_revision"
         | "unpublished"
       cms_template_type:
         | "image_knowledge"
@@ -1578,7 +1673,7 @@ export const Constants = {
         "draft",
         "pending_review",
         "published",
-        "rejected",
+        "needs_revision",
         "unpublished",
       ],
       cms_template_type: [

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
-import { createContent, updateContent, submitContentForReview } from "@/lib/cms/engine";
+import { createContent, updateContent, submitContentForReview, createRevisionDraft } from "@/lib/cms/engine";
 import { getTemplate, validateFields } from "@/lib/cms/templates";
 import { CATEGORY_LABELS } from "@/lib/cms/types";
 import type { CmsContentCategory, CmsContentFields, CmsContentItem, CmsTemplateType } from "@/lib/cms/types";
@@ -30,19 +30,39 @@ export function ContentForm({ templateType, existing }: ContentFormProps) {
   const [saving, setSaving] = useState<"draft" | "submit" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [creatingRevision, setCreatingRevision] = useState(false);
 
   const isOwner = !existing || existing.createdBy === user?.id;
   const isAdmin = user?.role === "admin";
-  const editableStatus = !existing || existing.status === "draft" || existing.status === "rejected";
-  const canEdit = isAdmin || (isOwner && editableStatus);
-  const canSubmit = !isAdmin && isOwner && editableStatus;
+  const isPublished = existing?.status === "published";
+  const editableStatus = !existing || existing.status === "draft" || existing.status === "needs_revision";
+  // Admin can fix up anyone's non-published draft; only the actual creator
+  // can submit it for review (submit_content_for_review() itself requires
+  // created_by = auth.uid(), so this mirrors what the RPC would allow).
+  const canEdit = (isAdmin && !isPublished) || (isOwner && editableStatus);
+  const canSubmit = isOwner && editableStatus;
 
   function updateFieldValue(key: string, value: string) {
     setFields((f) => ({ ...f, [key]: value }));
   }
 
+  async function handleCreateRevision() {
+    if (!existing) return;
+    setError(null);
+    setCreatingRevision(true);
+    const result = await createRevisionDraft(existing.id);
+    setCreatingRevision(false);
+    if (!result.ok || !result.data) {
+      setError(result.error ?? "建立修改草稿失败");
+      return;
+    }
+    router.push(`/cms/content/${result.data.id}`);
+  }
+
   async function handleSave(submit: boolean) {
     setError(null);
+    setSubmitSuccess(false);
     if (!title.trim()) return setError("请输入标题");
     const fieldError = validateFields(templateType, fields);
     if (fieldError) return setError(fieldError);
@@ -52,7 +72,8 @@ export function ContentForm({ templateType, existing }: ContentFormProps) {
 
     let contentId = existing?.id;
     if (existing) {
-      const result = await updateContent(existing.id, input);
+      if (!user) return;
+      const result = await updateContent(existing.id, input, user.id);
       if (!result.ok) {
         setSaving(null);
         setError(result.error ?? "保存失败");
@@ -79,7 +100,46 @@ export function ContentForm({ templateType, existing }: ContentFormProps) {
     }
 
     setSaving(null);
-    router.push("/cms");
+    if (submit) {
+      setSubmitSuccess(true);
+    } else {
+      router.push("/cms");
+    }
+  }
+
+  if (existing?.status === "published") {
+    return (
+      <div className="flex flex-col gap-4 pb-8">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <span className="text-2xl">{template.icon}</span>
+          <p className="text-sm font-semibold text-slate-800">{existing.title}</p>
+        </div>
+        <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-700">
+          修改已发布内容可能影响顾客看到的资料。请先建立一份修改草稿，审核发布后才会取代目前的正式内容。
+        </div>
+        {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
+        <button
+          type="button"
+          disabled={creatingRevision}
+          onClick={handleCreateRevision}
+          className="rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
+        >
+          {creatingRevision ? "建立中..." : "📝 建立修改草稿"}
+        </button>
+      </div>
+    );
+  }
+
+  if (submitSuccess) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-8 text-center">
+        <span className="text-3xl">✅</span>
+        <p className="text-sm font-semibold text-emerald-700">内容已提交审核，Admin 审核后才会正式上线。</p>
+        <button type="button" onClick={() => router.push("/cms")} className="mt-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600">
+          返回内容库
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -89,10 +149,10 @@ export function ContentForm({ templateType, existing }: ContentFormProps) {
         <p className="text-sm font-semibold text-slate-800">{template.label}</p>
       </div>
 
-      {existing?.status === "rejected" && existing.rejectionReason && (
+      {existing?.status === "needs_revision" && existing.reviewNote && (
         <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-600">
           <p className="mb-1 font-semibold">Admin 退回原因</p>
-          <p>{existing.rejectionReason}</p>
+          <p>{existing.reviewNote}</p>
         </div>
       )}
 
@@ -197,7 +257,7 @@ export function ContentForm({ templateType, existing }: ContentFormProps) {
             onClick={() => handleSave(true)}
             className="flex-1 rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
           >
-            {saving === "submit" ? "提交中..." : "提交审核"}
+            {saving === "submit" ? "提交中..." : existing?.status === "needs_revision" ? "重新提交审核" : "提交审核"}
           </button>
         )}
       </div>

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
 import type { CmsContentCategory, CmsContentFields, CmsContentItem, CmsJourneySettings, CmsScheduleEntry, CmsTemplateType, TodayContentItem } from "./types";
 
-type ContentRow = Database["public"]["Tables"]["cms_content_items"]["Row"];
+type ContentRow = Database["public"]["Tables"]["cms_content_items"]["Row"] & { creator?: { name: string } | null };
 
 function mapContentRow(row: ContentRow): CmsContentItem {
   return {
@@ -17,15 +17,24 @@ function mapContentRow(row: ContentRow): CmsContentItem {
     estimatedSeconds: row.estimated_seconds,
     status: row.status,
     createdBy: row.created_by,
-    rejectionReason: row.rejection_reason,
+    createdByName: row.creator?.name,
+    reviewNote: row.review_note,
+    submittedForReviewAt: row.submitted_for_review_at,
+    submittedForReviewBy: row.submitted_for_review_by,
     reviewedBy: row.reviewed_by,
     reviewedAt: row.reviewed_at,
     publishedAt: row.published_at,
+    publishedBy: row.published_by,
     unpublishedAt: row.unpublished_at,
+    contentVersion: row.content_version,
+    parentContentId: row.parent_content_id,
+    updatedBy: row.updated_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
+
+const CONTENT_SELECT_WITH_CREATOR = "*, creator:profiles!created_by(name)";
 
 export interface CmsResult<T = void> {
   ok: boolean;
@@ -35,30 +44,34 @@ export interface CmsResult<T = void> {
 
 export async function getContentLibrary(): Promise<CmsContentItem[]> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("cms_content_items").select("*").order("updated_at", { ascending: false });
+  const { data, error } = await supabase.from("cms_content_items").select(CONTENT_SELECT_WITH_CREATOR).order("updated_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map(mapContentRow);
+  return ((data ?? []) as unknown as ContentRow[]).map(mapContentRow);
 }
 
 export async function getContentById(id: string): Promise<CmsContentItem | undefined> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("cms_content_items").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase.from("cms_content_items").select(CONTENT_SELECT_WITH_CREATOR).eq("id", id).maybeSingle();
   if (error) throw error;
-  return data ? mapContentRow(data) : undefined;
+  return data ? mapContentRow(data as unknown as ContentRow) : undefined;
 }
 
 export async function getPendingContent(): Promise<CmsContentItem[]> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("cms_content_items").select("*").eq("status", "pending_review").order("updated_at", { ascending: true });
+  const { data, error } = await supabase
+    .from("cms_content_items")
+    .select(CONTENT_SELECT_WITH_CREATOR)
+    .eq("status", "pending_review")
+    .order("submitted_for_review_at", { ascending: true });
   if (error) throw error;
-  return (data ?? []).map(mapContentRow);
+  return ((data ?? []) as unknown as ContentRow[]).map(mapContentRow);
 }
 
 export async function getPublishedContent(): Promise<CmsContentItem[]> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("cms_content_items").select("*").eq("status", "published").order("published_at", { ascending: false });
+  const { data, error } = await supabase.from("cms_content_items").select(CONTENT_SELECT_WITH_CREATOR).eq("status", "published").order("published_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map(mapContentRow);
+  return ((data ?? []) as unknown as ContentRow[]).map(mapContentRow);
 }
 
 export interface CreateContentInput {
@@ -92,7 +105,7 @@ export async function createContent(customerId: string, input: CreateContentInpu
   return { ok: true, data: mapContentRow(data) };
 }
 
-export async function updateContent(id: string, input: CreateContentInput): Promise<CmsResult> {
+export async function updateContent(id: string, input: CreateContentInput, updatedBy: string): Promise<CmsResult> {
   const supabase = createClient();
   const { error } = await supabase
     .from("cms_content_items")
@@ -103,6 +116,7 @@ export async function updateContent(id: string, input: CreateContentInput): Prom
       fields: input.fields as never,
       cover_image_url: input.coverImageUrl || null,
       estimated_seconds: input.estimatedSeconds,
+      updated_by: updatedBy,
     })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
@@ -116,11 +130,21 @@ export async function submitContentForReview(contentId: string): Promise<CmsResu
   return { ok: true };
 }
 
-export async function reviewContent(contentId: string, approve: boolean, rejectionReason?: string): Promise<CmsResult> {
+export async function reviewContent(contentId: string, approve: boolean, reviewNote?: string): Promise<CmsResult> {
   const supabase = createClient();
-  const { error } = await supabase.rpc("review_content", { p_content_id: contentId, p_approve: approve, p_rejection_reason: rejectionReason });
+  const { error } = await supabase.rpc("review_content", { p_content_id: contentId, p_approve: approve, p_review_note: reviewNote });
   if (error) return { ok: false, error: error.message };
   return { ok: true };
+}
+
+/** The only way to "edit" published content — clones it into a new draft
+ * (parent_content_id set) rather than mutating the live row; RLS blocks
+ * direct UPDATEs to published rows entirely, so this is the sole path in. */
+export async function createRevisionDraft(contentId: string): Promise<CmsResult<{ id: string }>> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("create_revision_draft", { p_content_id: contentId });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: { id: data as string } };
 }
 
 export async function setContentPublished(contentId: string, published: boolean): Promise<CmsResult> {

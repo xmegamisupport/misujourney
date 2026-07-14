@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { SignOutButton } from "@/components/SignOutButton";
+import { usePendingContent } from "@/lib/cms/hooks";
 import { cn } from "@/lib/utils";
 
 interface CmsNavItem {
@@ -35,6 +36,9 @@ export function CmsShell({ children }: { children: ReactNode }) {
   const { user } = useAuthUser();
   const isAdmin = user?.role === "admin";
   const items = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
+  // Only meaningful for Admin — they're the only role that can act on it.
+  const { data: pending } = usePendingContent();
+  const pendingCount = isAdmin ? pending.length : 0;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -60,6 +64,9 @@ export function CmsShell({ children }: { children: ReactNode }) {
             >
               <span>{item.icon}</span>
               {item.label}
+              {item.href === "/cms/pending" && pendingCount > 0 && (
+                <span className="ml-auto rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-semibold text-white">{pendingCount}</span>
+              )}
             </Link>
           ))}
         </nav>
@@ -90,11 +97,18 @@ export function CmsShell({ children }: { children: ReactNode }) {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium",
+              "relative flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium",
               isActive(pathname, item.href) ? "text-emerald-600" : "text-slate-400",
             )}
           >
-            <span className="text-base">{item.icon}</span>
+            <span className="relative text-base">
+              {item.icon}
+              {item.href === "/cms/pending" && pendingCount > 0 && (
+                <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-semibold text-white">
+                  {pendingCount}
+                </span>
+              )}
+            </span>
             {item.label}
           </Link>
         ))}

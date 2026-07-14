@@ -205,11 +205,15 @@ export default function JourneySchedulePage() {
       {picking && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 md:items-center" onClick={() => setPicking(false)}>
           <div className="max-h-[70vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white p-5 shadow-lg md:rounded-3xl" onClick={(e) => e.stopPropagation()}>
-            <p className="mb-3 text-sm font-semibold text-slate-800">选择要加入 Day {dayNumber} 的内容</p>
+            <p className="mb-1 text-sm font-semibold text-slate-800">选择要加入 Day {dayNumber} 的内容</p>
+            <p className="mb-3 text-xs text-slate-400">只能选择已发布的内容</p>
             <div className="flex flex-col gap-2">
-              {library
-                .filter((item) => !todaysEntries.some((e) => e.contentId === item.id))
-                .map((item) => {
+              {(() => {
+                const pickable = library.filter((item) => item.status === "published" && !todaysEntries.some((e) => e.contentId === item.id));
+                if (pickable.length === 0) {
+                  return <p className="py-6 text-center text-sm text-slate-400">目前没有可以安排的已发布内容</p>;
+                }
+                return pickable.map((item) => {
                   const template = TEMPLATE_LIST.find((t) => t.type === item.templateType);
                   return (
                     <button
@@ -222,10 +226,10 @@ export default function JourneySchedulePage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-slate-800">{item.title}</p>
                       </div>
-                      <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium", STATUS_STYLES[item.status])}>{STATUS_LABELS[item.status]}</span>
                     </button>
                   );
-                })}
+                });
+              })()}
             </div>
           </div>
         </div>

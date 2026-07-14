@@ -7,6 +7,7 @@ import { ContentCardViewer } from "@/components/cms/ContentCardViewer";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { usePendingContent } from "@/lib/cms/hooks";
 import { reviewContent } from "@/lib/cms/engine";
+import { CATEGORY_LABELS } from "@/lib/cms/types";
 import { TEMPLATE_LIST } from "@/lib/cms/templates";
 import type { CmsContentItem } from "@/lib/cms/types";
 
@@ -16,6 +17,7 @@ function PendingCard({ item, onDone }: { item: CmsContentItem; onDone: () => voi
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [publishedMessage, setPublishedMessage] = useState(false);
   const template = TEMPLATE_LIST.find((t) => t.type === item.templateType);
 
   async function handlePublish() {
@@ -27,7 +29,8 @@ function PendingCard({ item, onDone }: { item: CmsContentItem; onDone: () => voi
       setError(result.error ?? "操作失败");
       return;
     }
-    onDone();
+    setPublishedMessage(true);
+    setTimeout(onDone, 900);
   }
 
   async function handleReject() {
@@ -46,13 +49,34 @@ function PendingCard({ item, onDone }: { item: CmsContentItem; onDone: () => voi
     onDone();
   }
 
+  if (publishedMessage) {
+    return (
+      <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
+        ✅ 内容已发布。安排到 Journey Day 后，顾客才会看到。
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
       <div className="flex items-start gap-3">
-        <span className="text-2xl">{template?.icon}</span>
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 text-xl">
+          {item.coverImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.coverImageUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            template?.icon
+          )}
+        </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-800">{item.title}</p>
-          <p className="mt-0.5 text-xs text-slate-400">{template?.label} · {new Date(item.createdAt).toLocaleDateString("zh-CN")}</p>
+          <p className="mt-0.5 text-xs text-slate-400">
+            {CATEGORY_LABELS[item.category]} · {template?.label} · 约 {item.estimatedSeconds} 秒
+          </p>
+          <p className="mt-0.5 text-xs text-slate-400">
+            建立者：{item.createdByName ?? "—"} · 提交于{" "}
+            {item.submittedForReviewAt ? new Date(item.submittedForReviewAt).toLocaleString("zh-CN") : "—"}
+          </p>
         </div>
         <button type="button" onClick={() => setPreviewOpen(true)} className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-emerald-300">
           预览
@@ -131,7 +155,7 @@ export default function PendingReviewPage() {
     <div className="flex flex-col gap-4">
       <PageHeader title="待审核" subtitle={`共 ${items.length} 篇待审核`} />
       {!loading && items.length === 0 ? (
-        <EmptyState icon="🎉" title="目前没有待审核的内容" />
+        <EmptyState icon="🎉" title="目前没有等待审核的内容" />
       ) : (
         <div className="flex flex-col gap-3">
           {items.map((item) => (

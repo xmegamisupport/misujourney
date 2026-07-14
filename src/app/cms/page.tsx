@@ -7,16 +7,26 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useContentLibrary } from "@/lib/cms/hooks";
 import { CATEGORY_LABELS, STATUS_LABELS, STATUS_STYLES } from "@/lib/cms/types";
+import type { CmsContentStatus } from "@/lib/cms/types";
 import { TEMPLATE_LIST } from "@/lib/cms/templates";
 import { cn } from "@/lib/utils";
+
+const STATUS_FILTERS: CmsContentStatus[] = ["draft", "pending_review", "needs_revision", "published", "unpublished"];
 
 export default function ContentLibraryPage() {
   const { user } = useAuthUser();
   const { data: items, loading } = useContentLibrary();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<CmsContentStatus | "all">("all");
   const canCreate = user?.role === "admin" || user?.role === "nutritionist" || user?.role === "trainer";
 
   const sorted = useMemo(() => [...items].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [items]);
+  const filtered = useMemo(() => (statusFilter === "all" ? sorted : sorted.filter((item) => item.status === statusFilter)), [sorted, statusFilter]);
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const item of items) counts[item.status] = (counts[item.status] ?? 0) + 1;
+    return counts;
+  }, [items]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -56,11 +66,43 @@ export default function ContentLibraryPage() {
         </div>
       )}
 
-      {!loading && sorted.length === 0 ? (
-        <EmptyState icon="📚" title="内容库还是空的" description={canCreate ? "点击右上角「+ 新增内容」建立第一篇" : "还没有人建立内容"} />
+      {items.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setStatusFilter("all")}
+            className={cn(
+              "rounded-full border px-3.5 py-1.5 text-xs font-medium transition",
+              statusFilter === "all" ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-500",
+            )}
+          >
+            全部 ({items.length})
+          </button>
+          {STATUS_FILTERS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setStatusFilter(s)}
+              className={cn(
+                "rounded-full border px-3.5 py-1.5 text-xs font-medium transition",
+                statusFilter === s ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-500",
+              )}
+            >
+              {STATUS_LABELS[s]} ({statusCounts[s] ?? 0})
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!loading && filtered.length === 0 ? (
+        <EmptyState
+          icon="📚"
+          title={items.length === 0 ? "内容库还是空的" : "这个状态下还没有内容"}
+          description={items.length === 0 && canCreate ? "点击右上角「+ 新增内容」建立第一篇" : undefined}
+        />
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
-          {sorted.map((item) => {
+          {filtered.map((item) => {
             const template = TEMPLATE_LIST.find((t) => t.type === item.templateType);
             return (
               <Link
