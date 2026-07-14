@@ -13,7 +13,6 @@ export default function CoachManagementPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [referralCode, setReferralCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +22,6 @@ export default function CoachManagementPage() {
     setName("");
     setEmail("");
     setPassword("");
-    setWhatsappNumber("");
     setReferralCode("");
   }
 
@@ -41,7 +39,6 @@ export default function CoachManagementPage() {
       name: name.trim(),
       email: email.trim(),
       password,
-      whatsappNumber: whatsappNumber.trim() || undefined,
       referralCode: referralCode.trim() || undefined,
     });
     setSubmitting(false);
@@ -91,6 +88,7 @@ export default function CoachManagementPage() {
       {formOpen && (
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
           <p className="text-sm font-semibold text-slate-800">新增教练账号</p>
+          <p className="text-xs text-slate-400">WhatsApp 联络资料由教练登录后自行到「我的」页面设置（需要选择国家/地区）</p>
           <div className="grid gap-3 md:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm text-slate-600">
               姓名
@@ -117,16 +115,6 @@ export default function CoachManagementPage() {
                 placeholder="至少 6 位"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm text-slate-600">
-              WhatsApp 号码（选填）
-              <input
-                type="text"
-                placeholder="例如 0123456789"
-                value={whatsappNumber}
-                onChange={(e) => setWhatsappNumber(e.target.value)}
                 className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
               />
             </label>
@@ -167,8 +155,8 @@ export default function CoachManagementPage() {
                 <p className="truncate text-sm font-semibold text-slate-800">{coach.name}</p>
                 <p className="truncate text-xs text-slate-400">{coach.email ?? "—"}</p>
                 <p className="mt-1 text-xs text-slate-400">
-                  {coach.customerCount} 位顾客 · 推荐码 {coach.referralCode ?? "—"}
-                  {coach.whatsappNumber && ` · WhatsApp ${coach.whatsappNumber}`}
+                  {coach.customerCount} 位顾客 · 推荐码 {coach.referralCode ?? "—"} · WhatsApp{" "}
+                  {coach.hasWhatsAppContact ? "已设置" : coach.whatsappNeedsReview ? "待确认（旧资料）" : "未设置"}
                 </p>
               </div>
             </div>

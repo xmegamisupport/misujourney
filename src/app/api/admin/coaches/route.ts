@@ -8,7 +8,6 @@ interface CreateCoachBody {
   name?: string;
   email?: string;
   password?: string;
-  whatsappNumber?: string;
   referralCode?: string;
 }
 
@@ -46,7 +45,7 @@ export async function GET() {
 
   const { data: coaches, error: coachError } = await admin
     .from("profiles")
-    .select("id, name, avatar, referral_code, whatsapp_number, created_at")
+    .select("id, name, avatar, referral_code, whatsapp_contact_method, whatsapp_normalized_number, whatsapp_custom_link, whatsapp_needs_review, created_at")
     .eq("role", "coach")
     .order("created_at", { ascending: false });
   if (coachError) return NextResponse.json({ error: coachError.message }, { status: 500 });
@@ -69,13 +68,15 @@ export async function GET() {
   const result = await Promise.all(
     (coaches ?? []).map(async (c) => {
       const { data: userData } = await admin.auth.admin.getUserById(c.id);
+      const hasWhatsAppContact = c.whatsapp_contact_method === "custom_link" ? Boolean(c.whatsapp_custom_link) : Boolean(c.whatsapp_normalized_number);
       return {
         id: c.id,
         name: c.name,
         avatar: c.avatar,
         email: userData.user?.email ?? null,
         referralCode: c.referral_code,
-        whatsappNumber: c.whatsapp_number,
+        hasWhatsAppContact,
+        whatsappNeedsReview: c.whatsapp_needs_review,
         customerCount: counts[c.id] ?? 0,
         createdAt: c.created_at,
       };
@@ -93,7 +94,6 @@ export async function POST(request: Request) {
   const name = body.name?.trim() ?? "";
   const email = body.email?.trim() ?? "";
   const password = body.password ?? "";
-  const whatsappNumber = body.whatsappNumber?.trim() || null;
   let referralCode = body.referralCode?.trim().toLowerCase() || "";
 
   if (!name) return NextResponse.json({ error: "请输入教练姓名" }, { status: 400 });
@@ -139,15 +139,15 @@ export async function POST(request: Request) {
   // admin.createUser() inserts the auth.users row first (default
   // app_metadata) and only merges in the custom app_metadata with a
   // separate update afterward, so the AFTER INSERT trigger never actually
-  // sees role: 'coach' — confirmed live, not a hypothetical.
-  const { error: updateError } = await admin
-    .from("profiles")
-    .update({ role: "coach", referral_code: referralCode, whatsapp_number: whatsappNumber })
-    .eq("id", created.user.id);
+  // sees role: 'coach' — confirmed live, not a hypothetical. WhatsApp contact
+  // info is set up separately by the Coach themselves via update_coach_
+  // whatsapp_contact() (which also supports Admin editing any Coach), since
+  // it needs a country selector this creation form doesn't have.
+  const { error: updateError } = await admin.from("profiles").update({ role: "coach", referral_code: referralCode }).eq("id", created.user.id);
 
   if (updateError) {
-    return NextResponse.json({ error: `账号已创建，但设置推荐码/WhatsApp 失败：${updateError.message}` }, { status: 500 });
+    return NextResponse.json({ error: `账号已创建，但设置推荐码失败：${updateError.message}` }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, coach: { id: created.user.id, name, email, referralCode, whatsappNumber } });
+  return NextResponse.json({ ok: true, coach: { id: created.user.id, name, email, referralCode } });
 }

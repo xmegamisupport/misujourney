@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
-import { normalizeWhatsAppNumber, buildWhatsAppLink, buildCoachContactMessage } from "@/lib/whatsapp";
+import { getCoachWhatsAppUrl, buildCoachContactMessage } from "@/lib/whatsapp";
 import type { CoachContact } from "@/lib/coach-contact/types";
 
 interface WhatsAppContactButtonProps {
@@ -19,13 +19,21 @@ export function WhatsAppContactButton({ coachContact, loading }: WhatsAppContact
   const { data: journey } = useJourneySummary(user?.id ?? "");
   const [opening, setOpening] = useState(false);
 
-  const whatsappNumber = coachContact?.whatsappNumber ? normalizeWhatsAppNumber(coachContact.whatsappNumber) : null;
+  const url = coachContact
+    ? getCoachWhatsAppUrl(
+        {
+          contactMethod: coachContact.whatsappContactMethod,
+          normalizedNumber: coachContact.whatsappNormalizedNumber,
+          customLink: coachContact.whatsappCustomLink,
+        },
+        buildCoachContactMessage(journey?.name || "顾客"),
+      )
+    : null;
 
   function handleContactClick() {
-    if (!whatsappNumber || opening) return;
+    if (!url || opening) return;
     setOpening(true);
-    const message = buildCoachContactMessage(journey?.name || "顾客");
-    window.open(buildWhatsAppLink(whatsappNumber, message), "_blank", "noopener,noreferrer");
+    window.open(url, "_blank", "noopener,noreferrer");
     setTimeout(() => setOpening(false), 1500);
   }
 
@@ -45,7 +53,7 @@ export function WhatsAppContactButton({ coachContact, loading }: WhatsAppContact
     );
   }
 
-  if (!whatsappNumber) {
+  if (!url) {
     return (
       <div className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 text-center text-sm text-slate-500">
         Coach 的 WhatsApp 资料暂未设置，请联系管理员。

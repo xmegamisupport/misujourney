@@ -748,6 +748,13 @@ export type Database = {
           start_weight: number | null
           timezone: string
           updated_at: string
+          whatsapp_contact_method: string
+          whatsapp_country_code: string | null
+          whatsapp_country_iso: string | null
+          whatsapp_custom_link: string | null
+          whatsapp_local_number: string | null
+          whatsapp_needs_review: boolean
+          whatsapp_normalized_number: string | null
           whatsapp_number: string | null
         }
         Insert: {
@@ -769,6 +776,13 @@ export type Database = {
           start_weight?: number | null
           timezone?: string
           updated_at?: string
+          whatsapp_contact_method?: string
+          whatsapp_country_code?: string | null
+          whatsapp_country_iso?: string | null
+          whatsapp_custom_link?: string | null
+          whatsapp_local_number?: string | null
+          whatsapp_needs_review?: boolean
+          whatsapp_normalized_number?: string | null
           whatsapp_number?: string | null
         }
         Update: {
@@ -790,6 +804,13 @@ export type Database = {
           start_weight?: number | null
           timezone?: string
           updated_at?: string
+          whatsapp_contact_method?: string
+          whatsapp_country_code?: string | null
+          whatsapp_country_iso?: string | null
+          whatsapp_custom_link?: string | null
+          whatsapp_local_number?: string | null
+          whatsapp_needs_review?: boolean
+          whatsapp_normalized_number?: string | null
           whatsapp_number?: string | null
         }
         Relationships: [
@@ -1009,7 +1030,9 @@ export type Database = {
           avatar: string
           coach_id: string
           name: string
-          whatsapp_number: string
+          whatsapp_contact_method: string
+          whatsapp_custom_link: string
+          whatsapp_normalized_number: string
         }[]
       }
       init_customer_inventory: {
@@ -1040,6 +1063,10 @@ export type Database = {
       mark_alert_followed_up: {
         Args: { p_alert_id: string }
         Returns: undefined
+      }
+      normalize_international_phone_number: {
+        Args: { p_country_calling_code: string; p_local_phone_number: string }
+        Returns: string
       }
       record_meal: {
         Args: {
@@ -1090,8 +1117,15 @@ export type Database = {
         Args: { p_customer_id: string; p_date: string }
         Returns: Json
       }
-      update_my_whatsapp_number: {
-        Args: { p_whatsapp_number: string }
+      update_coach_whatsapp_contact: {
+        Args: {
+          p_coach_id: string
+          p_whatsapp_contact_method: string
+          p_whatsapp_country_code: string
+          p_whatsapp_country_iso: string
+          p_whatsapp_custom_link: string
+          p_whatsapp_local_number: string
+        }
         Returns: undefined
       }
     }

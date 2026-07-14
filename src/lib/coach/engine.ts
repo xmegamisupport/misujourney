@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
+import type { WhatsAppContactMethod } from "@/lib/whatsapp";
 
 export interface CoachCustomerSummary {
   id: string;
@@ -16,15 +17,48 @@ export interface MyCoachProfile {
   name: string;
   avatar: string | null;
   referralCode: string | null;
-  whatsappNumber: string | null;
+  whatsappCountryCode: string | null;
+  whatsappCountryIso: string | null;
+  whatsappLocalNumber: string | null;
+  whatsappNormalizedNumber: string | null;
+  whatsappCustomLink: string | null;
+  whatsappContactMethod: WhatsAppContactMethod;
+  whatsappNeedsReview: boolean;
 }
 
 export async function getMyCoachProfile(coachId: string): Promise<MyCoachProfile | undefined> {
   const supabase = createClient();
-  const { data, error } = await supabase.from("profiles").select("id, name, avatar, referral_code, whatsapp_number").eq("id", coachId).maybeSingle();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(
+      "id, name, avatar, referral_code, whatsapp_country_code, whatsapp_country_iso, whatsapp_local_number, whatsapp_normalized_number, whatsapp_custom_link, whatsapp_contact_method, whatsapp_needs_review",
+    )
+    .eq("id", coachId)
+    .maybeSingle();
   if (error) throw error;
   if (!data) return undefined;
-  return { id: data.id, name: data.name, avatar: data.avatar, referralCode: data.referral_code, whatsappNumber: data.whatsapp_number };
+  return {
+    id: data.id,
+    name: data.name,
+    avatar: data.avatar,
+    referralCode: data.referral_code,
+    whatsappCountryCode: data.whatsapp_country_code,
+    whatsappCountryIso: data.whatsapp_country_iso,
+    whatsappLocalNumber: data.whatsapp_local_number,
+    whatsappNormalizedNumber: data.whatsapp_normalized_number,
+    whatsappCustomLink: data.whatsapp_custom_link,
+    whatsappContactMethod: data.whatsapp_contact_method as WhatsAppContactMethod,
+    whatsappNeedsReview: data.whatsapp_needs_review,
+  };
+}
+
+export interface UpdateWhatsAppContactInput {
+  coachId: string;
+  countryCode: string;
+  countryIso: string;
+  localNumber: string;
+  customLink: string;
+  contactMethod: WhatsAppContactMethod;
 }
 
 export interface UpdateWhatsAppResult {
@@ -32,12 +66,20 @@ export interface UpdateWhatsAppResult {
   error?: string;
 }
 
-/** The only way to change your own whatsapp_number — profiles has no direct
- * UPDATE grant for authenticated, so this goes through a narrow RPC that
- * only ever touches the caller's own row. */
-export async function updateMyWhatsAppNumber(whatsappNumber: string): Promise<UpdateWhatsAppResult> {
+/** The only way to change a Coach's structured WhatsApp contact info —
+ * profiles has no direct UPDATE grant for authenticated. The RPC allows the
+ * caller to edit their own row, or any Coach's row if the caller is an
+ * Admin — same function serves both self-edit and future Admin-edit UI. */
+export async function updateCoachWhatsAppContact(input: UpdateWhatsAppContactInput): Promise<UpdateWhatsAppResult> {
   const supabase = createClient();
-  const { error } = await supabase.rpc("update_my_whatsapp_number", { p_whatsapp_number: whatsappNumber });
+  const { error } = await supabase.rpc("update_coach_whatsapp_contact", {
+    p_coach_id: input.coachId,
+    p_whatsapp_country_code: input.countryCode,
+    p_whatsapp_country_iso: input.countryIso,
+    p_whatsapp_local_number: input.localNumber,
+    p_whatsapp_custom_link: input.customLink,
+    p_whatsapp_contact_method: input.contactMethod,
+  });
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
@@ -67,7 +109,8 @@ export interface AdminCoachSummary {
   avatar: string | null;
   email: string | null;
   referralCode: string | null;
-  whatsappNumber: string | null;
+  hasWhatsAppContact: boolean;
+  whatsappNeedsReview: boolean;
   customerCount: number;
   createdAt: string;
 }
@@ -86,14 +129,13 @@ export interface CreateCoachInput {
   name: string;
   email: string;
   password: string;
-  whatsappNumber?: string;
   referralCode?: string;
 }
 
 export interface CreateCoachResult {
   ok: boolean;
   error?: string;
-  coach?: { id: string; name: string; email: string; referralCode: string; whatsappNumber: string | null };
+  coach?: { id: string; name: string; email: string; referralCode: string };
 }
 
 /** The only way to create a Coach account — auth.users can't be written via

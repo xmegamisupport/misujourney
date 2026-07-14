@@ -66,13 +66,11 @@ export async function POST(request: Request) {
   // also has a unique DB constraint — if two people race for the same code,
   // roll back the just-created auth user rather than leaving an orphaned
   // coach account with no working referral code.
-  // whatsapp_number defaults to the phone they just typed so the
-  // customer-facing "WhatsApp联系Coach" button works immediately — Coach
-  // can correct it later from their own Profile page if it differs.
-  const { error: updateError } = await admin
-    .from("profiles")
-    .update({ role: "coach", referral_code: referralCode, phone, whatsapp_number: phone })
-    .eq("id", created.user.id);
+  // WhatsApp contact info (country + local number) is set up separately by
+  // the Coach via their Profile page, which has the country selector this
+  // registration form doesn't — guessing a country from a bare phone string
+  // is exactly what the structured-contact redesign was meant to avoid.
+  const { error: updateError } = await admin.from("profiles").update({ role: "coach", referral_code: referralCode, phone }).eq("id", created.user.id);
   if (updateError) {
     await admin.auth.admin.deleteUser(created.user.id);
     const message = updateError.message.toLowerCase().includes("duplicate") ? "该 Reseller Username 已被使用，请更换" : "注册失败，请稍后再试";
