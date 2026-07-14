@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import type { ReactNode } from "react";
 import type { Role } from "@/lib/types";
-import { roleNav, roleTheme } from "@/lib/nav";
+import { roleNav, roleTheme, roleIcon } from "@/lib/nav";
 import { SidebarNavigation } from "@/components/ui/SidebarNavigation";
 import { BottomNavigation } from "@/components/ui/BottomNavigation";
 import { SignOutButton } from "@/components/SignOutButton";
@@ -26,13 +27,16 @@ export function RoleShell({ role, children }: RoleShellProps) {
       <SidebarNavigation
         items={items}
         roleLabel={label}
+        roleIcon={roleIcon[role]}
         activeText={theme.activeText}
         activeBg={theme.activeBg}
         footer={<SignOutButton className="text-xs text-slate-400 hover:text-slate-600" />}
       />
       <div className="md:pl-64">
         <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-slate-100 bg-white/90 px-4 py-3 backdrop-blur md:hidden">
-          <span className="text-xl">🌱</span>
+          <span className="relative block h-7 w-7 shrink-0 overflow-hidden rounded-full bg-slate-50">
+            <Image src={roleIcon[role]} alt="" fill sizes="28px" className="object-cover object-top" />
+          </span>
           <span className="text-sm font-semibold text-slate-900">MISU Journey</span>
           <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", theme.chip)}>{label}</span>
         </div>

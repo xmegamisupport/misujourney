@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { NavItem } from "@/lib/nav";
@@ -8,6 +9,7 @@ import { cn } from "@/lib/utils";
 interface SidebarNavigationProps {
   items: NavItem[];
   roleLabel: string;
+  roleIcon: string;
   activeText?: string;
   activeBg?: string;
   footer?: React.ReactNode;
@@ -23,6 +25,7 @@ function isActive(pathname: string, href: string) {
 export function SidebarNavigation({
   items,
   roleLabel,
+  roleIcon,
   activeText = "text-emerald-700",
   activeBg = "bg-emerald-50",
   footer,
@@ -31,8 +34,10 @@ export function SidebarNavigation({
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-100 bg-white md:flex">
-      <div className="flex items-center gap-2 px-6 py-6">
-        <span className="text-2xl">🌱</span>
+      <div className="flex items-center gap-3 px-6 py-6">
+        <span className="relative block h-11 w-11 shrink-0 overflow-hidden rounded-full bg-slate-50">
+          <Image src={roleIcon} alt="" fill sizes="44px" className="object-cover object-top" />
+        </span>
         <div>
           <p className="text-sm font-semibold text-slate-900">MISU Journey</p>
           <p className="text-xs text-slate-400">{roleLabel}</p>

@@ -41,6 +41,12 @@ export const roleHome: Record<Role, string> = {
   admin: "/admin",
 };
 
+export const roleIcon: Record<Role, string> = {
+  customer: "/icons/customer.png",
+  coach: "/icons/coach.png",
+  admin: "/icons/admin.png",
+};
+
 /** zh fallback labels; RoleShell overrides with the active language's translation. */
 export const roleLabel: Record<Role, string> = {
   customer: "顾客",
