@@ -148,6 +148,25 @@ export async function getGoalPlansForCustomers(customerIds: string[]): Promise<R
   return map;
 }
 
+/** Batched current-goal lookup for a roster (latest per customer) — same
+ * pattern as getGoalPlansForCustomers. Used by the Coach workspace to derive
+ * the "goal weight achieved" celebration without an N+1 query. */
+export async function getCustomerGoalsForCustomers(customerIds: string[]): Promise<Record<string, CustomerGoal>> {
+  if (customerIds.length === 0) return {};
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("customer_goals")
+    .select("*")
+    .in("customer_id", customerIds)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const map: Record<string, CustomerGoal> = {};
+  for (const row of data ?? []) {
+    if (!map[row.customer_id]) map[row.customer_id] = mapCustomerGoalRow(row);
+  }
+  return map;
+}
+
 /** Admin-configurable weight-loss suggestion table — fetched fresh so the
  * onboarding wizard's live preview always matches what the RPC will compute,
  * without hardcoding the rule table in the UI. */

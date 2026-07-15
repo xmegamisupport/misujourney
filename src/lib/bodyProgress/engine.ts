@@ -149,6 +149,42 @@ export async function getBodyProgressHistory(customerId: string): Promise<BodyPr
   return recordRows.map((row) => mapRecordRow(row, photosByRecord.get(row.id) ?? []));
 }
 
+/** Batched history for a roster (newest first per customer) — one query for
+ * the whole set, so the Coach workspace can derive first-Body-Progress
+ * celebrations, Body-Progress-overdue support, and timelines without an N+1.
+ * RLS (own/coach/admin) already scopes what the caller can see. */
+export async function getBodyProgressRecordsForCustomers(customerIds: string[]): Promise<Record<string, BodyProgressRecord[]>> {
+  if (customerIds.length === 0) return {};
+  const supabase = createClient();
+  const { data: recordRows, error: recordError } = await supabase
+    .from("body_progress_records")
+    .select("*")
+    .in("customer_id", customerIds)
+    .order("submitted_at", { ascending: false });
+  if (recordError) throw recordError;
+  if (!recordRows || recordRows.length === 0) return {};
+
+  const { data: photoRows, error: photoError } = await supabase
+    .from("body_progress_photos")
+    .select("*")
+    .in("record_id", recordRows.map((r) => r.id));
+  if (photoError) throw photoError;
+
+  const photosByRecord = new Map<string, BodyProgressPhoto[]>();
+  for (const row of photoRows ?? []) {
+    const list = photosByRecord.get(row.record_id) ?? [];
+    list.push(mapPhotoRow(row));
+    photosByRecord.set(row.record_id, list);
+  }
+
+  const map: Record<string, BodyProgressRecord[]> = {};
+  for (const row of recordRows) {
+    const record = mapRecordRow(row, photosByRecord.get(row.id) ?? []);
+    (map[row.customer_id] ??= []).push(record);
+  }
+  return map;
+}
+
 /** Reuses the same "fetch full history once, find() the id" pattern already
  * proven for check-in history detail — no separate by-id query, and it
  * inherits the same "can't leak another customer's row via URL tampering"

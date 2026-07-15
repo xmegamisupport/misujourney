@@ -27,6 +27,7 @@ import {
 } from "@/lib/inventory/constants";
 import { parsePositiveInt } from "@/lib/inventory/validation";
 import { useActiveAttentionFlags, useLatestCustomerInsight } from "@/lib/insights/hooks";
+import { CoachFocusPanel } from "@/components/coach/CoachFocusPanel";
 import { SEVERITY_STYLES } from "@/lib/insights/constants";
 import { buildCustomerTrendSummary } from "@/lib/insights/summary";
 import { createClient } from "@/lib/supabase/client";
@@ -56,12 +57,6 @@ export default function CustomerDetailPage() {
   const { data: currentGoal } = useCurrentCustomerGoal(customerId);
   const { data: nutritionTargets } = useCurrentNutritionTargets(customerId);
   const { data: flags } = useActiveAttentionFlags(customerId);
-
-  const [notes, setNotes] = useState<string[]>([
-    "顾客反馈晚餐容易嘴馋，建议加餐搭配高纤维食物。",
-    "已提醒顾客本周需补充产品库存。",
-  ]);
-  const [draft, setDraft] = useState("");
 
   const { data: inventoryRows } = useCustomerInventory(customerId);
   const { data: transactions } = useCustomerTransactions(customerId);
@@ -225,6 +220,9 @@ export default function CustomerDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* ---------- Coach MVP focus layer ---------- */}
+      <CoachFocusPanel customerId={customerId} />
 
       {/* ---------- 本周重点观察 ---------- */}
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
@@ -677,35 +675,6 @@ export default function CustomerDetailPage() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-        <p className="mb-2 text-sm font-semibold text-slate-700">跟进备注</p>
-        <div className="flex flex-col gap-2">
-          {notes.map((note, i) => (
-            <div key={i} className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
-              {note}
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 flex gap-2">
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="添加跟进备注"
-            className="flex-1 rounded-xl border border-slate-200 px-3.5 py-2 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              if (!draft.trim()) return;
-              setNotes((prev) => [...prev, draft.trim()]);
-              setDraft("");
-            }}
-            className="rounded-xl bg-sky-500 px-4 text-sm font-semibold text-white transition hover:bg-sky-600"
-          >
-            添加
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
