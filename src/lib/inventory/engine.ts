@@ -8,7 +8,6 @@ import type {
   DailyCheckIn,
   EngineResult,
   InventoryTransaction,
-  PoopCount,
   ProductCode,
   RepurchaseAlert,
 } from "./types";
@@ -111,6 +110,9 @@ function mapCheckInRow(row: CheckInRow): DailyCheckIn {
     poopCount: row.poop_count,
     bedtime: row.bedtime,
     wakeTime: row.wake_time,
+    sleepStartAt: row.sleep_start_at,
+    sleepEndAt: row.sleep_end_at,
+    sleepDurationMinutes: row.sleep_duration_minutes,
     productUsage: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -376,14 +378,16 @@ export interface SubmitCheckInInput {
   customerId: string;
   date: string;
   weight: number;
-  poopCount: PoopCount;
   bedtime: string;
   wakeTime: string;
 }
 
 /** Goes through record_morning_checkin() rather than a plain insert: this is
  * the one action that starts the customer's Journey Day (creates/activates
- * their daily_journeys row in the same transaction as the checkin row). */
+ * their daily_journeys row in the same transaction as the checkin row).
+ * Bowel movement is no longer part of this payload — it belongs to the
+ * evening checkout (daily_evening_checkouts), not the morning weigh-in;
+ * the RPC itself now stores null for poop_count on every new row. */
 export async function submitCheckIn(input: SubmitCheckInInput): Promise<EngineResult<DailyCheckIn>> {
   const supabase = createClient();
   const { error } = await supabase.rpc("record_morning_checkin", {
@@ -391,7 +395,6 @@ export async function submitCheckIn(input: SubmitCheckInInput): Promise<EngineRe
     p_customer_id: input.customerId,
     p_date: input.date,
     p_weight: input.weight,
-    p_poop_count: input.poopCount,
     p_bedtime: input.bedtime,
     p_wake_time: input.wakeTime,
   });
@@ -405,21 +408,39 @@ export async function submitCheckIn(input: SubmitCheckInInput): Promise<EngineRe
 }
 
 export interface EditCheckInInput {
+  date: string;
   weight: number;
-  poopCount: PoopCount;
   bedtime: string;
   wakeTime: string;
 }
 
+/** Mirrors record_morning_checkin()'s cross-midnight sleep math: bedtime is
+ * "last night" unless it's numerically before wake time (both after
+ * midnight), in which case it's the same calendar day as wake. */
+function computeSleepFields(dateStr: string, bedtime: string, wakeTime: string): { sleepStartAt: string; sleepEndAt: string; sleepDurationMinutes: number } {
+  const wakeAt = new Date(`${dateStr}T${wakeTime}:00`);
+  const bedDate = new Date(`${dateStr}T00:00:00`);
+  if (bedtime >= wakeTime) bedDate.setDate(bedDate.getDate() - 1);
+  const bedAt = new Date(`${localDateStr(bedDate)}T${bedtime}:00`);
+  const sleepDurationMinutes = Math.round((wakeAt.getTime() - bedAt.getTime()) / 60000);
+  return { sleepStartAt: bedAt.toISOString(), sleepEndAt: wakeAt.toISOString(), sleepDurationMinutes };
+}
+
+/** Plain table update (not the RPC) — only ever used to edit today's own
+ * already-recorded check-in, never poop_count (that field is only ever
+ * written, as null, by record_morning_checkin() now). */
 export async function editCheckIn(customerId: string, checkInId: string, updates: EditCheckInInput): Promise<EngineResult> {
   const supabase = createClient();
+  const sleep = computeSleepFields(updates.date, updates.bedtime, updates.wakeTime);
   const { error } = await supabase
     .from("daily_checkins")
     .update({
       weight: updates.weight,
-      poop_count: updates.poopCount,
       bedtime: updates.bedtime,
       wake_time: updates.wakeTime,
+      sleep_start_at: sleep.sleepStartAt,
+      sleep_end_at: sleep.sleepEndAt,
+      sleep_duration_minutes: sleep.sleepDurationMinutes,
     })
     .eq("id", checkInId)
     .eq("customer_id", customerId);

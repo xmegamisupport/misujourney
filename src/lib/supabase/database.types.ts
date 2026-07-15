@@ -602,7 +602,10 @@ export type Database = {
           created_at: string
           customer_id: string
           id: string
-          poop_count: Database["public"]["Enums"]["poop_count"]
+          poop_count: Database["public"]["Enums"]["poop_count"] | null
+          sleep_duration_minutes: number | null
+          sleep_end_at: string | null
+          sleep_start_at: string | null
           updated_at: string
           wake_time: string
           weight: number
@@ -613,7 +616,10 @@ export type Database = {
           created_at?: string
           customer_id: string
           id?: string
-          poop_count: Database["public"]["Enums"]["poop_count"]
+          poop_count?: Database["public"]["Enums"]["poop_count"] | null
+          sleep_duration_minutes?: number | null
+          sleep_end_at?: string | null
+          sleep_start_at?: string | null
           updated_at?: string
           wake_time: string
           weight: number
@@ -624,7 +630,10 @@ export type Database = {
           created_at?: string
           customer_id?: string
           id?: string
-          poop_count?: Database["public"]["Enums"]["poop_count"]
+          poop_count?: Database["public"]["Enums"]["poop_count"] | null
+          sleep_duration_minutes?: number | null
+          sleep_end_at?: string | null
+          sleep_start_at?: string | null
           updated_at?: string
           wake_time?: string
           weight?: number
@@ -1594,7 +1603,6 @@ export type Database = {
           p_checkin_id: string
           p_customer_id: string
           p_date: string
-          p_poop_count: Database["public"]["Enums"]["poop_count"]
           p_wake_time: string
           p_weight: number
         }

@@ -16,6 +16,11 @@ import { createClient } from "@/lib/supabase/client";
 import { useTodayJourneyDay } from "@/lib/journey-day/hooks";
 import { cn } from "@/lib/utils";
 
+function formatMonthDay(dateStr: string): string {
+  const [, month, day] = dateStr.split("-");
+  return `${Number(month)}月${Number(day)}日`;
+}
+
 export default function EveningCheckoutPage() {
   return (
     <Suspense>
@@ -64,7 +69,7 @@ function EveningCheckoutForm() {
 
   async function handleSubmit() {
     if (!bowelMovement) {
-      setError("请选择今日排便情况");
+      setError(isMakeUp ? "请选择昨天排便情况" : "请选择今天排便情况");
       return;
     }
     setError(null);
@@ -116,12 +121,12 @@ function EveningCheckoutForm() {
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
-      <PageHeader title={isMakeUp ? "补填昨天的睡前回顾" : "🌙 睡前回顾"} backHref="/customer" />
+      <PageHeader title={isMakeUp ? `补充${formatMonthDay(targetDate)}睡前回顾` : "🌙 睡前回顾"} backHref="/customer" />
 
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-6">
           <div>
-            <p className="mb-3 text-sm font-semibold text-slate-800">今日排便</p>
+            <p className="mb-3 text-sm font-semibold text-slate-800">{isMakeUp ? "昨天排便几次？" : "今天排便几次？"}</p>
             <div className="grid grid-cols-3 gap-2">
               {(Object.entries(BOWEL_MOVEMENT_LABELS) as [BowelMovementLevel, string][]).map(([value, label]) => (
                 <button
@@ -141,7 +146,7 @@ function EveningCheckoutForm() {
 
           <div>
             <p className="mb-3 text-sm font-semibold text-slate-800">
-              今天有没有特殊情况？<span className="font-normal text-slate-400">（可多选）</span>
+              {isMakeUp ? "昨天有没有特殊情况？" : "今天有没有特殊情况？"}<span className="font-normal text-slate-400">（可多选）</span>
             </p>
             <div className="grid grid-cols-2 gap-2">
               {SPECIAL_CONDITION_OPTIONS.map((opt) => (
@@ -162,7 +167,7 @@ function EveningCheckoutForm() {
 
           <div>
             <p className="mb-2 text-sm font-semibold text-slate-800">
-              今日备注<span className="font-normal text-slate-400">（可选）</span>
+              {isMakeUp ? "昨天备注" : "今日备注"}<span className="font-normal text-slate-400">（可选）</span>
             </p>
             <textarea
               value={notes}

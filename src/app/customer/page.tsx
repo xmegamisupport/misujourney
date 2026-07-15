@@ -169,7 +169,8 @@ export default function CustomerDashboardPage() {
         <div className="flex items-center gap-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-4 shadow-sm">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl">🌙</span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-slate-800">昨天的睡前回顾还未完成</p>
+            <p className="text-sm font-semibold text-slate-800">昨天的睡前回顾还没完成</p>
+            <p className="mt-0.5 text-xs text-slate-500">花一点时间补上昨天的记录。</p>
           </div>
           <Link
             href={`/customer/checkout?date=${yesterday}`}

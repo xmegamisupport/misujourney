@@ -71,9 +71,17 @@ export interface DailyCheckIn {
   customerId: string;
   date: string;
   weight: number;
-  poopCount: PoopCount;
+  /** Bowel movement no longer belongs on the morning check-in — a customer
+   * can't know today's count before the day has happened. Null for every
+   * check-in recorded after this change; old rows keep their historical
+   * value (see daily_evening_checkouts.bowelMovement for the real, current
+   * source). */
+  poopCount: PoopCount | null;
   bedtime: string;
   wakeTime: string;
+  sleepStartAt: string | null;
+  sleepEndAt: string | null;
+  sleepDurationMinutes: number | null;
   productUsage: ProductUsageEntry[];
   createdAt: string;
   updatedAt: string;

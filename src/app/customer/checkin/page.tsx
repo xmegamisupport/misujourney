@@ -6,18 +6,10 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
-import { cn } from "@/lib/utils";
 import { useHasInventoryRecords, useTodayCheckIn } from "@/lib/inventory/hooks";
 import { initializeLegacyBalance, submitCheckIn, editCheckIn, deleteCheckIn, todayDateStr } from "@/lib/inventory/engine";
 import { parseNonNegativeInt } from "@/lib/inventory/validation";
-import type { PoopCount, DailyCheckIn } from "@/lib/inventory/types";
-
-const poopOptions: { key: PoopCount; label: string }[] = [
-  { key: "0", label: "0次" },
-  { key: "1", label: "1次" },
-  { key: "2", label: "2次" },
-  { key: "3+", label: "3次及以上" },
-];
+import type { DailyCheckIn } from "@/lib/inventory/types";
 
 function formatSleepDuration(bedtime: string, wakeTime: string): string {
   if (!bedtime || !wakeTime) return "";
@@ -165,7 +157,6 @@ function CheckInForm({
   const record = todayCheckIn;
 
   const [weight, setWeight] = useState(record?.weight.toString() ?? lastWeight?.toString() ?? "");
-  const [poopCount, setPoopCount] = useState<PoopCount>(record?.poopCount ?? "1");
   const [bedtime, setBedtime] = useState(record?.bedtime ?? "23:00");
   const [wakeTime, setWakeTime] = useState(record?.wakeTime ?? "07:00");
   const [error, setError] = useState<string | null>(null);
@@ -175,7 +166,6 @@ function CheckInForm({
 
   function resetFormToRecord(rec: DailyCheckIn) {
     setWeight(rec.weight.toString());
-    setPoopCount(rec.poopCount);
     setBedtime(rec.bedtime);
     setWakeTime(rec.wakeTime);
   }
@@ -191,7 +181,7 @@ function CheckInForm({
     }
 
     if (record && editing) {
-      const result = await editCheckIn(customerId, record.id, { weight: weightNum, poopCount, bedtime, wakeTime });
+      const result = await editCheckIn(customerId, record.id, { date: record.date, weight: weightNum, bedtime, wakeTime });
       if (!result.ok) {
         setError(result.error ?? "更新失败，请重试");
         return;
@@ -205,7 +195,6 @@ function CheckInForm({
       customerId,
       date: todayDateStr(),
       weight: weightNum,
-      poopCount,
       bedtime,
       wakeTime,
     });
@@ -255,7 +244,6 @@ function CheckInForm({
           </p>
           <div className="grid grid-cols-2 gap-3 text-sm text-slate-600">
             <p>体重：{record.weight}kg</p>
-            <p>排便：{poopOptions.find((o) => o.key === record.poopCount)?.label}</p>
             <p>
               睡眠：{record.bedtime} - {record.wakeTime}
             </p>
@@ -322,6 +310,8 @@ function CheckInForm({
         }
       />
 
+      <p className="-mt-2 text-sm text-slate-500">记录今天的晨重与昨晚睡眠</p>
+
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
         <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
           <label className="flex flex-col gap-1.5 text-sm text-slate-600">
@@ -341,27 +331,6 @@ function CheckInForm({
               {stageGoalLabel && `目标 ${stageGoalLabel}`}
             </p>
           )}
-        </div>
-
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <p className="mb-3 flex items-center gap-1.5 text-sm text-slate-600">
-            <span>💩</span>排便情况
-          </p>
-          <div className="grid grid-cols-4 gap-2">
-            {poopOptions.map((option) => (
-              <button
-                type="button"
-                key={option.key}
-                onClick={() => setPoopCount(option.key)}
-                className={cn(
-                  "rounded-2xl border px-2 py-3 text-center text-xs font-medium transition",
-                  poopCount === option.key ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-100 text-slate-500",
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">

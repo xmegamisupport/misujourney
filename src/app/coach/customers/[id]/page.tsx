@@ -600,7 +600,7 @@ export default function CustomerDetailPage() {
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-800">{ci.date}</p>
                   <p className="text-xs text-slate-400">
-                    体重 {ci.weight}kg · 排便 {ci.poopCount === "3+" ? "3次及以上" : `${ci.poopCount}次`} · 睡眠 {ci.bedtime}-{ci.wakeTime}
+                    体重 {ci.weight}kg · 睡眠 {ci.bedtime}-{ci.wakeTime}
                   </p>
                 </div>
                 {ci.productUsage.length > 0 && (
