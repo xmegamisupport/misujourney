@@ -4,8 +4,17 @@ import { useEffect, useState } from "react";
 import { getCoachWorkspace, getCoachCustomerContext, type CoachCustomerContext } from "./workspace";
 import type { CoachWorkspace } from "./workspace-types";
 
+const EMPTY_WORKSPACE: CoachWorkspace = {
+  celebrations: [],
+  support: [],
+  cards: [],
+  impact: { totalCustomers: 0, journeysCompleted: 0, journeysInProgress: 0, journeysCompletedThisMonth: 0 },
+  celebrateCustomerCount: 0,
+  supportCustomerCount: 0,
+};
+
 export function useCoachWorkspace(coachId: string): { data: CoachWorkspace; loading: boolean } {
-  const [data, setData] = useState<CoachWorkspace>({ celebrations: [], support: [] });
+  const [data, setData] = useState<CoachWorkspace>(EMPTY_WORKSPACE);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

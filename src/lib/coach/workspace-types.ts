@@ -53,6 +53,7 @@ export type SupportType =
   | "goal_weight_due";
 
 export interface SupportReasonLine {
+  type: SupportType;
   text: string;
   priority: SupportPriority;
 }
@@ -146,11 +147,59 @@ export interface ScriptRenderContext {
   CurrentChallenge: string;
 }
 
+// ---------- Home: one card per customer (customer-centric) ----------
+
+/** A short, glanceable tag on the Home customer card. The Home answers
+ * "who should I talk to today?" — never a paragraph. All explanation lives
+ * in the Focus View. */
+export type SignalKind = "celebration" | "support";
+
+export interface CustomerSignalTag {
+  kind: SignalKind;
+  icon: string;
+  label: string;
+  /** Position on the unified overall-priority scale — lower is more important. */
+  rank: number;
+}
+
+/** One customer = one card. All celebration and support signals for a
+ * customer are aggregated here so the Coach decides to contact them once. */
+export interface CoachCustomerCard {
+  customerId: string;
+  customerName: string;
+  avatar: string | null;
+  journeyName: JourneyName;
+  journeyDay: number;
+  celebrationTags: CustomerSignalTag[];
+  supportTags: CustomerSignalTag[];
+  /** min rank across all tags — drives card ordering. */
+  overallRank: number;
+  /** Which dimension leads the card's accent styling. */
+  overallTone: SignalKind;
+}
+
+/** Encouraging, non-KPI coaching statistics shown under the greeting. */
+export interface CoachImpact {
+  totalCustomers: number;
+  journeysCompleted: number;
+  journeysInProgress: number;
+  journeysCompletedThisMonth: number;
+}
+
 // ---------- Workspace ----------
 
 export interface CoachWorkspace {
+  /** Raw celebration events (kept for the Today's Summary count + Focus View). */
   celebrations: CelebrationItem[];
+  /** Raw support items, one per customer (kept for the count + Focus View). */
   support: SupportItem[];
+  /** Home display: one aggregated card per customer, ordered by overallRank. */
+  cards: CoachCustomerCard[];
+  impact: CoachImpact;
+  /** Distinct customers with ≥1 celebration today. */
+  celebrateCustomerCount: number;
+  /** Distinct customers who may need support today. */
+  supportCustomerCount: number;
 }
 
 export type { JourneyDays };

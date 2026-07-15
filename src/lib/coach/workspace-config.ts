@@ -3,6 +3,7 @@ import type {
   CelebrationPriority,
   CelebrationType,
   JourneyName,
+  SignalKind,
   SupportCategory,
   SupportPriority,
   SupportType,
@@ -48,6 +49,19 @@ export const CELEBRATION_PRIORITY_ORDER: Record<CelebrationPriority, number> = {
   lower: 3,
 };
 
+/** Short glanceable tag (icon + ≤6 words) per celebration type — the Home
+ * shows only these, never full sentences. Configurable. */
+export const CELEBRATION_TAG: Record<CelebrationType, { icon: string; label: string }> = {
+  goal_weight_achieved: { icon: "🎯", label: "达成目标体重" },
+  transformation_complete: { icon: "🏆", label: "完成 Transformation Journey" },
+  momentum_complete: { icon: "🏆", label: "完成 Momentum Journey" },
+  kickstart_complete: { icon: "🏆", label: "完成 Kickstart Journey" },
+  first_body_progress: { icon: "📸", label: "首次身形记录" },
+  new_lowest_weight: { icon: "⚖️", label: "体重新低" },
+  streak_30: { icon: "🔥", label: "连续打卡 30 天" },
+  streak_7: { icon: "✨", label: "连续打卡 7 天" },
+};
+
 // ---------- Support rules (configurable — MVP starting values) ----------
 
 export interface SupportRule {
@@ -77,6 +91,47 @@ export const SUPPORT_PRIORITY_ORDER: Record<SupportPriority, number> = {
   attention: 1,
   reminder: 2,
 };
+
+/** Short glanceable tag (icon + ≤6 words) per support type. attention_flag
+ * uses the flag's own label instead of this default. Configurable. */
+export const SUPPORT_TAG: Record<SupportType, { icon: string; label: string }> = {
+  participation_gap: { icon: "🌙", label: "参与中断" },
+  consistency_declining: { icon: "❤️", label: "参与度下降" },
+  low_consistency: { icon: "🏷️", label: "打卡率偏低" },
+  missed_evening_reflection: { icon: "🌙", label: "缺睡前回顾" },
+  attention_flag: { icon: "⚠️", label: "需要关注" },
+  insufficient_data: { icon: "🆕", label: "资料不足" },
+  repurchase: { icon: "📦", label: "需要回购" },
+  out_of_stock: { icon: "📦", label: "产品已用完" },
+  body_progress_overdue: { icon: "📸", label: "身形记录到期" },
+  journey_completion_due: { icon: "🏁", label: "Journey 即将完成" },
+  goal_weight_due: { icon: "🎯", label: "目标体重临近" },
+};
+
+// ---------- Unified overall-priority scale (Home card ordering) ----------
+// A customer card's overall rank is the min rank across all its tags.
+// Interleaves celebration + support so the Coach sees, top to bottom:
+// urgent support → big milestones → attention support → smaller wins →
+// gentle reminders. TEMPORARY MVP DEFAULT — configurable, not a permanent rule.
+
+const OVERALL_SUPPORT_RANK: Record<SupportPriority, number> = {
+  urgent: 0,
+  attention: 3,
+  reminder: 5,
+};
+
+const OVERALL_CELEBRATION_RANK: Record<CelebrationPriority, number> = {
+  highest: 1,
+  high: 2,
+  medium: 4,
+  lower: 6,
+};
+
+export function overallRankFor(kind: SignalKind, priority: CelebrationPriority | SupportPriority): number {
+  return kind === "support"
+    ? OVERALL_SUPPORT_RANK[priority as SupportPriority]
+    : OVERALL_CELEBRATION_RANK[priority as CelebrationPriority];
+}
 
 export const SUPPORT_CATEGORY_ORDER: SupportCategory[] = ["behaviour", "product", "milestones"];
 

@@ -6,20 +6,19 @@ import { useMyCoachProfile } from "@/lib/coach/hooks";
 import { useCoachCustomerContext } from "@/lib/coach/workspace-hooks";
 import { deriveSupport, deriveCelebrations } from "@/lib/coach/workspace";
 import { buildJourneyTimeline } from "@/lib/coach/timeline";
-import { journeyNameFor, CELEBRATION_PRIORITY_ORDER } from "@/lib/coach/workspace-config";
+import { journeyNameFor, CELEBRATION_PRIORITY_ORDER, SUPPORT_PRIORITY_LABELS, SUPPORT_PRIORITY_STYLES } from "@/lib/coach/workspace-config";
 import { scriptForSupport, scriptForCelebration, renderScript, COACH_SCRIPTS } from "@/lib/coach/scripts";
 import { normalizeWhatsAppNumber } from "@/lib/whatsapp";
 import { calculateCurrentDay } from "@/lib/journey";
 import { JourneyTimeline } from "./JourneyTimeline";
 import { CoachingScriptSheet } from "./CoachingScriptSheet";
 import { cn } from "@/lib/utils";
-import { SUPPORT_PRIORITY_LABELS, SUPPORT_PRIORITY_STYLES } from "@/lib/coach/workspace-config";
 
-/** The Coach MVP focus layer, injected at the top of the customer detail
- * page: journey context + active support reason + celebration + XMEGAMI
- * Coaching Script + WhatsApp + Journey Timeline. Read-only. The existing
- * deeper sections (trend summary, AI insight, inventory, meals) remain below
- * as deeper context. */
+/** The Coach MVP Focus View, injected at the top of the customer detail page.
+ * The Home answers "who should I talk to today?"; this answers "why" — the
+ * full celebration + support reasoning, XMEGAMI Coaching Script, WhatsApp
+ * hand-off and Journey Timeline. Read-only. The existing deeper sections
+ * (trend summary, AI insight, inventory, meals) remain below. */
 export function CoachFocusPanel({ customerId }: { customerId: string }) {
   const { user } = useAuthUser();
   const { data: coach } = useMyCoachProfile(user?.id ?? "");
@@ -28,7 +27,8 @@ export function CoachFocusPanel({ customerId }: { customerId: string }) {
   const derived = useMemo(() => {
     if (!ctx) return null;
     const support = deriveSupport(ctx);
-    const celebration = deriveCelebrations(ctx).sort((a, b) => CELEBRATION_PRIORITY_ORDER[a.priority] - CELEBRATION_PRIORITY_ORDER[b.priority])[0] ?? null;
+    const celebrations = deriveCelebrations(ctx).sort((a, b) => CELEBRATION_PRIORITY_ORDER[a.priority] - CELEBRATION_PRIORITY_ORDER[b.priority]);
+    const celebration = celebrations[0] ?? null;
     const timeline = buildJourneyTimeline(ctx);
     const journeyDay = ctx.startDate ? calculateCurrentDay(ctx.startDate) : 1;
     const cappedDay = ctx.journeyDays ? Math.min(journeyDay, ctx.journeyDays) : journeyDay;
@@ -54,7 +54,7 @@ export function CoachFocusPanel({ customerId }: { customerId: string }) {
       CurrentChallenge: challenge,
     });
 
-    return { support, celebration, timeline, journeyName, cappedDay, currentWeight, weightDirection, script, rendered };
+    return { support, celebration, celebrations, timeline, journeyName, cappedDay, currentWeight, weightDirection, script, rendered };
   }, [ctx, coach?.name]);
 
   if (loading || !ctx || !derived) return null;
@@ -72,21 +72,32 @@ export function CoachFocusPanel({ customerId }: { customerId: string }) {
           <p>体重趋势：{derived.weightDirection}</p>
         </div>
 
-        {derived.celebration && (
-          <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-2 text-sm text-slate-700">🎉 {derived.celebration.reasonNarrative}</div>
+        {derived.celebrations.length > 0 && (
+          <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-2">
+            <p className="mb-1 text-sm font-medium text-slate-700">🎉 值得庆祝</p>
+            <ul className="flex flex-col gap-1 text-sm leading-relaxed text-slate-600">
+              {derived.celebrations.map((c) => (
+                <li key={c.type}>· {c.reasonNarrative}</li>
+              ))}
+            </ul>
+          </div>
         )}
 
         {derived.support ? (
           <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-            <div className="mb-1 flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-700">为什么今天关心 TA</span>
-              <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", SUPPORT_PRIORITY_STYLES[derived.support.priority])}>
-                {SUPPORT_PRIORITY_LABELS[derived.support.priority]}
-              </span>
-            </div>
-            <p className="text-sm leading-relaxed text-slate-600">{derived.support.reasonNarrative}</p>
+            <p className="mb-1.5 text-sm font-medium text-slate-700">为什么今天关心 TA</p>
+            <ul className="flex flex-col gap-1.5 text-sm leading-relaxed text-slate-600">
+              {derived.support.reasons.map((r, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className={cn("mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium", SUPPORT_PRIORITY_STYLES[r.priority])}>
+                    {SUPPORT_PRIORITY_LABELS[r.priority]}
+                  </span>
+                  <span>{r.text}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-        ) : !derived.celebration ? (
+        ) : derived.celebrations.length === 0 ? (
           <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500">目前状态良好，可以给 TA 一些鼓励。</div>
         ) : null}
       </div>

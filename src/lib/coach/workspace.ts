@@ -13,13 +13,27 @@ import { assessConsistency } from "./consistency";
 import {
   CELEBRATION_RULES,
   CELEBRATION_PRIORITY_ORDER,
+  CELEBRATION_TAG,
   SUPPORT_RULES,
   SUPPORT_PRIORITY_ORDER,
+  SUPPORT_TAG,
   LOW_CHECKIN_RATE,
   INSUFFICIENT_DATA_CHECKINS,
   journeyNameFor,
+  overallRankFor,
 } from "./workspace-config";
-import type { CelebrationItem, CelebrationType, CoachWorkspace, SupportItem, SupportPriority, SupportReasonLine, SupportType } from "./workspace-types";
+import type {
+  CelebrationItem,
+  CelebrationType,
+  CoachCustomerCard,
+  CoachImpact,
+  CoachWorkspace,
+  CustomerSignalTag,
+  SupportItem,
+  SupportPriority,
+  SupportReasonLine,
+  SupportType,
+} from "./workspace-types";
 import type { DailyCheckIn, InventoryTransaction, CustomerInventory, RepurchaseAlert } from "@/lib/inventory/types";
 import type { EveningCheckout } from "@/lib/checkout/types";
 import type { BodyProgressRecord } from "@/lib/bodyProgress/types";
@@ -202,7 +216,7 @@ export function deriveSupport(ctx: CoachCustomerContext, today = todayDateStr())
 
   collected.sort((a, b) => SUPPORT_PRIORITY_ORDER[a.priority] - SUPPORT_PRIORITY_ORDER[b.priority]);
   const primary = collected[0];
-  const reasons: SupportReasonLine[] = collected.map((c) => ({ text: c.text, priority: c.priority }));
+  const reasons: SupportReasonLine[] = collected.map((c) => ({ type: c.type, text: c.text, priority: c.priority }));
   const reasonNarrative = `${collected.slice(0, 3).map((c) => c.text).join("；")}。建议今天主动关心 TA。`;
 
   return {
@@ -219,11 +233,82 @@ export function deriveSupport(ctx: CoachCustomerContext, today = todayDateStr())
   };
 }
 
+// ---------- Home aggregation: one card per customer ----------
+
+const EMPTY_IMPACT: CoachImpact = { totalCustomers: 0, journeysCompleted: 0, journeysInProgress: 0, journeysCompletedThisMonth: 0 };
+
+/** Aggregate every celebration + support signal for one customer into a
+ * single glanceable card. Returns null when the customer has no signal today
+ * (they don't belong on the Home). */
+function buildCustomerCard(ctx: CoachCustomerContext, celebrations: CelebrationItem[], support: SupportItem | null): CoachCustomerCard | null {
+  const celebrationTags: CustomerSignalTag[] = celebrations.map((c) => {
+    const tag = CELEBRATION_TAG[c.type];
+    return { kind: "celebration", icon: tag.icon, label: tag.label, rank: overallRankFor("celebration", c.priority) };
+  });
+
+  const supportTags: CustomerSignalTag[] = (support?.reasons ?? []).map((r) => {
+    const tag = SUPPORT_TAG[r.type];
+    // Attention flags carry their own human label (e.g. "近期身体不适").
+    const label = r.type === "attention_flag" ? r.text : tag.label;
+    return { kind: "support", icon: tag.icon, label, rank: overallRankFor("support", r.priority) };
+  });
+
+  if (celebrationTags.length === 0 && supportTags.length === 0) return null;
+
+  const journeyDay = support?.journeyDay ?? celebrations[0]?.journeyDay ?? (ctx.startDate ? calculateCurrentDay(ctx.startDate) : 1);
+  const cappedDay = ctx.journeyDays ? Math.min(journeyDay, ctx.journeyDays) : journeyDay;
+  const allRanks = [...celebrationTags, ...supportTags].map((t) => t.rank);
+  const overallRank = Math.min(...allRanks);
+  // The leading tag decides the accent — whichever the top rank belongs to.
+  const overallTone: CustomerSignalTag["kind"] =
+    supportTags.some((t) => t.rank === overallRank) && !celebrationTags.some((t) => t.rank === overallRank) ? "support" : "celebration";
+
+  return {
+    customerId: ctx.id,
+    customerName: ctx.name,
+    avatar: ctx.avatar,
+    journeyName: journeyNameFor(ctx.journeyDays),
+    journeyDay: cappedDay,
+    celebrationTags,
+    supportTags,
+    overallRank,
+    overallTone,
+  };
+}
+
+/** Encouraging coaching statistics — a completed Journey is one whose elapsed
+ * days have reached its duration. Not a KPI, not a ranking. */
+function computeImpact(contexts: CoachCustomerContext[], today = todayDateStr()): CoachImpact {
+  const thisMonth = today.slice(0, 7);
+  let journeysCompleted = 0;
+  let journeysInProgress = 0;
+  let journeysCompletedThisMonth = 0;
+
+  for (const ctx of contexts) {
+    if (!ctx.startDate || !ctx.journeyDays) {
+      journeysInProgress += 1;
+      continue;
+    }
+    const day = calculateCurrentDay(ctx.startDate);
+    if (day >= ctx.journeyDays) {
+      journeysCompleted += 1;
+      const completedOn = new Date(toUtc(ctx.startDate) + ctx.journeyDays * 86400000).toISOString().slice(0, 10);
+      if (completedOn.slice(0, 7) === thisMonth) journeysCompletedThisMonth += 1;
+    } else {
+      journeysInProgress += 1;
+    }
+  }
+
+  return { totalCustomers: contexts.length, journeysCompleted, journeysInProgress, journeysCompletedThisMonth };
+}
+
 // ---------- Orchestrator ----------
 
 export async function getCoachWorkspace(coachId: string): Promise<CoachWorkspace> {
   const customers = await getMyCustomers(coachId);
-  if (customers.length === 0) return { celebrations: [], support: [] };
+  if (customers.length === 0) {
+    return { celebrations: [], support: [], cards: [], impact: EMPTY_IMPACT, celebrateCustomerCount: 0, supportCustomerCount: 0 };
+  }
   const ids = customers.map((c) => c.id);
 
   const [goalPlans, goals, checkIns, checkouts, transactions, inventory, bodyProgress, flags, alerts] = await Promise.all([
@@ -258,11 +343,37 @@ export async function getCoachWorkspace(coachId: string): Promise<CoachWorkspace
     repurchaseAlerts: alertsByCustomer[c.id] ?? [],
   }));
 
-  // Two independent dimensions — a customer may appear in both lists.
-  const celebrations = contexts.flatMap((ctx) => deriveCelebrations(ctx)).sort((a, b) => CELEBRATION_PRIORITY_ORDER[a.priority] - CELEBRATION_PRIORITY_ORDER[b.priority]);
-  const support = contexts.map((ctx) => deriveSupport(ctx)).filter((s): s is SupportItem => s !== null);
+  // Celebration and support stay two independent dimensions at derivation
+  // time; the Home then aggregates both into one card per customer so the
+  // Coach decides to contact each person once.
+  const celebrations: CelebrationItem[] = [];
+  const support: SupportItem[] = [];
+  const cards: CoachCustomerCard[] = [];
 
-  return { celebrations, support };
+  for (const ctx of contexts) {
+    const cels = deriveCelebrations(ctx);
+    const sup = deriveSupport(ctx);
+    celebrations.push(...cels);
+    if (sup) support.push(sup);
+    const card = buildCustomerCard(ctx, cels, sup);
+    if (card) cards.push(card);
+  }
+
+  celebrations.sort((a, b) => CELEBRATION_PRIORITY_ORDER[a.priority] - CELEBRATION_PRIORITY_ORDER[b.priority]);
+  support.sort((a, b) => SUPPORT_PRIORITY_ORDER[a.priority] - SUPPORT_PRIORITY_ORDER[b.priority]);
+  cards.sort((a, b) => a.overallRank - b.overallRank || a.customerName.localeCompare(b.customerName));
+
+  const celebrateCustomerCount = new Set(celebrations.map((c) => c.customerId)).size;
+  const supportCustomerCount = support.length;
+
+  return {
+    celebrations,
+    support,
+    cards,
+    impact: computeImpact(contexts),
+    celebrateCustomerCount,
+    supportCustomerCount,
+  };
 }
 
 function daysAgo(n: number): string {
