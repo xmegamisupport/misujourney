@@ -9,6 +9,7 @@ import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import { useHasInventoryRecords, useTodayCheckIn } from "@/lib/inventory/hooks";
 import { initializeLegacyBalance, submitCheckIn, editCheckIn, deleteCheckIn, todayDateStr } from "@/lib/inventory/engine";
 import { parseNonNegativeInt } from "@/lib/inventory/validation";
+import { CheckInSummaryCard } from "@/components/inventory/CheckInSummaryCard";
 import type { DailyCheckIn } from "@/lib/inventory/types";
 
 function formatSleepDuration(bedtime: string, wakeTime: string): string {
@@ -242,13 +243,7 @@ function CheckInForm({
           <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
             <span>✅</span>今日已打卡
           </p>
-          <div className="grid grid-cols-2 gap-3 text-sm text-slate-600">
-            <p>体重：{record.weight}kg</p>
-            <p>
-              睡眠：昨晚 {record.bedtime} - 今天 {record.wakeTime}
-            </p>
-            <p>睡眠时长：{formatSleepDuration(record.bedtime, record.wakeTime)}</p>
-          </div>
+          <CheckInSummaryCard record={record} />
         </div>
 
         {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
@@ -283,6 +278,13 @@ function CheckInForm({
             </button>
           )}
         </div>
+
+        <Link
+          href="/customer/checkin/history"
+          className="rounded-xl border border-slate-200 py-3 text-center text-sm font-semibold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-600"
+        >
+          查看晨重历史
+        </Link>
       </div>
     );
   }

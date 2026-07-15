@@ -226,14 +226,17 @@ export default function CustomerDashboardPage() {
         <p className="mb-2 text-sm font-semibold text-slate-700">今日任务</p>
         <div className="flex flex-col gap-2">
           {weighInDone ? (
-            <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3.5">
+            <Link
+              href="/customer/checkin"
+              className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3.5 transition hover:border-emerald-200"
+            >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">⚖️</span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-slate-500 line-through">今日晨重</p>
                 <p className="text-xs text-slate-400">已记录 {todayCheckIn?.weight}kg</p>
               </div>
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400 bg-emerald-400 text-xs text-white">✓</span>
-            </div>
+            </Link>
           ) : todayJourney?.morningWeightStatus === "skipped" ? (
             <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">⚖️</span>
@@ -245,19 +248,17 @@ export default function CustomerDashboardPage() {
           ) : tooEarlyForMorning ? (
             <LockedTaskCard icon="⚖️" label="今日晨重" hint={LOCKED_HINT_TOO_EARLY} />
           ) : inMorningWindow ? (
-            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/40 p-3.5">
+            <Link
+              href="/customer/checkin"
+              className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/40 p-3.5 transition hover:border-emerald-300"
+            >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">⚖️</span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-slate-800">今日晨重</p>
                 <p className="text-xs text-slate-400">完成晨重，正式开始今天的 Journey</p>
               </div>
-              <Link
-                href="/customer/checkin"
-                className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
-              >
-                开始今日晨重
-              </Link>
-            </div>
+              <span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">开始今日晨重</span>
+            </Link>
           ) : (
             <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/40 p-3.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">⚖️</span>

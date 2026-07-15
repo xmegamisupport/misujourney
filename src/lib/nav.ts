@@ -10,7 +10,6 @@ export interface NavItem {
 
 export const customerNav: NavItem[] = [
   { href: "/customer", label: "首页", icon: "🏠", key: "home" },
-  { href: "/customer/checkin", label: "打卡", icon: "✅", key: "checkin" },
   { href: "/customer/meals", label: "饮食", icon: "🍽️", key: "meals" },
   { href: "/customer/learn", label: "学习", icon: "📚", key: "learn" },
   { href: "/customer/progress", label: "成长", icon: "📈", key: "progress" },
