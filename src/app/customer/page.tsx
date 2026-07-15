@@ -21,6 +21,8 @@ import { skipMorningCheckin } from "@/lib/journey-day/engine";
 import { useCurrentNutritionTargets } from "@/lib/nutrition/hooks";
 import { buildDailyNutritionAdvice } from "@/lib/nutrition/daily-advice";
 import { countVegetableServings, VEGETABLE_SERVINGS_TARGET } from "@/lib/meal-check/plate-analysis";
+import { useBodyProgressHomeState } from "@/lib/bodyProgress/hooks";
+import { BODY_PROGRESS_CTA_LABEL, bodyProgressCtaHref } from "@/lib/bodyProgress/engine";
 
 const waterPresets = [100, 200, 300];
 /** Only used for the brief window before the real per-customer target
@@ -85,6 +87,8 @@ export default function CustomerDashboardPage() {
   const { data: yesterdayCheckout, loading: yesterdayCheckoutLoading } = useCheckoutForDate(customerId, yesterday);
 
   const { data: todayJourney, loading: todayJourneyLoading, refresh: refreshJourney } = useTodayJourneyDay(customerId, today);
+  const { cta: bodyProgressCta, loading: bodyProgressLoading } = useBodyProgressHomeState(customerId);
+  const bodyProgressActionable = bodyProgressCta.kind !== "view_growth_journey";
   const journeyActive = (todayJourney?.status ?? "waiting_for_morning") === "active";
   const [skipping, setSkipping] = useState(false);
   const [skipError, setSkipError] = useState<string | null>(null);
@@ -294,6 +298,20 @@ export default function CustomerDashboardPage() {
           )}
         </div>
       </div>
+
+      {!bodyProgressLoading && bodyProgressActionable && (
+        <Link
+          href={bodyProgressCtaHref(bodyProgressCta)}
+          className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm transition hover:border-emerald-200"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">🧍</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-slate-800">身形记录</p>
+            <p className="text-xs text-slate-400">记录你的身形变化，为自己留下一个参考</p>
+          </div>
+          <span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">{BODY_PROGRESS_CTA_LABEL[bodyProgressCta.kind]}</span>
+        </Link>
+      )}
 
       {journeyActive ? (
         <div className={`rounded-2xl border p-4 shadow-sm ${waterDone ? "border-emerald-100 bg-emerald-50/60" : "border-sky-100 bg-white"}`}>

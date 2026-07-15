@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { TrendChart } from "@/components/ui/TrendChart";
@@ -80,6 +81,17 @@ export default function ProgressPage() {
           {weeklyInsight?.customerMessage ?? "继续记录几天，我们会帮你整理更有参考价值的趋势。"}
         </p>
       </div>
+
+      <Link
+        href="/customer/progress/body"
+        className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-emerald-200"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">🧍</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-slate-800">身形记录</p>
+          <p className="text-xs text-slate-400">查看我的成长记录 →</p>
+        </div>
+      </Link>
     </div>
   );
 }

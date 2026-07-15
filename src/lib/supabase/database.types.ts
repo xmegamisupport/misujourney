@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      body_progress_photos: {
+        Row: {
+          angle: Database["public"]["Enums"]["body_progress_angle"]
+          created_at: string
+          id: string
+          original_path: string
+          record_id: string
+        }
+        Insert: {
+          angle: Database["public"]["Enums"]["body_progress_angle"]
+          created_at?: string
+          id?: string
+          original_path: string
+          record_id: string
+        }
+        Update: {
+          angle?: Database["public"]["Enums"]["body_progress_angle"]
+          created_at?: string
+          id?: string
+          original_path?: string
+          record_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "body_progress_photos_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "body_progress_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      body_progress_records: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          journey_day: number
+          journey_plan_days: number
+          source_checkin_date: string | null
+          source_checkin_id: string | null
+          submitted_at: string
+          weight_unit: string | null
+          weight_value: number | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          journey_day: number
+          journey_plan_days: number
+          source_checkin_date?: string | null
+          source_checkin_id?: string | null
+          submitted_at?: string
+          weight_unit?: string | null
+          weight_value?: number | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          journey_day?: number
+          journey_plan_days?: number
+          source_checkin_date?: string | null
+          source_checkin_id?: string | null
+          submitted_at?: string
+          weight_unit?: string | null
+          weight_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "body_progress_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "body_progress_records_source_checkin_id_fkey"
+            columns: ["source_checkin_id"]
+            isOneToOne: false
+            referencedRelation: "daily_checkins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cms_content_items: {
         Row: {
           category: Database["public"]["Enums"]["cms_content_category"]
@@ -1638,6 +1724,10 @@ export type Database = {
         Args: { p_customer_id: string; p_date: string }
         Returns: Json
       }
+      submit_body_progress: {
+        Args: { p_photos: Json; p_record_id: string }
+        Returns: Json
+      }
       submit_content_for_review: {
         Args: { p_content_id: string }
         Returns: undefined
@@ -1666,6 +1756,7 @@ export type Database = {
     Enums: {
       activity_level: "sedentary" | "light" | "moderate" | "high"
       bmi_category: "underweight" | "normal" | "overweight" | "obese"
+      body_progress_angle: "front" | "left" | "right" | "back"
       bowel_movement_level: "none" | "once" | "two_or_more"
       cms_content_category:
         | "nutrition_knowledge"
@@ -1845,6 +1936,7 @@ export const Constants = {
     Enums: {
       activity_level: ["sedentary", "light", "moderate", "high"],
       bmi_category: ["underweight", "normal", "overweight", "obese"],
+      body_progress_angle: ["front", "left", "right", "back"],
       bowel_movement_level: ["none", "once", "two_or_more"],
       cms_content_category: [
         "nutrition_knowledge",
