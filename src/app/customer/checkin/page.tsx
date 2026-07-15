@@ -245,7 +245,7 @@ function CheckInForm({
           <div className="grid grid-cols-2 gap-3 text-sm text-slate-600">
             <p>体重：{record.weight}kg</p>
             <p>
-              睡眠：{record.bedtime} - {record.wakeTime}
+              睡眠：昨晚 {record.bedtime} - 今天 {record.wakeTime}
             </p>
             <p>睡眠时长：{formatSleepDuration(record.bedtime, record.wakeTime)}</p>
           </div>
@@ -339,7 +339,7 @@ function CheckInForm({
           </p>
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1.5 text-xs text-slate-500">
-              入睡时间
+              昨晚入睡时间
               <input
                 type="time"
                 value={bedtime}
@@ -348,7 +348,7 @@ function CheckInForm({
               />
             </label>
             <label className="flex flex-col gap-1.5 text-xs text-slate-500">
-              起床时间
+              今天起床时间
               <input
                 type="time"
                 value={wakeTime}
