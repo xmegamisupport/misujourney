@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { PhotoGuidePlaceholder } from "@/components/bodyProgress/PhotoGuidePlaceholder";
+import { PhotoGuideExamples } from "@/components/bodyProgress/PhotoGuideExamples";
 
 const PRACTICAL_TIPS = [
   "穿着合身或舒适贴身的衣物",
@@ -50,7 +50,7 @@ function BodyProgressGuideContent() {
         <p className="mt-2">我们只是想帮你留下一个起点 —— 一个未来的你会感谢现在的你的起点。</p>
       </div>
 
-      <PhotoGuidePlaceholder />
+      <PhotoGuideExamples />
 
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
         <p className="mb-3 text-sm font-semibold text-slate-700">拍摄小提示</p>

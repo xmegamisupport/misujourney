@@ -1,0 +1,3 @@
+Guide photos for the Body Progress flow. Drop the 5 real example photos here:
+overview.jpg, front.jpg, left.jpg, right.jpg, back.jpg
+Components read these paths from a single manifest (no hardcoded paths in components).
