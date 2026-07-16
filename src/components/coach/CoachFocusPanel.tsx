@@ -61,9 +61,50 @@ export function CoachFocusPanel({ customerId }: { customerId: string }) {
 
   const whatsappNumber = ctx.phone ? normalizeWhatsAppNumber(ctx.phone) : null;
 
+  const noSignals = derived.celebrations.length === 0 && !derived.support;
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+      {/* 🎉 Celebrate Today — every celebration reason, never mixed with support. */}
+      {derived.celebrations.length > 0 && (
+        <section className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
+          <p className="mb-2 text-sm font-semibold text-slate-800">🎉 今天值得庆祝</p>
+          <ul className="flex flex-col gap-1.5 text-sm leading-relaxed text-slate-700">
+            {derived.celebrations.map((c) => (
+              <li key={c.type}>· {c.reasonNarrative}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ❤️ Support Today — every support reason, its own section. */}
+      {derived.support && (
+        <section className="rounded-2xl border border-amber-100 bg-amber-50/30 p-4">
+          <p className="mb-2 text-sm font-semibold text-slate-800">❤️ 今天需要支持</p>
+          <ul className="flex flex-col gap-1.5 text-sm leading-relaxed text-slate-700">
+            {derived.support.reasons.map((r, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className={cn("mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium", SUPPORT_PRIORITY_STYLES[r.priority])}>
+                  {SUPPORT_PRIORITY_LABELS[r.priority]}
+                </span>
+                <span>{r.text}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {noSignals && (
+        <section className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">
+          目前状态良好，可以给 TA 一些鼓励。
+        </section>
+      )}
+
+      {/* Journey Timeline */}
+      <JourneyTimeline events={derived.timeline} />
+
+      {/* Journey Context */}
+      <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
         <p className="text-sm font-semibold text-slate-800">
           {derived.journeyName.emoji} {derived.journeyName.name} · Day {derived.cappedDay}
         </p>
@@ -71,40 +112,10 @@ export function CoachFocusPanel({ customerId }: { customerId: string }) {
           <p>当前体重：{derived.currentWeight !== null ? `${derived.currentWeight}kg` : "—"}</p>
           <p>体重趋势：{derived.weightDirection}</p>
         </div>
+      </section>
 
-        {derived.celebrations.length > 0 && (
-          <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-2">
-            <p className="mb-1 text-sm font-medium text-slate-700">🎉 值得庆祝</p>
-            <ul className="flex flex-col gap-1 text-sm leading-relaxed text-slate-600">
-              {derived.celebrations.map((c) => (
-                <li key={c.type}>· {c.reasonNarrative}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {derived.support ? (
-          <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-            <p className="mb-1.5 text-sm font-medium text-slate-700">为什么今天关心 TA</p>
-            <ul className="flex flex-col gap-1.5 text-sm leading-relaxed text-slate-600">
-              {derived.support.reasons.map((r, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className={cn("mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium", SUPPORT_PRIORITY_STYLES[r.priority])}>
-                    {SUPPORT_PRIORITY_LABELS[r.priority]}
-                  </span>
-                  <span>{r.text}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : derived.celebrations.length === 0 ? (
-          <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500">目前状态良好，可以给 TA 一些鼓励。</div>
-        ) : null}
-      </div>
-
+      {/* Coaching Script */}
       <CoachingScriptSheet key={derived.rendered} script={derived.script} rendered={derived.rendered} whatsappNumber={whatsappNumber} />
-
-      <JourneyTimeline events={derived.timeline} />
     </div>
   );
 }

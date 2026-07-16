@@ -162,14 +162,21 @@ export interface CustomerSignalTag {
   rank: number;
 }
 
+/** The single state a Dashboard card shows. The Dashboard is a decision
+ * surface — it never exposes individual diagnostic signals; those live in the
+ * Focus View. */
+export type CustomerCardStatus = "celebrate" | "support" | "celebrate_support";
+
 /** One customer = one card. All celebration and support signals for a
- * customer are aggregated here so the Coach decides to contact them once. */
+ * customer are aggregated here so the Coach decides to contact them once. The
+ * card renders only `status`; the tag arrays feed ordering + the Focus View. */
 export interface CoachCustomerCard {
   customerId: string;
   customerName: string;
   avatar: string | null;
   journeyName: JourneyName;
   journeyDay: number;
+  status: CustomerCardStatus;
   celebrationTags: CustomerSignalTag[];
   supportTags: CustomerSignalTag[];
   /** min rank across all tags — drives card ordering. */

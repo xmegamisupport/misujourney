@@ -283,6 +283,9 @@ function buildCustomerCard(ctx: CoachCustomerContext, celebrations: CelebrationI
   // The leading tag decides the accent — whichever the top rank belongs to.
   const overallTone: CustomerSignalTag["kind"] =
     supportTags.some((t) => t.rank === overallRank) && !celebrationTags.some((t) => t.rank === overallRank) ? "support" : "celebration";
+  // The Dashboard shows one of three states only — never the raw signals.
+  const status: CoachCustomerCard["status"] =
+    celebrationTags.length > 0 && supportTags.length > 0 ? "celebrate_support" : supportTags.length > 0 ? "support" : "celebrate";
 
   return {
     customerId: ctx.id,
@@ -290,6 +293,7 @@ function buildCustomerCard(ctx: CoachCustomerContext, celebrations: CelebrationI
     avatar: ctx.avatar,
     journeyName: journeyNameFor(ctx.journeyDays),
     journeyDay: cappedDay,
+    status,
     celebrationTags,
     supportTags,
     overallRank,
