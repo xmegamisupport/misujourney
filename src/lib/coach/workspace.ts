@@ -29,6 +29,7 @@ import type {
   CoachImpact,
   CoachWorkspace,
   CustomerSignalTag,
+  JourneyState,
   SupportItem,
   SupportPriority,
   SupportReasonLine,
@@ -235,7 +236,27 @@ export function deriveSupport(ctx: CoachCustomerContext, today = todayDateStr())
 
 // ---------- Home aggregation: one card per customer ----------
 
-const EMPTY_IMPACT: CoachImpact = { totalCustomers: 0, journeysCompleted: 0, journeysInProgress: 0, journeysCompletedThisMonth: 0 };
+const EMPTY_IMPACT: CoachImpact = { totalCustomers: 0, activeJourney: 0, journeysCompleted: 0, journeysPaused: 0, journeysCompletedThisMonth: 0 };
+
+/** Whether a customer's Journey is currently paused. The full pause workflow
+ * (pregnancy, medical, financial, personal, motivation) is NOT part of the
+ * MVP — there is no pause data source yet, so this is always false today. The
+ * state is modelled now so the dashboard, statistics and daily workspace stay
+ * consistent once pausing ships: a paused customer is counted separately and
+ * leaves the daily Customer Workspace. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function isJourneyPaused(ctx: CoachCustomerContext): boolean {
+  // TODO: read the customer's Journey pause status when the pause workflow ships.
+  return false;
+}
+
+/** Active until the elapsed Journey days reach its duration, then completed —
+ * unless the Journey has been explicitly paused. */
+function deriveJourneyState(ctx: CoachCustomerContext): JourneyState {
+  if (isJourneyPaused(ctx)) return "paused";
+  if (ctx.startDate && ctx.journeyDays && calculateCurrentDay(ctx.startDate) >= ctx.journeyDays) return "completed";
+  return "active";
+}
 
 /** Aggregate every celebration + support signal for one customer into a
  * single glanceable card. Returns null when the customer has no signal today
@@ -276,30 +297,30 @@ function buildCustomerCard(ctx: CoachCustomerContext, celebrations: CelebrationI
   };
 }
 
-/** Encouraging coaching statistics — a completed Journey is one whose elapsed
- * days have reached its duration. Not a KPI, not a ranking. */
+/** Encouraging coaching statistics grouped by Journey state. Not a KPI, not a
+ * ranking. A completed Journey is one whose elapsed days have reached its
+ * duration; paused is a separate state (see deriveJourneyState). */
 function computeImpact(contexts: CoachCustomerContext[], today = todayDateStr()): CoachImpact {
   const thisMonth = today.slice(0, 7);
+  let activeJourney = 0;
   let journeysCompleted = 0;
-  let journeysInProgress = 0;
+  let journeysPaused = 0;
   let journeysCompletedThisMonth = 0;
 
   for (const ctx of contexts) {
-    if (!ctx.startDate || !ctx.journeyDays) {
-      journeysInProgress += 1;
-      continue;
-    }
-    const day = calculateCurrentDay(ctx.startDate);
-    if (day >= ctx.journeyDays) {
+    const state = deriveJourneyState(ctx);
+    if (state === "paused") {
+      journeysPaused += 1;
+    } else if (state === "completed") {
       journeysCompleted += 1;
-      const completedOn = new Date(toUtc(ctx.startDate) + ctx.journeyDays * 86400000).toISOString().slice(0, 10);
+      const completedOn = new Date(toUtc(ctx.startDate!) + ctx.journeyDays! * 86400000).toISOString().slice(0, 10);
       if (completedOn.slice(0, 7) === thisMonth) journeysCompletedThisMonth += 1;
     } else {
-      journeysInProgress += 1;
+      activeJourney += 1;
     }
   }
 
-  return { totalCustomers: contexts.length, journeysCompleted, journeysInProgress, journeysCompletedThisMonth };
+  return { totalCustomers: contexts.length, activeJourney, journeysCompleted, journeysPaused, journeysCompletedThisMonth };
 }
 
 // ---------- Orchestrator ----------
@@ -351,6 +372,9 @@ export async function getCoachWorkspace(coachId: string): Promise<CoachWorkspace
   const cards: CoachCustomerCard[] = [];
 
   for (const ctx of contexts) {
+    // Paused Journeys leave the daily coaching workspace — they are still
+    // counted in My Impact, just not surfaced for daily contact.
+    if (deriveJourneyState(ctx) === "paused") continue;
     const cels = deriveCelebrations(ctx);
     const sup = deriveSupport(ctx);
     celebrations.push(...cels);

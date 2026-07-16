@@ -21,12 +21,16 @@ export default function CoachWorkspacePage() {
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
       <PageHeader title="教练工作台" subtitle="Every Day Is A New Journey" />
 
-      {/* Greeting + Today's Summary */}
-      <CoachGreeting
-        coachName={coach?.name ?? ""}
-        celebrateCount={workspace.celebrateCustomerCount}
-        supportCount={workspace.supportCustomerCount}
-      />
+      {/* Today's Coaching Mission — frames the day as a mission, not a feed of
+          notifications. */}
+      <section>
+        <h2 className="mb-2 text-lg font-bold text-slate-900">🎯 今日教练任务</h2>
+        <CoachGreeting
+          coachName={coach?.name ?? ""}
+          celebrateCount={workspace.celebrateCustomerCount}
+          supportCount={workspace.supportCustomerCount}
+        />
+      </section>
 
       {/* My Impact — encouraging coaching statistics */}
       <MyImpact impact={workspace.impact} />

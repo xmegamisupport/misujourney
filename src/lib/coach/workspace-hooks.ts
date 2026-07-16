@@ -8,7 +8,7 @@ const EMPTY_WORKSPACE: CoachWorkspace = {
   celebrations: [],
   support: [],
   cards: [],
-  impact: { totalCustomers: 0, journeysCompleted: 0, journeysInProgress: 0, journeysCompletedThisMonth: 0 },
+  impact: { totalCustomers: 0, activeJourney: 0, journeysCompleted: 0, journeysPaused: 0, journeysCompletedThisMonth: 0 },
   celebrateCustomerCount: 0,
   supportCustomerCount: 0,
 };

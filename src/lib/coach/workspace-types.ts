@@ -178,11 +178,23 @@ export interface CoachCustomerCard {
   overallTone: SignalKind;
 }
 
+/** A customer's Journey state. "paused" (pregnancy, medical, financial,
+ * personal, motivation) is modelled now so statistics and the daily workspace
+ * stay consistent once the full pause workflow ships — paused customers are
+ * counted separately and drop out of the daily Customer Workspace. */
+export type JourneyState = "active" | "completed" | "paused";
+
 /** Encouraging, non-KPI coaching statistics shown under the greeting. */
 export interface CoachImpact {
+  /** Total customers assigned to this Coach. */
   totalCustomers: number;
+  /** Customers currently participating in an active Journey. */
+  activeJourney: number;
+  /** Customers who have successfully completed their Journey. */
   journeysCompleted: number;
-  journeysInProgress: number;
+  /** Customers who have temporarily paused their Journey. */
+  journeysPaused: number;
+  /** Customers who completed their Journey during the current month. */
   journeysCompletedThisMonth: number;
 }
 
