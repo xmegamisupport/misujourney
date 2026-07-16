@@ -55,23 +55,29 @@ export function AnglePhotoSlot({ angle, label, photoUrl, uploading, mode, onSele
 
   return (
     <div data-angle={angle} className={cn("flex flex-col items-center gap-3", variant === "grid" && "gap-2")}>
-      <div
-        className={cn(
-          "relative flex items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed bg-slate-50",
-          variant === "current" ? "h-72 w-56" : "h-32 w-full",
-          photoUrl ? "border-emerald-300 border-solid" : "border-slate-200"
-        )}
-      >
-        {photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photoUrl} alt={label} className="h-full w-full object-cover" />
-        ) : (
-          <span className="text-4xl text-slate-300">🧍</span>
-        )}
-        {uploading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-sm text-slate-500">上传中...</div>
-        )}
-      </div>
+      {/* The preview box is only shown when there's something to show — a taken
+          photo, an in-progress upload, or a Review grid tile. In the sequential
+          capture step the real example photo above is the only reference, so an
+          empty placeholder box is intentionally not rendered. */}
+      {(variant === "grid" || photoUrl || uploading) && (
+        <div
+          className={cn(
+            "relative flex items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed bg-slate-50",
+            variant === "current" ? "h-72 w-56" : "h-32 w-full",
+            photoUrl ? "border-emerald-300 border-solid" : "border-slate-200"
+          )}
+        >
+          {photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photoUrl} alt={label} className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-4xl text-slate-300">🧍</span>
+          )}
+          {uploading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-sm text-slate-500">上传中...</div>
+          )}
+        </div>
+      )}
 
       <button
         type="button"
