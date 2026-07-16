@@ -1293,12 +1293,17 @@ export type Database = {
           activity_level: Database["public"]["Enums"]["activity_level"] | null
           age: number | null
           avatar: string | null
+          coach_activated_at: string | null
+          coach_activated_by: string | null
           coach_id: string | null
+          coach_revoked_at: string | null
+          coach_welcome_ack_at: string | null
           created_at: string
           diet_type: Database["public"]["Enums"]["diet_type"] | null
           gender: string | null
           height: number | null
           id: string
+          is_coach: boolean
           name: string
           onboarding_completed_at: string | null
           phone: string | null
@@ -1321,12 +1326,17 @@ export type Database = {
           activity_level?: Database["public"]["Enums"]["activity_level"] | null
           age?: number | null
           avatar?: string | null
+          coach_activated_at?: string | null
+          coach_activated_by?: string | null
           coach_id?: string | null
+          coach_revoked_at?: string | null
+          coach_welcome_ack_at?: string | null
           created_at?: string
           diet_type?: Database["public"]["Enums"]["diet_type"] | null
           gender?: string | null
           height?: number | null
           id: string
+          is_coach?: boolean
           name: string
           onboarding_completed_at?: string | null
           phone?: string | null
@@ -1349,12 +1359,17 @@ export type Database = {
           activity_level?: Database["public"]["Enums"]["activity_level"] | null
           age?: number | null
           avatar?: string | null
+          coach_activated_at?: string | null
+          coach_activated_by?: string | null
           coach_id?: string | null
+          coach_revoked_at?: string | null
+          coach_welcome_ack_at?: string | null
           created_at?: string
           diet_type?: Database["public"]["Enums"]["diet_type"] | null
           gender?: string | null
           height?: number | null
           id?: string
+          is_coach?: boolean
           name?: string
           onboarding_completed_at?: string | null
           phone?: string | null
@@ -1374,6 +1389,13 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_coach_activated_by_fkey"
+            columns: ["coach_activated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_coach_id_fkey"
             columns: ["coach_id"]
@@ -1496,6 +1518,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      ack_coach_welcome: { Args: never; Returns: undefined }
+      admin_set_coach_access: {
+        Args: {
+          p_enabled: boolean
+          p_referral_code?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       admin_set_customer_coach: {
         Args: { p_coach_id: string; p_customer_id: string }
         Returns: undefined
@@ -1565,13 +1596,6 @@ export type Database = {
         Returns: undefined
       }
       create_revision_draft: { Args: { p_content_id: string }; Returns: string }
-      get_coach_public_by_referral: {
-        Args: { p_code: string }
-        Returns: {
-          avatar: string | null
-          name: string
-        }[]
-      }
       current_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -1596,6 +1620,13 @@ export type Database = {
           p_journey_start_weight_kg: number
         }
         Returns: string
+      }
+      get_coach_public_by_referral: {
+        Args: { p_code: string }
+        Returns: {
+          avatar: string
+          name: string
+        }[]
       }
       get_inventory_alert_status: {
         Args: {
