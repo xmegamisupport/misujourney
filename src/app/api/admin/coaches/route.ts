@@ -4,13 +4,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
-interface CreateCoachBody {
-  name?: string;
-  email?: string;
-  password?: string;
-  referralCode?: string;
-}
-
 async function requireAdmin() {
   const supabase = await createServerClient();
   const {
@@ -24,12 +17,6 @@ async function requireAdmin() {
     return { error: NextResponse.json({ error: "只有 Admin 可以执行此操作" }, { status: 403 }) };
   }
   return { error: null };
-}
-
-function generateReferralCode(name: string): string {
-  const base = name.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 6) || "coach";
-  const suffix = Math.random().toString(36).slice(2, 6);
-  return `${base}${suffix}`;
 }
 
 export async function GET() {
@@ -92,70 +79,4 @@ export async function GET() {
   });
 
   return NextResponse.json({ coaches: result });
-}
-
-export async function POST(request: Request) {
-  const { error } = await requireAdmin();
-  if (error) return error;
-
-  const body = (await request.json()) as CreateCoachBody;
-  const name = body.name?.trim() ?? "";
-  const email = body.email?.trim() ?? "";
-  const password = body.password ?? "";
-  let referralCode = body.referralCode?.trim().toLowerCase() || "";
-
-  if (!name) return NextResponse.json({ error: "请输入教练姓名" }, { status: 400 });
-  if (!email) return NextResponse.json({ error: "请输入邮箱" }, { status: 400 });
-  if (password.length < 6) return NextResponse.json({ error: "密码至少需要 6 位" }, { status: 400 });
-
-  let admin;
-  try {
-    admin = createAdminClient();
-  } catch {
-    return NextResponse.json({ error: "服务器未配置 SUPABASE_SERVICE_ROLE_KEY" }, { status: 500 });
-  }
-
-  if (referralCode) {
-    const { data: existing } = await admin.from("profiles").select("id").eq("referral_code", referralCode).maybeSingle();
-    if (existing) return NextResponse.json({ error: "该推荐码已被使用" }, { status: 400 });
-  } else {
-    for (let i = 0; i < 5; i++) {
-      const candidate = generateReferralCode(name);
-      const { data: existing } = await admin.from("profiles").select("id").eq("referral_code", candidate).maybeSingle();
-      if (!existing) {
-        referralCode = candidate;
-        break;
-      }
-    }
-    if (!referralCode) return NextResponse.json({ error: "生成推荐码失败，请手动输入" }, { status: 500 });
-  }
-
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    app_metadata: { role: "coach" },
-    user_metadata: { name },
-  });
-
-  if (createError || !created.user) {
-    const message = createError?.message.includes("already been registered") ? "该邮箱已被注册" : "创建账号失败，请稍后再试";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
-
-  // role must be set here explicitly, not left to handle_new_user() alone:
-  // admin.createUser() inserts the auth.users row first (default
-  // app_metadata) and only merges in the custom app_metadata with a
-  // separate update afterward, so the AFTER INSERT trigger never actually
-  // sees role: 'coach' — confirmed live, not a hypothetical. WhatsApp contact
-  // info is set up separately by the Coach themselves via update_coach_
-  // whatsapp_contact() (which also supports Admin editing any Coach), since
-  // it needs a country selector this creation form doesn't have.
-  const { error: updateError } = await admin.from("profiles").update({ role: "coach", referral_code: referralCode }).eq("id", created.user.id);
-
-  if (updateError) {
-    return NextResponse.json({ error: `账号已创建，但设置推荐码失败：${updateError.message}` }, { status: 500 });
-  }
-
-  return NextResponse.json({ ok: true, coach: { id: created.user.id, name, email, referralCode } });
 }

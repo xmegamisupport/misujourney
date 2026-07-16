@@ -248,33 +248,6 @@ export async function getCoachBoundCustomers(coachId: string): Promise<CoachBoun
   return body.customers as CoachBoundCustomer[];
 }
 
-export interface CreateCoachInput {
-  name: string;
-  email: string;
-  password: string;
-  referralCode?: string;
-}
-
-export interface CreateCoachResult {
-  ok: boolean;
-  error?: string;
-  coach?: { id: string; name: string; email: string; referralCode: string };
-}
-
-/** The only way to create a Coach account — auth.users can't be written via
- * a plain RPC, so this goes through the service-role Admin API on the
- * server (/api/admin/coaches), gated on the caller already being an admin. */
-export async function createCoachAccount(input: CreateCoachInput): Promise<CreateCoachResult> {
-  const res = await fetch("/api/admin/coaches", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-  const body = await res.json();
-  if (!res.ok) return { ok: false, error: body.error ?? "创建失败" };
-  return { ok: true, coach: body.coach };
-}
-
 export async function getCustomerProfile(customerId: string): Promise<CoachCustomerProfile | undefined> {
   const supabase = createClient();
   const { data, error } = await supabase.from("profiles").select("*").eq("id", customerId).maybeSingle();
