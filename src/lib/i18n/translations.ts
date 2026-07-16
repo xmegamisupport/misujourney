@@ -4,7 +4,7 @@ export const translations = {
   zh: {
     nav: {
       customer: { home: "首页", meals: "饮食", learn: "学习", progress: "成长", profile: "我的" },
-      coach: { dashboard: "概览", customers: "顾客", alerts: "提醒", referral: "推荐", profile: "我的" },
+      coach: { dashboard: "概览", customers: "顾客", alerts: "提醒", referral: "推荐", profile: "账户" },
       admin: { dashboard: "概览", users: "用户", coaches: "教练", customers: "顾客", cms: "知识 CMS", settings: "设置" },
     },
     roleLabel: { customer: "顾客", coach: "Journey Coach", admin: "XMEGAMI 管理员" },

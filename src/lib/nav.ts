@@ -21,7 +21,7 @@ export const coachNav: NavItem[] = [
   { href: "/coach/customers", label: "顾客", icon: "👥", key: "customers" },
   { href: "/coach/alerts", label: "提醒", icon: "🔔", key: "alerts" },
   { href: "/coach/referral", label: "推荐", icon: "🔗", key: "referral" },
-  { href: "/coach/profile", label: "我的", icon: "👤", key: "profile" },
+  { href: "/coach/profile", label: "账户", icon: "👤", key: "profile" },
 ];
 
 export const adminNav: NavItem[] = [
