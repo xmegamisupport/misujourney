@@ -39,6 +39,40 @@ export const roleHome: Record<Role, string> = {
   admin: "/admin",
 };
 
+/** Post-login / default landing. Coach capability and Customer onboarding are
+ * independent states: a coach-capable account (role='customer' + is_coach)
+ * that hasn't started its own Journey lands in the Coach Workspace rather than
+ * being trapped in customer onboarding. Legacy role='coach' still homes to
+ * /coach during the transition. Routing controls UI access only — RLS remains
+ * the real data boundary. */
+export function resolveHomePath(role: string, isCoach: boolean, onboardingCompleted: boolean): string {
+  if (role === "admin") return "/admin";
+  if (role === "nutritionist" || role === "trainer") return "/cms";
+  if (role === "coach") return "/coach"; // legacy, transitional
+  // customer base tier
+  if (isCoach && !onboardingCompleted) return "/coach";
+  return "/customer";
+}
+
+/** Whether an account may enter a protected route tree. UI-access only — RLS
+ * remains the real data boundary. /coach is gated by the is_coach capability
+ * (plus legacy role='coach' during the transition); the other trees stay
+ * strictly role-based. */
+export function hasPrefixAccess(prefix: string, role: string, isCoach: boolean): boolean {
+  switch (prefix) {
+    case "/customer":
+      return role === "customer";
+    case "/coach":
+      return isCoach || role === "coach";
+    case "/admin":
+      return role === "admin";
+    case "/cms":
+      return role === "admin" || role === "nutritionist" || role === "trainer";
+    default:
+      return false;
+  }
+}
+
 export const roleIcon: Record<Role, string> = {
   customer: "/icons/customer.png",
   coach: "/icons/coach.png",

@@ -5,13 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { initializeInventoryFromRegistration } from "@/lib/inventory/engine";
+import { resolveHomePath } from "@/lib/nav";
 
 const PENDING_INVENTORY_KEY = "misu_pending_inventory_init";
-const ROLE_HOME: Record<string, string> = {
-  customer: "/customer",
-  coach: "/coach",
-  admin: "/admin",
-};
 
 export default function LoginPage() {
   return (
@@ -68,9 +64,13 @@ function LoginForm() {
       }
     }
 
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_coach, onboarding_completed_at")
+      .eq("id", data.user.id)
+      .single();
     const redirectTo = searchParams.get("redirectTo");
-    const home = (profile && ROLE_HOME[profile.role]) || "/customer";
+    const home = profile ? resolveHomePath(profile.role, profile.is_coach, profile.onboarding_completed_at != null) : "/customer";
 
     setSubmitting(false);
     router.push(redirectTo && redirectTo.startsWith("/") ? redirectTo : home);
