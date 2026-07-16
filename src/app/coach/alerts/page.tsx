@@ -22,6 +22,7 @@ import {
   compareAlertStatusSeverity,
 } from "@/lib/inventory/constants";
 import type { CustomerInventory, DailyCheckIn, InventoryTransaction, RepurchaseAlert, RepurchaseAlertLevel } from "@/lib/inventory/types";
+import { normalizeWhatsAppNumber, buildWhatsAppLink, buildCustomerContactMessage } from "@/lib/whatsapp";
 
 const checkinFilters: { key: "all" | FlagSeverity; label: string }[] = [
   { key: "all", label: "全部" },
@@ -225,12 +226,23 @@ function RepurchaseAlertCard({
         )}
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2">
-        <Link
-          href="/coach/messages"
-          className="rounded-xl border border-slate-200 py-2 text-center text-xs font-medium text-slate-600 transition hover:border-slate-300"
-        >
-          联系顾客
-        </Link>
+        {customer?.phone ? (
+          <a
+            href={buildWhatsAppLink(normalizeWhatsAppNumber(customer.phone), buildCustomerContactMessage(customer.name))}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-xl border border-emerald-200 py-2 text-center text-xs font-medium text-emerald-600 transition hover:bg-emerald-50"
+          >
+            💬 WhatsApp
+          </a>
+        ) : (
+          <Link
+            href={`/coach/customers/${alert.customerId}`}
+            className="rounded-xl border border-slate-200 py-2 text-center text-xs font-medium text-slate-600 transition hover:border-slate-300"
+          >
+            联系顾客
+          </Link>
+        )}
         <button
           type="button"
           disabled={alert.status === "FOLLOWED_UP"}

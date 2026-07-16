@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCurrentCustomerGoal, getCurrentGoalPlan, getCurrentGoalsForCustomers, getWeightGoalRules } from "./engine";
+import { getCurrentCustomerGoal, getCurrentGoalPlan, getCurrentGoalsForCustomers, getGoalPlansForCustomers, getWeightGoalRules } from "./engine";
 import type { CustomerGoal, GoalPlan, WeightGoalRule } from "./types";
 
 export function useCurrentCustomerGoal(customerId: string): { data: CustomerGoal | undefined; loading: boolean } {
@@ -63,6 +63,29 @@ export function useWeightGoalRules(): { data: WeightGoalRule[]; loading: boolean
       cancelled = true;
     };
   }, []);
+
+  return { data, loading };
+}
+
+export function useGoalPlansForCustomers(customerIds: string[]): { data: Record<string, GoalPlan>; loading: boolean } {
+  const [data, setData] = useState<Record<string, GoalPlan>>({});
+  const [loading, setLoading] = useState(true);
+  const key = customerIds.join(",");
+
+  useEffect(() => {
+    let cancelled = false;
+    getGoalPlansForCustomers(customerIds)
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   return { data, loading };
 }

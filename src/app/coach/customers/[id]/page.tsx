@@ -28,6 +28,7 @@ import {
 import { parsePositiveInt } from "@/lib/inventory/validation";
 import { useActiveAttentionFlags, useLatestCustomerInsight } from "@/lib/insights/hooks";
 import { CoachFocusPanel } from "@/components/coach/CoachFocusPanel";
+import { normalizeWhatsAppNumber, buildWhatsAppLink, buildCustomerContactMessage } from "@/lib/whatsapp";
 import { SEVERITY_STYLES } from "@/lib/insights/constants";
 import { buildCustomerTrendSummary } from "@/lib/insights/summary";
 import { createClient } from "@/lib/supabase/client";
@@ -219,6 +220,18 @@ export default function CustomerDetailPage() {
             )}
           </div>
         </div>
+        {profile.phone ? (
+          <a
+            href={buildWhatsAppLink(normalizeWhatsAppNumber(profile.phone), buildCustomerContactMessage(profile.name))}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-600"
+          >
+            💬 WhatsApp
+          </a>
+        ) : (
+          <span className="shrink-0 rounded-full bg-slate-100 px-4 py-2 text-xs font-medium text-slate-400">未设置号码</span>
+        )}
       </div>
 
       {/* ---------- Coach MVP focus layer ---------- */}
