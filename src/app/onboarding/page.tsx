@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { SignOutButton } from "@/components/SignOutButton";
 import { cn } from "@/lib/utils";
@@ -113,7 +113,6 @@ function StepIndicator({ step }: { step: number }) {
 }
 
 function OnboardingWizard({ customerId, defaultName, defaultReferral }: { customerId: string; defaultName: string; defaultReferral: string | null }) {
-  const router = useRouter();
   const initial = useState(() => readStoredDraft(defaultName ?? "", defaultReferral))[0];
   const [step, setStep] = useState(initial.step);
   const [draft, setDraft] = useState<WizardDraft>(initial.draft);
@@ -254,7 +253,7 @@ function OnboardingWizard({ customerId, defaultName, defaultReferral }: { custom
   }
 
   if (result) {
-    return <OnboardingResult result={result} onStart={() => router.push("/customer")} />;
+    return <OnboardingResult result={result} />;
   }
 
   return (
@@ -632,7 +631,7 @@ function StepLongTermGoal({ value, onChange, valid }: { value: string; onChange:
   );
 }
 
-function OnboardingResult({ result, onStart }: { result: CompleteRegistrationGoalsResult; onStart: () => void }) {
+function OnboardingResult({ result }: { result: CompleteRegistrationGoalsResult }) {
   const statusCopy: Record<string, { title: string; body: string }> = {
     auto_approved: { title: "目标已确认", body: "你的第一阶段目标已经设定好，随时可以开始。" },
     auto_adjusted: { title: "已为你拆分为阶段目标", body: "长期目标已保存作为未来参考，我们先从第一阶段开始。" },
@@ -662,13 +661,12 @@ function OnboardingResult({ result, onStart }: { result: CompleteRegistrationGoa
           <p>✓ {result.targetMisuDays} 天 MISU 打卡</p>
         </div>
 
-        <button
-          type="button"
-          onClick={onStart}
-          className="mt-6 w-full rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+        <Link
+          href="/customer"
+          className="mt-6 block w-full rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-white transition hover:bg-emerald-600"
         >
           开始 Journey →
-        </button>
+        </Link>
       </div>
     </div>
   );
