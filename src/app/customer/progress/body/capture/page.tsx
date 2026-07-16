@@ -5,10 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { AnglePhotoSlot } from "@/components/bodyProgress/AnglePhotoSlot";
-import { BodyOutlineOverlay } from "@/components/bodyProgress/BodyOutlineOverlay";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { uploadBodyProgressPhoto, listUploadedBodyProgressPhotos, getBodyProgressPhotoSignedUrl } from "@/lib/bodyProgress/engine";
 import { BODY_PROGRESS_ANGLES } from "@/lib/bodyProgress/constants";
+import { BODY_PROGRESS_GUIDE_BY_ANGLE } from "@/lib/bodyProgress/guide-assets";
 import type { BodyProgressAngle } from "@/lib/bodyProgress/types";
 
 const ANGLE_LABELS: Record<BodyProgressAngle, string> = { front: "正面", left: "左侧", right: "右侧", back: "背面" };
@@ -118,13 +118,24 @@ function BodyProgressCaptureFlow() {
       {currentAngle && (
         <div className="flex flex-col items-center gap-4 py-2">
           <p className="text-base font-semibold text-slate-800">请拍摄：{ANGLE_LABELS[currentAngle]}</p>
-          <div className="relative">
-            <AnglePhotoSlot angle={currentAngle} label={ANGLE_LABELS[currentAngle]} photoUrl={null} uploading={uploading} mode={mode} onSelectFile={handleSelectFile} variant="current" />
-            <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-56 -translate-x-1/2 text-slate-400">
-              <BodyOutlineOverlay />
+
+          {/* Real example photo for this angle (from the guide manifest) so the
+              customer copies a consistent angle. Reference only — not analysis. */}
+          <figure className="w-56 max-w-full">
+            <div className="aspect-[3/4] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={BODY_PROGRESS_GUIDE_BY_ANGLE[currentAngle].src}
+                alt={`${ANGLE_LABELS[currentAngle]}参考示范`}
+                className="h-full w-full object-cover"
+              />
             </div>
-          </div>
-          <p className="max-w-xs text-center text-xs text-slate-400">身形轮廓仅作参考，不影响提交</p>
+            <figcaption className="mt-1 text-center text-xs text-slate-400">参考示范</figcaption>
+          </figure>
+
+          <AnglePhotoSlot angle={currentAngle} label={ANGLE_LABELS[currentAngle]} photoUrl={null} uploading={uploading} mode={mode} onSelectFile={handleSelectFile} variant="current" />
+
+          <p className="max-w-xs text-center text-xs text-slate-400">照着示范的角度拍摄，方便日后对比，不影响提交</p>
         </div>
       )}
 

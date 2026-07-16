@@ -33,3 +33,9 @@ export const BODY_PROGRESS_GUIDE_ANGLES: (GuideImage & { angle: BodyProgressAngl
   { angle: "right", src: `${GUIDE_DIR}/right.jpeg`, label: "右侧" },
   { angle: "back", src: `${GUIDE_DIR}/back.jpeg`, label: "背面" },
 ];
+
+/** Angle → example photo, so the capture step can show the reference for the
+ * angle currently being shot. Same single source of truth. */
+export const BODY_PROGRESS_GUIDE_BY_ANGLE: Record<BodyProgressAngle, GuideImage> = Object.fromEntries(
+  BODY_PROGRESS_GUIDE_ANGLES.map(({ angle, src, label }) => [angle, { src, label }]),
+) as Record<BodyProgressAngle, GuideImage>;
