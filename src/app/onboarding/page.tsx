@@ -16,6 +16,7 @@ import {
 import { DIET_TYPE_LABELS, ACTIVITY_LEVEL_LABELS, GOAL_TYPE_LABELS, GOAL_TYPE_ICONS, JOURNEY_PLAN_OPTIONS } from "@/lib/goals/constants";
 import { completeRegistrationGoals, type CompleteRegistrationGoalsResult } from "@/lib/goals/engine";
 import { useWeightGoalRules } from "@/lib/goals/hooks";
+import { lookupCoachByReferral, type ReferralCoach } from "@/lib/referral";
 import type { ActivityLevel, DietType, GoalStatus, GoalType, JourneyDays, WeightGoalRange } from "@/lib/goals/types";
 
 const TOTAL_STEPS = 5;
@@ -69,15 +70,19 @@ const DRAFT_STORAGE_KEY = "misu-onboarding-draft";
  * only ever mounts client-side (see OnboardingPage's loading gate above), so
  * there is no server-rendered version of this subtree to hydration-mismatch
  * against — same pattern as the meal-check confirm/result pages. */
-function readStoredDraft(defaultName: string): { step: number; draft: WizardDraft } {
-  if (typeof window === "undefined") return { step: 1, draft: { ...EMPTY_DRAFT, name: defaultName } };
+function readStoredDraft(defaultName: string, defaultReferral: string | null): { step: number; draft: WizardDraft } {
+  // The referral code is captured at sign-up (user_metadata) and is the sole
+  // source of truth here — it always wins over any stored draft value, and the
+  // customer never edits it in onboarding.
+  const seedReferral = (draft: WizardDraft): WizardDraft => ({ ...draft, referralCode: defaultReferral ?? draft.referralCode });
+  if (typeof window === "undefined") return { step: 1, draft: seedReferral({ ...EMPTY_DRAFT, name: defaultName }) };
   try {
     const raw = window.sessionStorage.getItem(DRAFT_STORAGE_KEY);
-    if (!raw) return { step: 1, draft: { ...EMPTY_DRAFT, name: defaultName } };
+    if (!raw) return { step: 1, draft: seedReferral({ ...EMPTY_DRAFT, name: defaultName }) };
     const parsed = JSON.parse(raw) as { step: number; draft: WizardDraft };
-    return { step: parsed.step ?? 1, draft: { ...EMPTY_DRAFT, ...parsed.draft } };
+    return { step: parsed.step ?? 1, draft: seedReferral({ ...EMPTY_DRAFT, ...parsed.draft }) };
   } catch {
-    return { step: 1, draft: { ...EMPTY_DRAFT, name: defaultName } };
+    return { step: 1, draft: seedReferral({ ...EMPTY_DRAFT, name: defaultName }) };
   }
 }
 
@@ -88,7 +93,7 @@ export default function OnboardingPage() {
     return <div className="px-4 py-10 text-center text-sm text-slate-400">加载中...</div>;
   }
 
-  return <OnboardingWizard customerId={user.id} defaultName={user.name} />;
+  return <OnboardingWizard customerId={user.id} defaultName={user.name} defaultReferral={user.referralCode} />;
 }
 
 function StepIndicator({ step }: { step: number }) {
@@ -107,15 +112,29 @@ function StepIndicator({ step }: { step: number }) {
   );
 }
 
-function OnboardingWizard({ customerId, defaultName }: { customerId: string; defaultName: string }) {
+function OnboardingWizard({ customerId, defaultName, defaultReferral }: { customerId: string; defaultName: string; defaultReferral: string | null }) {
   const router = useRouter();
-  const initial = useState(() => readStoredDraft(defaultName ?? ""))[0];
+  const initial = useState(() => readStoredDraft(defaultName ?? "", defaultReferral))[0];
   const [step, setStep] = useState(initial.step);
   const [draft, setDraft] = useState<WizardDraft>(initial.draft);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<CompleteRegistrationGoalsResult | null>(null);
+  const [referralCoach, setReferralCoach] = useState<ReferralCoach | null>(null);
   const { data: weightGoalRules } = useWeightGoalRules();
+
+  // Read-only confirmation of the bound Coach — the code itself is fixed from
+  // sign-up and never edited here. lookupCoachByReferral() returns null for an
+  // empty/invalid code, so state is only ever set from the async result.
+  useEffect(() => {
+    let cancelled = false;
+    lookupCoachByReferral(draft.referralCode).then((coach) => {
+      if (!cancelled) setReferralCoach(coach);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [draft.referralCode]);
 
   // Auto-save: every step/field change is persisted so a refresh mid-wizard
   // doesn't lose progress. Cleared once the RPC actually submits.
@@ -257,7 +276,7 @@ function OnboardingWizard({ customerId, defaultName }: { customerId: string; def
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
           <StepIndicator step={step} />
 
-          {step === 1 && <StepBasicInfo draft={draft} update={update} />}
+          {step === 1 && <StepBasicInfo draft={draft} update={update} referralCoach={referralCoach} />}
           {step === 2 && <StepGoalType draft={draft} update={update} />}
           {step === 3 && (
             <StepLongTermGoal
@@ -325,10 +344,18 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 const inputClass =
   "rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100";
 
-function StepBasicInfo({ draft, update }: { draft: WizardDraft; update: <K extends keyof WizardDraft>(key: K, value: WizardDraft[K]) => void }) {
+function StepBasicInfo({ draft, update, referralCoach }: { draft: WizardDraft; update: <K extends keyof WizardDraft>(key: K, value: WizardDraft[K]) => void; referralCoach: ReferralCoach | null }) {
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-base font-semibold text-slate-900">Step 1 · 填写基础资料</h2>
+      {referralCoach && (
+        <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg">{referralCoach.avatar ?? "🌿"}</span>
+          <p className="text-sm text-slate-700">
+            你的专属 Coach：<span className="font-semibold text-emerald-700">{referralCoach.name}</span>
+          </p>
+        </div>
+      )}
       <FieldLabel>
         姓名
         <input value={draft.name} onChange={(e) => update("name", e.target.value)} className={inputClass} />
@@ -349,10 +376,6 @@ function StepBasicInfo({ draft, update }: { draft: WizardDraft; update: <K exten
       <FieldLabel>
         电话号码
         <input value={draft.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+60 1x-xxx xxxx" className={inputClass} />
-      </FieldLabel>
-      <FieldLabel>
-        Referral Code（选填）
-        <input value={draft.referralCode} onChange={(e) => update("referralCode", e.target.value)} placeholder="chloe688" className={inputClass} />
       </FieldLabel>
       <div className="grid grid-cols-2 gap-3">
         <FieldLabel>

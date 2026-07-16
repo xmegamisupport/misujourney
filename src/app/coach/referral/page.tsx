@@ -20,7 +20,7 @@ export default function CoachReferralPage() {
   const { data: coach } = useMyCoachProfile(coachId);
   const { data: customers } = useMyCustomers(coachId);
   const [copied, setCopied] = useState(false);
-  const link = `misujourney.vercel.app/join/${coach?.referralCode ?? ""}`;
+  const link = `misujourney.vercel.app/register?ref=${coach?.referralCode ?? ""}`;
 
   const newThisMonth = useMemo(() => customers.filter((c) => isThisMonth(c.startDate)).length, [customers]);
   const recentJoins = useMemo(

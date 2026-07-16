@@ -8,6 +8,9 @@ export interface AuthUser {
   id: string;
   role: Enums<"user_role">;
   name: string;
+  /** Referral code captured at sign-up (user_metadata) — the customer→coach
+   * binding source carried through email confirmation into onboarding. */
+  referralCode: string | null;
 }
 
 /** The real authenticated user + profile, for pages that need the actual
@@ -30,7 +33,8 @@ export function useAuthUser(): { user: AuthUser | null; loading: boolean } {
         if (!authUser) return;
         const { data: profile } = await supabase.from("profiles").select("role, name").eq("id", authUser.id).single();
         if (!cancelled && profile) {
-          setUser({ id: authUser.id, role: profile.role, name: profile.name });
+          const referralCode = typeof authUser.user_metadata?.referral_code === "string" ? authUser.user_metadata.referral_code : null;
+          setUser({ id: authUser.id, role: profile.role, name: profile.name, referralCode });
         }
       })
       .finally(() => {

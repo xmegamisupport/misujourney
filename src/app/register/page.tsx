@@ -1,23 +1,36 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { initializeInventoryFromRegistration } from "@/lib/inventory/engine";
 import { UNITS_PER_BOX } from "@/lib/inventory/constants";
 import { parseNonNegativeInt } from "@/lib/inventory/validation";
 import { registerCoachAccount } from "@/lib/coach/engine";
+import { lookupCoachByReferral, normalizeReferralCode, isReferralCodeShape, type ReferralCoach } from "@/lib/referral";
 
 const PENDING_INVENTORY_KEY = "misu_pending_inventory_init";
 
 type Mode = "choose" | "customer" | "coach";
 
 export default function RegisterPage() {
-  const [mode, setMode] = useState<Mode>("choose");
+  return (
+    <Suspense>
+      <RegisterInner />
+    </Suspense>
+  );
+}
+
+function RegisterInner() {
+  const searchParams = useSearchParams();
+  // A ?ref= link is a customer invitation — skip the role picker and go
+  // straight to the customer form so registration "simply continues".
+  const refParam = searchParams.get("ref");
+  const [mode, setMode] = useState<Mode>(refParam ? "customer" : "choose");
 
   if (mode === "coach") return <CoachRegisterForm onBack={() => setMode("choose")} />;
-  if (mode === "customer") return <CustomerRegisterForm onBack={() => setMode("choose")} />;
+  if (mode === "customer") return <CustomerRegisterForm refParam={refParam} onBack={() => setMode("choose")} />;
   return <RoleChoice onChoose={setMode} />;
 }
 
@@ -68,7 +81,22 @@ function RoleChoice({ onChoose }: { onChoose: (mode: Mode) => void }) {
   );
 }
 
-function CustomerRegisterForm({ onBack }: { onBack: () => void }) {
+/** Small green confirmation of the identified Coach — reused for both the
+ * referral link and the manual fallback. Not a landing page, just one line. */
+function CoachBadge({ coach }: { coach: ReferralCoach }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg">{coach.avatar ?? "🌿"}</span>
+      <p className="text-sm text-slate-700">
+        你的专属 Coach：<span className="font-semibold text-emerald-700">{coach.name}</span>
+      </p>
+    </div>
+  );
+}
+
+type RefStatus = "loading" | "valid" | "invalid";
+
+function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; onBack: () => void }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -79,8 +107,73 @@ function CustomerRegisterForm({ onBack }: { onBack: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(false);
 
+  // Referral link mode: validate the ?ref= code before allowing sign-up.
+  const linkMode = refParam !== null;
+  const [refStatus, setRefStatus] = useState<RefStatus>(linkMode ? "loading" : "valid");
+  const [refCoach, setRefCoach] = useState<ReferralCoach | null>(null);
+
+  // Manual fallback (normal registration only). manualStatus is derived from
+  // the typed code + the last async lookup result, so the effect only ever
+  // sets state inside the debounced callback (no synchronous setState).
+  const [showManual, setShowManual] = useState(false);
+  const [manualCode, setManualCode] = useState("");
+  const [manualChecked, setManualChecked] = useState<string | null>(null);
+  const [manualCoach, setManualCoach] = useState<ReferralCoach | null>(null);
+
   const parsedN = parseNonNegativeInt(boxesN);
   const parsedDX = parseNonNegativeInt(boxesDX);
+
+  const manualTrimmed = manualCode.trim();
+  const manualShapeOk = isReferralCodeShape(manualTrimmed);
+  const manualStatus: "idle" | "loading" | "valid" | "invalid" =
+    !showManual || manualTrimmed === ""
+      ? "idle"
+      : !manualShapeOk
+        ? "invalid"
+        : manualTrimmed !== manualChecked
+          ? "loading"
+          : manualCoach
+            ? "valid"
+            : "invalid";
+
+  // Validate the referral link once on entry — state set only in the async
+  // result; refStatus starts as "loading" for link mode.
+  useEffect(() => {
+    if (!linkMode || refParam === null) return;
+    let cancelled = false;
+    lookupCoachByReferral(refParam).then((coach) => {
+      if (cancelled) return;
+      if (coach) {
+        setRefCoach(coach);
+        setRefStatus("valid");
+      } else {
+        setRefStatus("invalid");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [linkMode, refParam]);
+
+  // Debounced validation for the manual fallback code.
+  useEffect(() => {
+    if (linkMode || !showManual || !manualShapeOk || manualTrimmed === manualChecked) return;
+    const handle = setTimeout(() => {
+      lookupCoachByReferral(manualTrimmed).then((coach) => {
+        setManualCoach(coach);
+        setManualChecked(manualTrimmed);
+      });
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [linkMode, showManual, manualShapeOk, manualTrimmed, manualChecked]);
+
+  /** The validated code to persist in user_metadata at sign-up — carried
+   * through email confirmation into onboarding, where complete_registration_
+   * goals() does the trusted binding. Only ever a code string; never a id. */
+  function referralToStore(): string | undefined {
+    if (linkMode) return refStatus === "valid" ? normalizeReferralCode(refParam ?? "") : undefined;
+    return manualStatus === "valid" ? normalizeReferralCode(manualCode) : undefined;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -107,12 +200,14 @@ function CustomerRegisterForm({ onBack }: { onBack: () => void }) {
       return;
     }
 
+    const referralCode = referralToStore();
+
     setSubmitting(true);
     const supabase = createClient();
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { name: name.trim() } },
+      options: { data: { name: name.trim(), ...(referralCode ? { referral_code: referralCode } : {}) } },
     });
 
     if (signUpError) {
@@ -142,7 +237,8 @@ function CustomerRegisterForm({ onBack }: { onBack: () => void }) {
     }
 
     // Email confirmation required — no session yet. Stash the inventory
-    // numbers so the first successful login can complete the setup.
+    // numbers so the first successful login can complete the setup. The
+    // referral code rides along in user_metadata, so it survives confirmation.
     window.localStorage.setItem(PENDING_INVENTORY_KEY, JSON.stringify({ boxesN: parsedN, boxesDX: parsedDX }));
     setSubmitting(false);
     setPendingConfirmation(true);
@@ -163,6 +259,27 @@ function CustomerRegisterForm({ onBack }: { onBack: () => void }) {
     );
   }
 
+  // Invalid referral link — do NOT let it silently create an unbound customer.
+  if (linkMode && refStatus === "invalid") {
+    return (
+      <div className="flex min-h-screen flex-1 items-center justify-center bg-gradient-to-b from-emerald-50 via-white to-sky-50 px-6 py-12">
+        <div className="w-full max-w-sm rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-sm">
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-2xl">⚠️</span>
+          <p className="mb-2 text-base font-semibold text-slate-900">推荐链接无法识别</p>
+          <p className="mb-5 text-sm text-slate-500">这个推荐链接暂时无法识别，请向你的 Coach 获取正确链接。</p>
+          <Link
+            href="/register"
+            className="block w-full rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+          >
+            继续普通注册
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const submitDisabled = submitting || (linkMode && refStatus !== "valid");
+
   return (
     <div className="flex min-h-screen flex-1 items-center justify-center bg-gradient-to-b from-emerald-50 via-white to-sky-50 px-6 py-12">
       <div className="w-full max-w-sm">
@@ -177,6 +294,17 @@ function CustomerRegisterForm({ onBack }: { onBack: () => void }) {
             ← 返回
           </button>
           <h2 className="mb-5 text-lg font-semibold text-slate-900">创建账号</h2>
+
+          {/* Referral link: locked Coach confirmation, no editable field. */}
+          {linkMode && refStatus === "loading" && (
+            <div className="mb-5 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-400">识别推荐链接中…</div>
+          )}
+          {linkMode && refStatus === "valid" && refCoach && (
+            <div className="mb-5">
+              <CoachBadge coach={refCoach} />
+            </div>
+          )}
+
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             <label className="flex flex-col gap-1.5 text-sm text-slate-600">
               姓名
@@ -208,6 +336,35 @@ function CustomerRegisterForm({ onBack }: { onBack: () => void }) {
                 className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
               />
             </label>
+
+            {/* Manual referral fallback — only in normal registration (no link). */}
+            {!linkMode && (
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                {!showManual ? (
+                  <button type="button" onClick={() => setShowManual(true)} className="text-sm font-medium text-emerald-600">
+                    有推荐码？
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <label className="flex flex-col gap-1.5 text-sm text-slate-600">
+                      推荐码（Coach 的 Reseller Username）
+                      <input
+                        type="text"
+                        placeholder="例如 chloe688"
+                        value={manualCode}
+                        onChange={(e) => setManualCode(e.target.value)}
+                        className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </label>
+                    {manualStatus === "loading" && <p className="text-xs text-slate-400">识别中…</p>}
+                    {manualStatus === "valid" && manualCoach && <CoachBadge coach={manualCoach} />}
+                    {manualStatus === "invalid" && (
+                      <p className="text-xs text-amber-600">找不到这位 Coach，请确认推荐码；你也可以先不填，稍后由管理员为你安排。</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
               <p className="mb-1 text-sm font-semibold text-slate-800">我的 MISU 产品</p>
@@ -251,13 +408,11 @@ function CustomerRegisterForm({ onBack }: { onBack: () => void }) {
               我已阅读并同意《服务条款》与《隐私政策》
             </label>
 
-            {error && (
-              <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>
-            )}
+            {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitDisabled}
               className="mt-1 rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
             >
               {submitting ? "注册中..." : "注册并开始旅程"}
@@ -386,9 +541,7 @@ function CoachRegisterForm({ onBack }: { onBack: () => void }) {
               我已阅读并同意《服务条款》与《隐私政策》
             </label>
 
-            {error && (
-              <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>
-            )}
+            {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
 
             <button
               type="submit"

@@ -1565,6 +1565,13 @@ export type Database = {
         Returns: undefined
       }
       create_revision_draft: { Args: { p_content_id: string }; Returns: string }
+      get_coach_public_by_referral: {
+        Args: { p_code: string }
+        Returns: {
+          avatar: string | null
+          name: string
+        }[]
+      }
       current_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
