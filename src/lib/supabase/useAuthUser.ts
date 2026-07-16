@@ -11,6 +11,10 @@ export interface AuthUser {
   /** Referral code captured at sign-up (user_metadata) — the customer→coach
    * binding source carried through email confirmation into onboarding. */
   referralCode: string | null;
+  /** Admin-granted Coach capability (independent of role). */
+  isCoach: boolean;
+  /** When the one-time Coach welcome was acknowledged (null = not yet). */
+  coachWelcomeAckAt: string | null;
 }
 
 /** The real authenticated user + profile, for pages that need the actual
@@ -31,10 +35,21 @@ export function useAuthUser(): { user: AuthUser | null; loading: boolean } {
       .getUser()
       .then(async ({ data: { user: authUser } }) => {
         if (!authUser) return;
-        const { data: profile } = await supabase.from("profiles").select("role, name").eq("id", authUser.id).single();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, name, is_coach, coach_welcome_ack_at")
+          .eq("id", authUser.id)
+          .single();
         if (!cancelled && profile) {
           const referralCode = typeof authUser.user_metadata?.referral_code === "string" ? authUser.user_metadata.referral_code : null;
-          setUser({ id: authUser.id, role: profile.role, name: profile.name, referralCode });
+          setUser({
+            id: authUser.id,
+            role: profile.role,
+            name: profile.name,
+            referralCode,
+            isCoach: profile.is_coach,
+            coachWelcomeAckAt: profile.coach_welcome_ack_at,
+          });
         }
       })
       .finally(() => {
