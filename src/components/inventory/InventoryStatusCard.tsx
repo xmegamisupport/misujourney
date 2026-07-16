@@ -12,16 +12,14 @@ interface InventoryStatusCardProps {
   productCode: ProductCode;
   remainingUnits: number;
   totalUsedUnits: number;
-  estimatedDaysRemaining: number | null;
 }
 
 export function InventoryStatusCard({
   productCode,
   remainingUnits,
   totalUsedUnits,
-  estimatedDaysRemaining,
 }: InventoryStatusCardProps) {
-  const status = getInventoryAlertStatus(productCode, remainingUnits);
+  const status = getInventoryAlertStatus(remainingUnits);
   const style = INVENTORY_ALERT_STATUS_STYLES[status];
 
   return (
@@ -39,9 +37,6 @@ export function InventoryStatusCard({
         <span className="text-2xl font-semibold text-slate-900">{remainingUnits}</span>
         <span className="text-sm text-slate-400">包剩余</span>
       </div>
-      <p className="text-xs text-slate-400">
-        {estimatedDaysRemaining !== null ? `大约剩余 ${estimatedDaysRemaining} 天` : "暂时没有足够记录计算"}
-      </p>
       <p className="text-xs text-slate-400">已使用 {totalUsedUnits} 包</p>
     </div>
   );

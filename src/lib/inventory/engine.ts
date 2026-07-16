@@ -301,27 +301,10 @@ export async function getTodayMealsForCustomers(customerIds: string[]): Promise<
   return map;
 }
 
-/** Usage-driven daily average across the last N days, from an already-fetched
- * transaction list (callers load transactions once and share them). */
-export function calcAverageDailyUsage(transactions: InventoryTransaction[], productCode: ProductCode, daysWindow = 7): number | null {
-  const cutoff = Date.now() - daysWindow * 24 * 60 * 60 * 1000;
-  const usageTx = transactions.filter(
-    (t) =>
-      t.productCode === productCode &&
-      (t.type === "CHECK_IN_USAGE" || t.type === "MEAL_USAGE") &&
-      new Date(t.createdAt).getTime() >= cutoff,
-  );
-  if (usageTx.length === 0) return null;
-  const totalUsed = usageTx.reduce((sum, t) => sum + Math.abs(t.quantityChange), 0);
-  const recordedDays = new Set(usageTx.map((t) => t.createdAt.slice(0, 10))).size;
-  if (recordedDays === 0) return null;
-  return totalUsed / recordedDays;
-}
-
-export function calcEstimatedDaysRemaining(remainingUnits: number, avgDailyUsage: number | null): number | null {
-  if (avgDailyUsage === null || avgDailyUsage <= 0) return null;
-  return Math.round(remainingUnits / avgDailyUsage);
-}
+// Inventory status is now a fixed remaining-count rule (see
+// getInventoryAlertStatus in constants.ts) — the previous usage-rate /
+// estimated-days-remaining prediction helpers were removed on purpose, since
+// customers follow different usage plans and prediction was unreliable.
 
 // ---------- Write operations ----------
 // All inventory-mutating writes go through SECURITY DEFINER Postgres RPCs so

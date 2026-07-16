@@ -8,8 +8,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InventoryStatusCard } from "@/components/inventory/InventoryStatusCard";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
-import { useHasInventoryRecords, useCustomerInventory, useCustomerTransactions } from "@/lib/inventory/hooks";
-import { calcAverageDailyUsage, calcEstimatedDaysRemaining } from "@/lib/inventory/engine";
+import { useHasInventoryRecords, useCustomerInventory } from "@/lib/inventory/hooks";
 import type { ProductCode } from "@/lib/inventory/types";
 
 const inventoryProducts: ProductCode[] = ["MISU_N_PLUS", "MISU_DX_PLUS"];
@@ -33,7 +32,6 @@ export default function CustomerProfilePage() {
   const currentWeight = journey?.latestWeight ?? journey?.startWeight ?? null;
   const { data: hasInventory } = useHasInventoryRecords(customerId);
   const { data: inventoryRows } = useCustomerInventory(customerId);
-  const { data: transactions } = useCustomerTransactions(customerId);
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
@@ -72,15 +70,12 @@ export default function CustomerProfilePage() {
           <div className="grid grid-cols-2 gap-3">
             {inventoryProducts.map((productCode) => {
               const row = inventoryRows.find((r) => r.productCode === productCode);
-              const avgDailyUsage = calcAverageDailyUsage(transactions, productCode);
-              const estimatedDaysRemaining = calcEstimatedDaysRemaining(row?.remainingUnits ?? 0, avgDailyUsage);
               return (
                 <InventoryStatusCard
                   key={productCode}
                   productCode={productCode}
                   remainingUnits={row?.remainingUnits ?? 0}
                   totalUsedUnits={row?.totalUsedUnits ?? 0}
-                  estimatedDaysRemaining={estimatedDaysRemaining}
                 />
               );
             })}

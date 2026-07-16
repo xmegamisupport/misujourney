@@ -39,8 +39,14 @@ export interface InventoryTransaction {
   createdAt: string;
 }
 
-export type InventoryAlertStatus = "SUFFICIENT" | "REPURCHASE_SOON" | "URGENT" | "OUT_OF_STOCK";
+/** Inventory status is driven ONLY by the current remaining sachet count via
+ * fixed thresholds — no daily-rate or estimated-days prediction. Ordered by
+ * severity: SUFFICIENT (≥9) < WATCH (6–8) < REPURCHASE_SOON (1–5) <
+ * OUT_OF_STOCK (0). Identical for every MISU product. */
+export type InventoryAlertStatus = "SUFFICIENT" | "WATCH" | "REPURCHASE_SOON" | "OUT_OF_STOCK";
 
+/** Coach-facing repurchase-alert follow-up level (repurchase_alerts table) —
+ * a separate concept from the display status above; keeps its own values. */
 export type RepurchaseAlertLevel = "REPURCHASE_SOON" | "URGENT" | "OUT_OF_STOCK";
 
 export type RepurchaseAlertState = "OPEN" | "FOLLOWED_UP" | "COMPLETED" | "DISMISSED";

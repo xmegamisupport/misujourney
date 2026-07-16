@@ -170,7 +170,7 @@ export async function getAllCustomersForAdmin(): Promise<AdminCustomerSummary[]>
     const todayMeals = todayMealsMap[c.id] ?? [];
     const todayMisuScore = todayMeals.length > 0 ? Math.round(todayMeals.reduce((sum, m) => sum + m.misuScore, 0) / todayMeals.length) : 0;
     const inventoryRows = inventoryMap[c.id] ?? [];
-    const stockStatus = inventoryRows.length > 0 ? combineAlertStatuses(inventoryRows.map((r) => getInventoryAlertStatus(r.productCode, r.remainingUnits))) : null;
+    const stockStatus = inventoryRows.length > 0 ? combineAlertStatuses(inventoryRows.map((r) => getInventoryAlertStatus(r.remainingUnits))) : null;
 
     return {
       id: c.id,

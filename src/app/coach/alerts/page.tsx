@@ -12,16 +12,16 @@ import { useMyCustomers } from "@/lib/coach/hooks";
 import type { CoachCustomerSummary } from "@/lib/coach/engine";
 import { useAttentionFlagsForCustomers } from "@/lib/insights/hooks";
 import { SEVERITY_STYLES } from "@/lib/insights/constants";
-import { useActiveAlerts, useInventoryForCustomers, useCheckInsForCustomers, useTransactionsForCustomers } from "@/lib/inventory/hooks";
-import { markAlertFollowedUp, calcAverageDailyUsage, calcEstimatedDaysRemaining } from "@/lib/inventory/engine";
+import { useActiveAlerts, useInventoryForCustomers, useCheckInsForCustomers } from "@/lib/inventory/hooks";
+import { markAlertFollowedUp } from "@/lib/inventory/engine";
 import {
   PRODUCT_LABELS,
   PRODUCT_ICONS,
-  INVENTORY_ALERT_STATUS_LABELS,
-  INVENTORY_ALERT_STATUS_STYLES,
-  compareAlertStatusSeverity,
+  REPURCHASE_ALERT_LEVEL_LABELS,
+  REPURCHASE_ALERT_LEVEL_STYLES,
+  compareRepurchaseAlertLevelSeverity,
 } from "@/lib/inventory/constants";
-import type { CustomerInventory, DailyCheckIn, InventoryTransaction, RepurchaseAlert, RepurchaseAlertLevel } from "@/lib/inventory/types";
+import type { CustomerInventory, DailyCheckIn, RepurchaseAlert, RepurchaseAlertLevel } from "@/lib/inventory/types";
 import { normalizeWhatsAppNumber, buildWhatsAppLink, buildCustomerContactMessage } from "@/lib/whatsapp";
 
 const checkinFilters: { key: "all" | FlagSeverity; label: string }[] = [
@@ -67,11 +67,10 @@ function FollowUpAlertsContent() {
   const { data: activeAlerts } = useActiveAlerts();
   const { data: inventoryMap } = useInventoryForCustomers(customerIds);
   const { data: checkInMap } = useCheckInsForCustomers(customerIds);
-  const { data: transactionMap } = useTransactionsForCustomers(customerIds);
 
   const sortedRepurchaseAlerts = useMemo(() => {
     return [...activeAlerts].sort((a, b) => {
-      const severityDiff = compareAlertStatusSeverity(a.alertLevel, b.alertLevel);
+      const severityDiff = compareRepurchaseAlertLevelSeverity(a.alertLevel, b.alertLevel);
       if (severityDiff !== 0) return severityDiff;
       const remainingA = inventoryMap[a.customerId]?.find((r) => r.productCode === a.productCode)?.remainingUnits ?? 0;
       const remainingB = inventoryMap[b.customerId]?.find((r) => r.productCode === b.productCode)?.remainingUnits ?? 0;
@@ -157,8 +156,8 @@ function FollowUpAlertsContent() {
             return (
               <div key={level}>
                 <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700">
-                  <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", INVENTORY_ALERT_STATUS_STYLES[level].chip)}>
-                    {INVENTORY_ALERT_STATUS_LABELS[level]}
+                  <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", REPURCHASE_ALERT_LEVEL_STYLES[level].chip)}>
+                    {REPURCHASE_ALERT_LEVEL_LABELS[level]}
                   </span>
                   <span className="text-xs text-slate-400">{group.length} 项</span>
                 </p>
@@ -170,7 +169,6 @@ function FollowUpAlertsContent() {
                       customersById={customersById}
                       inventoryMap={inventoryMap}
                       checkInMap={checkInMap}
-                      transactionMap={transactionMap}
                     />
                   ))}
                 </div>
@@ -188,18 +186,14 @@ function RepurchaseAlertCard({
   customersById,
   inventoryMap,
   checkInMap,
-  transactionMap,
 }: {
   alert: RepurchaseAlert;
   customersById: Record<string, CoachCustomerSummary>;
   inventoryMap: Record<string, CustomerInventory[]>;
   checkInMap: Record<string, DailyCheckIn[]>;
-  transactionMap: Record<string, InventoryTransaction[]>;
 }) {
   const customer = customersById[alert.customerId];
   const remaining = inventoryMap[alert.customerId]?.find((r) => r.productCode === alert.productCode)?.remainingUnits ?? 0;
-  const avgDailyUsage = calcAverageDailyUsage(transactionMap[alert.customerId] ?? [], alert.productCode);
-  const estimatedDays = calcEstimatedDaysRemaining(remaining, avgDailyUsage);
   const checkIns = checkInMap[alert.customerId] ?? [];
   const lastCheckInDate = checkIns.length > 0 ? [...checkIns].sort((a, b) => b.date.localeCompare(a.date))[0].date : "暂无记录";
 
@@ -214,9 +208,7 @@ function RepurchaseAlertCard({
               {PRODUCT_ICONS[alert.productCode]} {PRODUCT_LABELS[alert.productCode]}
             </span>
           </p>
-          <p className="mt-1 text-xs text-slate-500">
-            剩余 {remaining} 包 · 预计还能用 {estimatedDays !== null ? `${estimatedDays} 天` : "暂无法估算"}
-          </p>
+          <p className="mt-1 text-xs text-slate-500">剩余 {remaining} 包</p>
           <p className="mt-0.5 text-xs text-slate-400">
             最近打卡：{lastCheckInDate} · 提醒触发：{alert.triggeredAt.slice(0, 10)}
           </p>

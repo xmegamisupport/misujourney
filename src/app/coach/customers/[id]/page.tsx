@@ -15,7 +15,7 @@ import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import { useCurrentNutritionTargets } from "@/lib/nutrition/hooks";
 import { countVegetableServings, VEGETABLE_SERVINGS_TARGET } from "@/lib/meal-check/plate-analysis";
 import { useCustomerInventory, useCustomerTransactions, useCustomerCheckIns, useTodayMeals } from "@/lib/inventory/hooks";
-import { calcAverageDailyUsage, calcEstimatedDaysRemaining, recordRepurchase, manualAdjustment } from "@/lib/inventory/engine";
+import { recordRepurchase, manualAdjustment } from "@/lib/inventory/engine";
 import {
   PRODUCT_LABELS,
   PRODUCT_ICONS,
@@ -138,7 +138,7 @@ export default function CustomerDetailPage() {
   const latestWeight = journey?.latestWeight ?? journey?.startWeight ?? null;
   const checkinRate = currentDay > 0 ? Math.min(100, Math.round((checkIns.length / currentDay) * 100)) : 0;
 
-  const inventoryStatuses = inventoryRows.map((r) => getInventoryAlertStatus(r.productCode, r.remainingUnits));
+  const inventoryStatuses = inventoryRows.map((r) => getInventoryAlertStatus(r.remainingUnits));
   const combinedStockStatus = inventoryRows.length > 0 ? combineAlertStatuses(inventoryStatuses) : null;
 
   if (!user || profileLoading) {
@@ -372,9 +372,7 @@ export default function CustomerDetailPage() {
             {productCodes.map((code) => {
               const row = inventoryRows.find((r) => r.productCode === code);
               if (!row) return null;
-              const status = getInventoryAlertStatus(code, row.remainingUnits);
-              const avgDailyUsage = calcAverageDailyUsage(transactions, code);
-              const estimatedDays = calcEstimatedDaysRemaining(row.remainingUnits, avgDailyUsage);
+              const status = getInventoryAlertStatus(row.remainingUnits);
               return (
                 <div key={code} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
                   <div className="mb-2 flex items-center justify-between">
@@ -395,8 +393,6 @@ export default function CustomerDetailPage() {
                     <span>初始库存 {row.initialUnits} 包</span>
                     <span>总使用 {row.totalUsedUnits} 包</span>
                     <span>累计新增 {row.totalAddedUnits} 包</span>
-                    <span>近 7 天日均 {avgDailyUsage !== null ? `${avgDailyUsage.toFixed(1)} 包` : "暂无记录"}</span>
-                    <span>预计还能用 {estimatedDays !== null ? `${estimatedDays} 天` : "暂无法估算"}</span>
                   </div>
                 </div>
               );
