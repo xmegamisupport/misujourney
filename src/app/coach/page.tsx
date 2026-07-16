@@ -21,10 +21,9 @@ export default function CoachWorkspacePage() {
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
       <PageHeader title="教练工作台" subtitle="Every Day Is A New Journey" />
 
-      {/* Today's Coaching List — this is today's action list, not a feed of
-          notifications. */}
+      {/* Today's Overview — greeting + a quick read on the day. */}
       <section>
-        <h2 className="mb-2 text-lg font-bold text-slate-900">今日教练名单</h2>
+        <h2 className="mb-2 text-lg font-bold text-slate-900">今日概况</h2>
         <CoachGreeting
           coachName={coach?.name ?? ""}
           celebrateCount={workspace.celebrateCustomerCount}
@@ -38,7 +37,7 @@ export default function CoachWorkspacePage() {
       {/* Customer Workspace — one customer = one card. Answers "who should I
           talk to today?"; the Focus View answers "why". */}
       <section>
-        <p className="mb-2 text-sm font-semibold text-slate-700">今天的顾客</p>
+        <p className="mb-2 text-sm font-semibold text-slate-700">今日重点顾客</p>
         {noCards ? (
           <EmptyState icon="💚" title="全部照顾到了" description="今天你已经陪伴了每一位需要你的顾客。" />
         ) : (
