@@ -275,39 +275,6 @@ export async function createCoachAccount(input: CreateCoachInput): Promise<Creat
   return { ok: true, coach: body.coach };
 }
 
-export interface RegisterCoachInput {
-  name: string;
-  email: string;
-  password: string;
-  phone: string;
-  referralCode: string;
-}
-
-export interface RegisterCoachResult {
-  ok: boolean;
-  error?: string;
-}
-
-/** Public self-service Coach registration (the /register "MISU Coach"
- * path). Account creation happens server-side via the service-role Admin
- * API (/api/auth/register-coach) since role must go through app_metadata,
- * not anything the client sends — then this signs the browser in with the
- * same credentials so registration and login happen in one step. */
-export async function registerCoachAccount(input: RegisterCoachInput): Promise<RegisterCoachResult> {
-  const res = await fetch("/api/auth/register-coach", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-  const body = await res.json();
-  if (!res.ok) return { ok: false, error: body.error ?? "注册失败" };
-
-  const supabase = createClient();
-  const { error: signInError } = await supabase.auth.signInWithPassword({ email: input.email, password: input.password });
-  if (signInError) return { ok: false, error: "账号已创建，但自动登录失败，请前往登录页手动登录" };
-  return { ok: true };
-}
-
 export async function getCustomerProfile(customerId: string): Promise<CoachCustomerProfile | undefined> {
   const supabase = createClient();
   const { data, error } = await supabase.from("profiles").select("*").eq("id", customerId).maybeSingle();

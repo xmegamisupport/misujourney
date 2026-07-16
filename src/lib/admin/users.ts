@@ -13,6 +13,12 @@ export interface AdminUserRow {
   role: Role;
   status: AdminUserStatus;
   joinedAt: string;
+  /** Admin-granted Coach capability (independent of role). */
+  isCoach: boolean;
+  /** Permanent Reseller Username / referral code, or null if never set. */
+  referralCode: string | null;
+  /** When Coach access was activated, if ever. */
+  coachActivatedAt: string | null;
 }
 
 /** Admin-only — goes through /api/admin/users since email/confirmation/ban
@@ -26,9 +32,10 @@ export async function getAllUsersForAdmin(): Promise<AdminUserRow[]> {
   return body.users as AdminUserRow[];
 }
 
-export function useAllUsersForAdmin(): { data: AdminUserRow[]; loading: boolean } {
+export function useAllUsersForAdmin(): { data: AdminUserRow[]; loading: boolean; refresh: () => void } {
   const [data, setData] = useState<AdminUserRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,7 +49,7 @@ export function useAllUsersForAdmin(): { data: AdminUserRow[]; loading: boolean 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [nonce]);
 
-  return { data, loading };
+  return { data, loading, refresh: () => setNonce((n) => n + 1) };
 }

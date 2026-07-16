@@ -53,9 +53,11 @@ export async function GET() {
     admin
       .from("profiles")
       .select(
-        "id, name, avatar, referral_code, whatsapp_country_code, whatsapp_country_iso, whatsapp_local_number, whatsapp_contact_method, whatsapp_normalized_number, whatsapp_custom_link, whatsapp_needs_review, created_at",
+        "id, name, avatar, referral_code, whatsapp_country_code, whatsapp_country_iso, whatsapp_local_number, whatsapp_contact_method, whatsapp_normalized_number, whatsapp_custom_link, whatsapp_needs_review, created_at, coach_activated_at",
       )
-      .eq("role", "coach")
+      // Coach identity is the is_coach capability; legacy role='coach' kept
+      // transitionally.
+      .or("is_coach.eq.true,role.eq.coach")
       .order("created_at", { ascending: false }),
     admin.from("profiles").select("coach_id").eq("role", "customer").not("coach_id", "is", null).not("onboarding_completed_at", "is", null),
     admin.auth.admin.listUsers({ perPage: 1000 }),

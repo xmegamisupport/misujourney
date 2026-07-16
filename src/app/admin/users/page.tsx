@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useAllUsersForAdmin } from "@/lib/admin/users";
+import { useAllUsersForAdmin, type AdminUserRow } from "@/lib/admin/users";
+import { ActivateCoachModal } from "@/components/admin/ActivateCoachModal";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/types";
 
@@ -25,7 +26,8 @@ const statusLabel = { active: "已启用", inactive: "已停用", pending: "待�
 export default function UserManagementPage() {
   const [query, setQuery] = useState("");
   const [role, setRole] = useState<"all" | Role>("all");
-  const { data: allUsers, loading } = useAllUsersForAdmin();
+  const [activating, setActivating] = useState<AdminUserRow | null>(null);
+  const { data: allUsers, loading, refresh } = useAllUsersForAdmin();
 
   const users = useMemo(
     () =>
@@ -74,6 +76,7 @@ export default function UserManagementPage() {
                 <th className="px-4 py-3 font-medium">角色</th>
                 <th className="px-4 py-3 font-medium">状态</th>
                 <th className="px-4 py-3 font-medium">加入时间</th>
+                <th className="px-4 py-3 font-medium">Coach</th>
               </tr>
             </thead>
             <tbody>
@@ -88,11 +91,41 @@ export default function UserManagementPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-slate-400">{u.joinedAt.slice(0, 10)}</td>
+                  <td className="px-4 py-3">
+                    {u.isCoach ? (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="w-fit rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-700">Coach Active</span>
+                        <span className="text-[11px] text-slate-400">
+                          {u.referralCode ?? "—"}
+                          {u.coachActivatedAt ? ` · ${u.coachActivatedAt.slice(0, 10)}` : ""}
+                        </span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setActivating(u)}
+                        className="rounded-full border border-violet-200 px-3 py-1 text-xs font-medium text-violet-600 transition hover:bg-violet-50"
+                      >
+                        开通教练
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {activating && (
+        <ActivateCoachModal
+          user={activating}
+          onClose={() => setActivating(null)}
+          onActivated={() => {
+            setActivating(null);
+            refresh();
+          }}
+        />
       )}
     </div>
   );

@@ -33,7 +33,11 @@ export async function GET() {
   }
 
   const [{ data: profiles, error: profileError }, { data: userList, error: userListError }] = await Promise.all([
-    admin.from("profiles").select("id, name, avatar, role, created_at, onboarding_completed_at").in("role", LISTED_ROLES).order("created_at", { ascending: false }),
+    admin
+      .from("profiles")
+      .select("id, name, avatar, role, created_at, onboarding_completed_at, is_coach, referral_code, coach_activated_at")
+      .in("role", LISTED_ROLES)
+      .order("created_at", { ascending: false }),
     admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
@@ -61,6 +65,9 @@ export async function GET() {
         role: p.role,
         status,
         joinedAt: p.created_at,
+        isCoach: p.is_coach ?? false,
+        referralCode: p.referral_code ?? null,
+        coachActivatedAt: p.coach_activated_at ?? null,
       };
     });
 
