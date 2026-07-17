@@ -49,7 +49,6 @@ export function GuidedCameraCapture({
   const capturedUrlRef = useRef<string | null>(null);
 
   const [phase, setPhaseState] = useState<Phase>("starting");
-  const [poseReady, setPoseReady] = useState(false);
   const [aligned, setAligned] = useState(false);
   const [message, setMessage] = useState("正在开启相机…");
   const [count, setCount] = useState(0);
@@ -207,12 +206,10 @@ export function GuidedCameraCapture({
           return;
         }
         landmarkerRef.current = lm;
-        setPoseReady(true);
       } catch {
-        if (!cancelled) {
-          setPoseReady(false);
-          setMessage("自动对位暂时不可用，可手动拍摄");
-        }
+        // Pose model unavailable — the automatic flow won't trigger, but the
+        // manual shutter (always shown) still works for assisted capture.
+        if (!cancelled) setMessage("自动对位暂时不可用，可点圆钮手动拍摄");
       }
       rafRef.current = requestAnimationFrame(() => detectLoopRef.current());
     }
@@ -321,17 +318,24 @@ export function GuidedCameraCapture({
         </span>
       </div>
 
-      {/* Bottom controls stay minimal: manual shutter only if the pose model
-          didn't load, plus gallery + the exit is in the top bar. */}
+      {/* Bottom controls: a manual shutter is ALWAYS available (assisted capture
+          — someone else can tap it any time) while the automatic alignment +
+          countdown keep running underneath. Self-capture needs no tap at all. */}
       <div
-        className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 px-4"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.25rem)" }}
+        className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-2 px-4"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.1rem)" }}
       >
-        {!poseReady && phase === "guiding" && (
-          <button type="button" onClick={capturePhoto} className="rounded-full bg-emerald-500 px-8 py-3 text-sm font-semibold text-white shadow-lg active:bg-emerald-600">
-            手动拍摄
+        {(phase === "guiding" || phase === "countdown") && (
+          <button
+            type="button"
+            onClick={capturePhoto}
+            aria-label="拍摄"
+            className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white/85 bg-transparent transition active:scale-95"
+          >
+            <span className="h-12 w-12 rounded-full bg-white transition active:bg-white/80" />
           </button>
         )}
+        <p className="text-[11px] text-white/60">对齐后会自动拍摄，也可点圆钮手动拍</p>
         <button type="button" onClick={onUseGallery} className="text-xs font-medium text-white/70 active:text-white">
           改用相册上传
         </button>

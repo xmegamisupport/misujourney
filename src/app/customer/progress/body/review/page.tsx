@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { AnglePhotoSlot } from "@/components/bodyProgress/AnglePhotoSlot";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
 import { useTodayCheckIn, useCustomerCheckIns } from "@/lib/inventory/hooks";
@@ -12,7 +11,6 @@ import {
   getBodyProgressPhotoSignedUrl,
   listUploadedBodyProgressPhotos,
   submitBodyProgress,
-  uploadBodyProgressPhoto,
   type UploadedBodyProgressPhoto,
 } from "@/lib/bodyProgress/engine";
 import { BODY_PROGRESS_ANGLES, BODY_PROGRESS_CYCLE_DAYS } from "@/lib/bodyProgress/constants";
@@ -36,7 +34,9 @@ export default function BodyProgressReviewPage() {
 function BodyProgressReviewContent() {
   const searchParams = useSearchParams();
   const recordId = searchParams.get("recordId");
-  const isBaseline = searchParams.get("from") === "baseline";
+  const from = searchParams.get("from");
+  const isBaseline = from === "baseline";
+  const fromSuffix = from ? `&from=${from}` : "";
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
 
@@ -48,7 +48,6 @@ function BodyProgressReviewContent() {
   const [photos, setPhotos] = useState<UploadedBodyProgressPhoto[]>([]);
   const [urls, setUrls] = useState<Partial<Record<BodyProgressAngle, string | null>>>({});
   const [loading, setLoading] = useState(true);
-  const [retaking, setRetaking] = useState<BodyProgressAngle | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitBodyProgressResult | null>(null);
@@ -70,16 +69,10 @@ function BodyProgressReviewContent() {
     };
   }, [customerId, recordId]);
 
-  async function handleRetake(angle: BodyProgressAngle, file: File) {
-    if (!recordId) return;
-    setRetaking(angle);
-    const uploadResult = await uploadBodyProgressPhoto(customerId, recordId, angle, file);
-    if (uploadResult.ok) {
-      const url = await getBodyProgressPhotoSignedUrl(`${customerId}/${recordId}/${angle}.${uploadResult.data!.ext}`);
-      setUrls((prev) => ({ ...prev, [angle]: url }));
-      setPhotos((prev) => prev.map((p) => (p.angle === angle ? { ...p, ext: uploadResult.data!.ext } : p)));
-    }
-    setRetaking(null);
+  // A retake reopens ONLY that angle's Example → Camera and returns here; the
+  // other three photos are left untouched.
+  function retakeHref(angle: BodyProgressAngle): string {
+    return `/customer/progress/body/capture?recordId=${recordId}&mode=camera&retake=${angle}${fromSuffix}`;
   }
 
   async function handleSubmit() {
@@ -163,17 +156,33 @@ function BodyProgressReviewContent() {
 
       {!loading && (
         <div className="grid grid-cols-2 gap-4">
-          {BODY_PROGRESS_ANGLES.map((angle) => (
-            <AnglePhotoSlot
-              key={angle}
-              angle={angle}
-              label={ANGLE_LABELS[angle]}
-              photoUrl={urls[angle] ?? null}
-              uploading={retaking === angle}
-              variant="grid"
-              onSelectFile={(file) => handleRetake(angle, file)}
-            />
-          ))}
+          {BODY_PROGRESS_ANGLES.map((angle) => {
+            const photoUrl = urls[angle] ?? null;
+            return (
+              <div key={angle} className="flex flex-col gap-2">
+                <div
+                  className={`relative aspect-[3/4] overflow-hidden rounded-2xl border-2 ${photoUrl ? "border-emerald-300" : "border-dashed border-slate-200"} bg-slate-50`}
+                >
+                  {photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photoUrl} alt={ANGLE_LABELS[angle]} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-4xl text-slate-300">🧍</span>
+                  )}
+                  <span className="absolute left-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-medium text-white">{ANGLE_LABELS[angle]}</span>
+                  {photoUrl && (
+                    <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] text-white">✓</span>
+                  )}
+                </div>
+                <Link
+                  href={retakeHref(angle)}
+                  className="rounded-xl border border-slate-200 py-2 text-center text-sm font-medium text-slate-600 transition hover:border-emerald-200 hover:text-emerald-600"
+                >
+                  {photoUrl ? "✏️ 重拍" : "去拍摄"}
+                </Link>
+              </div>
+            );
+          })}
         </div>
       )}
 

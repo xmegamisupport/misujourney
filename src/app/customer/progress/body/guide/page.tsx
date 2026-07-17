@@ -72,7 +72,7 @@ function BodyProgressGuideContent() {
           onClick={() => goToCapture("camera")}
           className="rounded-2xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600"
         >
-          开始拍照
+          开始拍摄照片
         </button>
         <button
           type="button"
