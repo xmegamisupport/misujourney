@@ -127,12 +127,16 @@ function BodyProgressCaptureFlow() {
 
           {mode === "camera" && !useGallery ? (
             // Hands-free guided camera: stand inside the overlay, hold the pose,
-            // auto-countdown, auto-capture. Falls back to gallery/manual inside.
+            // auto-countdown, auto-capture. Renders full-screen (covers the
+            // bottom nav). Falls back to gallery/manual inside.
             <GuidedCameraCapture
               key={currentAngle}
+              angle={currentAngle}
               angleLabel={ANGLE_LABELS[currentAngle]}
+              stepText={`${stepNumber} / ${BODY_PROGRESS_ANGLES.length}`}
               onCapture={handleSelectFile}
               onUseGallery={() => setUseGallery(true)}
+              onExit={() => router.push(`/customer/progress/body/guide?recordId=${recordId}${fromSuffix}`)}
               fallback={
                 <AnglePhotoSlot angle={currentAngle} label={ANGLE_LABELS[currentAngle]} photoUrl={null} uploading={uploading} mode="library" onSelectFile={handleSelectFile} variant="current" />
               }

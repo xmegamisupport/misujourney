@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PoseLandmarker } from "@mediapipe/tasks-vision";
-import { computeAlignment } from "@/lib/bodyProgress/alignment";
+import { computeAlignment, isProfileAngle } from "@/lib/bodyProgress/alignment";
+import type { BodyProgressAngle } from "@/lib/bodyProgress/types";
 import { AlignmentOverlay } from "./AlignmentOverlay";
 
 const WASM_CDN = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
@@ -10,24 +11,33 @@ const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmark
 const STABILITY_MS = 2000; // must hold the aligned pose this long before the countdown
 const COUNTDOWN_START = 5;
 
-const POSE_TIPS = ["正面对着镜头", "双脚与肩同宽", "双手自然垂放身体两侧", "自然站立，不用刻意收腹", "身体不要前倾或后仰"];
-
 type Phase = "starting" | "guiding" | "countdown" | "captured" | "unsupported" | "denied" | "error";
 
-/** Guided, hands-free camera capture for one angle. Falls back to `fallback`
- * (the plain file-input capture) whenever the live camera or pose model can't
- * run, so capture always works and existing functionality is never lost. */
+/** Full-screen, hands-free guided camera for a single angle. It takes over the
+ * viewport (a fixed layer above the bottom navigation, so capture feels like the
+ * native camera), shows the angle's realistic overlay, and runs the alignment →
+ * stability-lock → auto-countdown → auto-capture state machine. Falls back to
+ * `fallback` (the plain file-input capture, rendered inline — not full-screen)
+ * whenever the live camera or pose model can't run, so capture always works. */
 export function GuidedCameraCapture({
+  angle,
   angleLabel,
+  stepText,
   onCapture,
   onUseGallery,
+  onExit,
   fallback,
 }: {
+  angle: BodyProgressAngle;
   angleLabel: string;
+  stepText?: string;
   onCapture: (file: File) => void;
   onUseGallery: () => void;
+  onExit?: () => void;
   fallback: React.ReactNode;
 }) {
+  const profile = isProfileAngle(angle);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -125,23 +135,27 @@ export function GuidedCameraCapture({
         result = null;
       }
       const lm = result?.landmarks?.[0] ?? null;
-      const a = computeAlignment(lm, true);
+      const a = computeAlignment(lm, { mirrored: true, profile });
       setAligned(a.aligned);
       setMessage(a.message);
 
       if (a.aligned) {
         const now = performance.now();
         if (alignedSinceRef.current === null) alignedSinceRef.current = now;
+        // Stability lock: only start the countdown after the aligned pose has
+        // been held still for STABILITY_MS.
         if (phaseRef.current === "guiding" && now - alignedSinceRef.current >= STABILITY_MS) {
           startCountdown();
         }
       } else {
+        // Any loss of alignment resets the stability timer and — if a countdown
+        // was running — cancels it immediately, returning the overlay to white.
         alignedSinceRef.current = null;
         if (phaseRef.current === "countdown") cancelCountdown();
       }
     }
     rafRef.current = requestAnimationFrame(() => detectLoopRef.current());
-  }, [cancelCountdown, startCountdown]);
+  }, [cancelCountdown, startCountdown, profile]);
 
   useEffect(() => {
     detectLoopRef.current = detectLoop;
@@ -228,7 +242,8 @@ export function GuidedCameraCapture({
     setPhase("guiding");
   }
 
-  // Camera unavailable / denied → fall back to the plain file-input capture.
+  // Camera unavailable / denied → fall back to the plain file-input capture,
+  // rendered inline (NOT full-screen) so the normal page chrome returns.
   if (phase === "unsupported" || phase === "denied" || phase === "error") {
     return (
       <div className="flex w-full flex-col items-center gap-3">
@@ -240,67 +255,87 @@ export function GuidedCameraCapture({
     );
   }
 
-  // Captured → confirm screen.
+  // Captured → full-screen confirmation (Use / Retake).
   if (phase === "captured" && capturedUrl) {
     return (
-      <div className="flex w-full flex-col items-center gap-4">
-        <div className="w-64 max-w-full overflow-hidden rounded-2xl border border-slate-100 bg-slate-900">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={capturedUrl} alt={`${angleLabel}照片`} className="w-full object-contain" />
+      <div className="fixed inset-0 z-[60] flex flex-col bg-black">
+        <div className="flex items-center justify-center px-4 py-3 text-sm font-semibold text-white">
+          {angleLabel}{stepText ? ` · ${stepText}` : ""}
         </div>
-        <div className="grid w-64 max-w-full grid-cols-2 gap-2">
-          <button type="button" onClick={retake} className="rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
+        <div className="relative flex-1 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={capturedUrl} alt={`${angleLabel}照片`} className="absolute inset-0 h-full w-full object-contain" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 px-4 pb-8 pt-4" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}>
+          <button type="button" onClick={retake} className="rounded-2xl border border-white/30 py-3.5 text-sm font-semibold text-white transition active:bg-white/10">
             重拍
           </button>
           <button
             type="button"
             onClick={() => capturedFileRef.current && onCapture(capturedFileRef.current)}
-            className="rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
+            className="rounded-2xl bg-emerald-500 py-3.5 text-sm font-semibold text-white transition active:bg-emerald-600"
           >
             使用照片
           </button>
         </div>
+        <canvas ref={canvasRef} className="hidden" />
       </div>
     );
   }
 
-  // Live camera + overlay.
+  // Live full-screen camera. The video fills the layer (native-camera feel); the
+  // overlay, status and countdown float over it, and the bottom nav is covered.
   return (
-    <div className="flex w-full flex-col items-center gap-3">
-      <div className="relative aspect-[3/4] w-64 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-900">
-        <video ref={videoRef} playsInline muted className="h-full w-full object-cover" style={{ transform: "scaleX(-1)" }} />
-        <AlignmentOverlay aligned={aligned} />
+    <div className="fixed inset-0 z-[60] overflow-hidden bg-black">
+      <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" style={{ transform: "scaleX(-1)" }} />
 
-        {phase === "countdown" && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-7xl font-bold text-white drop-shadow-lg">{count}</span>
-          </div>
-        )}
+      <AlignmentOverlay angle={angle} aligned={aligned} />
 
-        <div className="absolute inset-x-0 bottom-0 flex justify-center p-2">
-          <span className={`rounded-full px-3 py-1 text-xs font-medium ${aligned ? "bg-emerald-500/90 text-white" : "bg-black/55 text-white"}`}>{message}</span>
-        </div>
+      {/* Minimal top bar: exit · title · progress. No instruction cards. */}
+      <div
+        className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pb-3 text-white"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)", background: "linear-gradient(to bottom, rgba(0,0,0,0.45), transparent)" }}
+      >
+        <button type="button" onClick={onExit} aria-label="退出" className="flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-lg text-white active:bg-black/50">
+          ✕
+        </button>
+        <span className="text-sm font-semibold">{angleLabel}</span>
+        <span className="min-w-9 text-right text-sm font-medium text-white/85">{stepText ?? ""}</span>
       </div>
 
-      {/* Manual shutter only when the pose model isn't available. */}
-      {!poseReady && phase === "guiding" && (
-        <button type="button" onClick={capturePhoto} className="rounded-full bg-emerald-500 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600">
-          手动拍摄
-        </button>
+      {/* Countdown — big, centred, auto-driven (no shutter button). */}
+      {phase === "countdown" && count > 0 && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <span className="text-[7rem] font-bold leading-none text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">{count}</span>
+        </div>
       )}
 
-      <div className="w-64 max-w-full rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
-        <p className="mb-1 text-[11px] font-semibold text-slate-500">保持一致的自然站姿</p>
-        <ul className="flex flex-col gap-0.5 text-[11px] text-slate-500">
-          {POSE_TIPS.map((t) => (
-            <li key={t}>· {t}</li>
-          ))}
-        </ul>
+      {/* Alignment status. Turns cyan-green with "位置正确" once aligned. */}
+      <div className="pointer-events-none absolute inset-x-0 flex justify-center px-4" style={{ bottom: "calc(env(safe-area-inset-bottom) + 5.5rem)" }}>
+        <span
+          className={`rounded-full px-4 py-2 text-sm font-semibold shadow-lg transition ${
+            aligned ? "bg-emerald-500 text-white" : "bg-black/55 text-white"
+          }`}
+        >
+          {aligned && phase === "guiding" ? "✓ 位置正确，请保持不动" : message}
+        </span>
       </div>
 
-      <button type="button" onClick={onUseGallery} className="text-xs font-medium text-slate-400 transition hover:text-slate-600">
-        改用相册上传
-      </button>
+      {/* Bottom controls stay minimal: manual shutter only if the pose model
+          didn't load, plus gallery + the exit is in the top bar. */}
+      <div
+        className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 px-4"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.25rem)" }}
+      >
+        {!poseReady && phase === "guiding" && (
+          <button type="button" onClick={capturePhoto} className="rounded-full bg-emerald-500 px-8 py-3 text-sm font-semibold text-white shadow-lg active:bg-emerald-600">
+            手动拍摄
+          </button>
+        )}
+        <button type="button" onClick={onUseGallery} className="text-xs font-medium text-white/70 active:text-white">
+          改用相册上传
+        </button>
+      </div>
 
       <canvas ref={canvasRef} className="hidden" />
     </div>

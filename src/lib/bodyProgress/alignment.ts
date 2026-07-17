@@ -2,13 +2,16 @@
 // Pure and deterministic (no DOM/ML) so it can be reasoned about and unit
 // tested; the camera component feeds it pose landmarks each frame.
 //
-// Framing standard (normalised frame coords, y downward, 0 = top):
+// Framing standard (normalised frame coords, y downward, 0 = top), taken from
+// the four official reference photos:
 //   • head crown ~7% from the top (5-8% headroom)
-//   • frame ends at mid-thigh (~90%)
+//   • frame ends at upper thigh (~90%)
 //   • body centred on the vertical mid-line
-//   • ~8-12% margin left/right
-// Capturing head→mid-thigh (not the whole body) keeps the face, arms, waist,
+//   • the body occupies ~80-85% of the frame height
+// Capturing head→upper-thigh (not the whole body) keeps the face, arms, waist,
 // abdomen, hips and upper thighs large and comparable across Day 1/30/60/90.
+
+import type { BodyProgressAngle } from "./types";
 
 export interface PoseLandmark {
   x: number;
@@ -37,11 +40,10 @@ export const FRAMING = {
   midThighY: 0.9,
   centerX: 0.5,
   get targetBodyHeight() {
-    return this.midThighY - this.headTopY; // ~0.83
+    return this.midThighY - this.headTopY; // ~0.83 → body fills ~83% of the frame
   },
   // Tolerances (fractions of the frame). Deliberately generous — the goal is
-  // "close enough for a consistent comparison", not pixel perfection. Tune on
-  // a real device.
+  // "close enough for a consistent comparison", not pixel perfection.
   dxTol: 0.06,
   sizeTol: 0.12,
   crownBand: 0.09,
@@ -49,6 +51,13 @@ export const FRAMING = {
   shoulderLevelTol: 0.06,
   minVisibility: 0.5,
 } as const;
+
+/** Whether a given angle is a side profile. Front/back are symmetric (both
+ * shoulders + both hips face the camera); left/right are profiles where the
+ * far-side shoulder/hip is occluded and the shoulders can't be "level". */
+export function isProfileAngle(angle: BodyProgressAngle): boolean {
+  return angle === "left" || angle === "right";
+}
 
 export type AlignmentDir = "left" | "right" | "closer" | "backwards" | "none";
 
@@ -60,19 +69,43 @@ export interface AlignmentResult {
   dir: AlignmentDir;
 }
 
+export interface AlignmentOptions {
+  /** Flip only the left/right guidance to match a selfie-mirrored preview. */
+  mirrored?: boolean;
+  /** Side-profile framing: relaxes centring and skips the shoulder-level check. */
+  profile?: boolean;
+}
+
 function vis(l: PoseLandmark | undefined): boolean {
   return !!l && (l.visibility === undefined || l.visibility >= FRAMING.minVisibility);
 }
 
+function avg(nums: number[]): number {
+  return nums.reduce((a, b) => a + b, 0) / nums.length;
+}
+
 /** Evaluate one frame of pose landmarks against the framing standard.
- * `mirrored` flips only the left/right guidance so it matches a selfie-mirrored
- * preview (the body position math is unaffected). */
-export function computeAlignment(landmarks: PoseLandmark[] | null | undefined, mirrored = true): AlignmentResult {
-  const need = [LM.nose, LM.leftShoulder, LM.rightShoulder, LM.leftHip, LM.rightHip];
-  const haveCore = !!landmarks && need.every((i) => vis(landmarks[i]));
-  const hasThigh = !!landmarks && ((vis(landmarks[LM.leftHip]) && vis(landmarks[LM.leftKnee])) || (vis(landmarks[LM.rightHip]) && vis(landmarks[LM.rightKnee])));
+ * Front/back use the full symmetric check; side profiles relax centring and
+ * drop the shoulder-level requirement (the far shoulder is occluded). */
+export function computeAlignment(landmarks: PoseLandmark[] | null | undefined, opts: AlignmentOptions = {}): AlignmentResult {
+  const { mirrored = true, profile = false } = opts;
+
+  // Core body must be present. Front/back need both shoulders + both hips;
+  // a profile only needs the nose plus at least one shoulder and one hip.
+  const shouldersSeen = [LM.leftShoulder, LM.rightShoulder].filter((i) => landmarks && vis(landmarks[i]));
+  const hipsSeen = [LM.leftHip, LM.rightHip].filter((i) => landmarks && vis(landmarks[i]));
+  const noseSeen = !!landmarks && vis(landmarks[LM.nose]);
+  const haveCore = profile
+    ? noseSeen && shouldersSeen.length >= 1 && hipsSeen.length >= 1
+    : noseSeen && shouldersSeen.length === 2 && hipsSeen.length === 2;
+
+  const thighPairs: number[] = [];
+  if (landmarks && vis(landmarks[LM.leftHip]) && vis(landmarks[LM.leftKnee])) thighPairs.push((landmarks[LM.leftHip].y + landmarks[LM.leftKnee].y) / 2);
+  if (landmarks && vis(landmarks[LM.rightHip]) && vis(landmarks[LM.rightKnee])) thighPairs.push((landmarks[LM.rightHip].y + landmarks[LM.rightKnee].y) / 2);
+  const hasThigh = thighPairs.length >= 1;
+
   if (!landmarks || !haveCore || !hasThigh) {
-    return { hasBody: false, aligned: false, message: "请站进画面里，让全身进入镜头", dir: "none" };
+    return { hasBody: false, aligned: false, message: "请站进画面里，让身体进入镜头", dir: "none" };
   }
 
   const headPoints = [LM.nose, LM.leftEye, LM.rightEye, LM.leftEar, LM.rightEar]
@@ -81,25 +114,26 @@ export function computeAlignment(landmarks: PoseLandmark[] | null | undefined, m
     .map((l) => l.y);
   const crownY = Math.max(0, Math.min(...headPoints) - 0.04); // crown sits above eyes/ears
 
-  const centerX = (landmarks[LM.leftShoulder].x + landmarks[LM.rightShoulder].x + landmarks[LM.leftHip].x + landmarks[LM.rightHip].x) / 4;
+  const centerXs = [...shouldersSeen, ...hipsSeen].map((i) => landmarks[i].x);
+  const centerX = avg(centerXs);
 
-  const thighYs: number[] = [];
-  if (vis(landmarks[LM.leftHip]) && vis(landmarks[LM.leftKnee])) thighYs.push((landmarks[LM.leftHip].y + landmarks[LM.leftKnee].y) / 2);
-  if (vis(landmarks[LM.rightHip]) && vis(landmarks[LM.rightKnee])) thighYs.push((landmarks[LM.rightHip].y + landmarks[LM.rightKnee].y) / 2);
-  const midThighY = thighYs.reduce((a, b) => a + b, 0) / thighYs.length;
+  const midThighY = avg(thighPairs);
 
   const bodyHeight = midThighY - crownY;
   const sizeRatio = bodyHeight / FRAMING.targetBodyHeight;
   const dx = centerX - FRAMING.centerX;
-  const shoulderLevel = Math.abs(landmarks[LM.leftShoulder].y - landmarks[LM.rightShoulder].y);
 
+  const dxTol = profile ? FRAMING.dxTol + 0.03 : FRAMING.dxTol; // a profile naturally sits a touch off-centre
   const sized = Math.abs(sizeRatio - 1) <= FRAMING.sizeTol;
-  const centered = Math.abs(dx) <= FRAMING.dxTol;
+  const centered = Math.abs(dx) <= dxTol;
   const crownOk = Math.abs(crownY - FRAMING.headTopY) <= FRAMING.crownBand;
   const thighOk = Math.abs(midThighY - FRAMING.midThighY) <= FRAMING.thighBand;
-  const level = shoulderLevel <= FRAMING.shoulderLevelTol;
-  const aligned = sized && centered && crownOk && thighOk && level;
 
+  // Shoulder-level check only applies to a front/back stance with both
+  // shoulders in view; a profile can't be "level".
+  const level = profile || shouldersSeen.length < 2 || Math.abs(landmarks[LM.leftShoulder].y - landmarks[LM.rightShoulder].y) <= FRAMING.shoulderLevelTol;
+
+  const aligned = sized && centered && crownOk && thighOk && level;
   if (aligned) return { hasBody: true, aligned: true, message: "✓ 位置正确，请保持不动", dir: "none" };
 
   // Guidance priority: size (distance) → horizontal → vertical → posture.
