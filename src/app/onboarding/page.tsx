@@ -166,10 +166,6 @@ function OnboardingWizard({ customerId, defaultName, defaultPhone, defaultReferr
   // stays "fresh" and only a real return (new tab session) triggers resume.
   const startedFresh = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem(FRESH_SIGNUP_KEY) !== null)[0];
   const [resumed, setResumed] = useState(startedFresh);
-  // Opt-in on-screen trace (append ?debug=1 to the onboarding URL). Invisible
-  // to real customers — a QA aid to see exactly what Step 5 computes. Remove
-  // once the goal-recommendation issue is confirmed resolved.
-  const debugMode = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "1")[0];
   const [step, setStep] = useState(initial.step);
   const [draft, setDraft] = useState<WizardDraft>(initial.draft);
   const [error, setError] = useState<string | null>(null);
@@ -362,30 +358,6 @@ function OnboardingWizard({ customerId, defaultName, defaultPhone, defaultReferr
               customWithinRange={customWithinRange}
               journeyDays={draft.journeyDays}
             />
-          )}
-
-          {debugMode && step === 5 && (
-            <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-900 p-3 text-[10px] leading-relaxed text-emerald-300">
-              {JSON.stringify(
-                {
-                  "draft.goalTypes": draft.goalTypes,
-                  effectiveGoalType: effectiveGoalType || "(none)",
-                  age,
-                  height,
-                  currentWeight,
-                  bmi,
-                  goalStatus,
-                  canSuggestLoss,
-                  "draft.journeyDays": draft.journeyDays,
-                  longTermGoalWeight,
-                  weightGoalRange,
-                  sessionStorageDraft:
-                    typeof window !== "undefined" ? window.sessionStorage.getItem(DRAFT_STORAGE_KEY) : null,
-                },
-                null,
-                2,
-              )}
-            </pre>
           )}
 
           {error && (
@@ -600,6 +572,15 @@ function StepStageGoal({
   const [warningDismissed, setWarningDismissed] = useState(false);
   const showWarning = customWithinRange === false && !warningDismissed;
 
+  // Rendering rule (explicit, mutually exclusive). A safe first-stage loss
+  // target shows whenever the loss gate passes AND a rule range exists — this
+  // is true for BOTH auto_approved and auto_adjusted (canSuggestLoss already
+  // encodes goalStatus !== 'goal_restricted' && goal === lose_weight). goalStatus
+  // is NEVER checked for === 'auto_approved' here.
+  const showLossCard = canSuggestLoss && weightGoalRange !== null;
+  const showRuleMissing = canSuggestLoss && weightGoalRange === null; // loss-eligible but rule table not resolved yet
+  const showMaintenance = !canSuggestLoss;
+
   if (!currentWeight || !journeyDays) {
     return (
       <div className="flex flex-col gap-4">
@@ -614,23 +595,7 @@ function StepStageGoal({
       <h2 className="text-base font-semibold text-slate-900">Step 5：这是属于你的第一阶段目标</h2>
       <p className="text-sm text-slate-500">根据你刚刚填写的资料，我们已经帮你规划好第一阶段。不用一次做到所有改变，我们会陪你一步一步完成。</p>
 
-      {!canSuggestLoss ? (
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
-          <div className="flex items-baseline justify-between">
-            <span className="text-xs text-slate-500">目前体重</span>
-            <span className="text-lg font-semibold text-slate-900">{currentWeight} kg</span>
-          </div>
-          <div className="mt-2 flex items-baseline justify-between gap-3">
-            <span className="shrink-0 text-xs text-slate-500">第一阶段目标</span>
-            <span className="text-right text-sm font-semibold text-emerald-700">维持现在的状态，慢慢养成好习惯</span>
-          </div>
-          <p className="mt-3 text-xs text-slate-500">
-            {goalStatus === "goal_restricted"
-              ? "考虑到你现在填写的资料，第一阶段我们先陪你把饮食、饮水和作息的基础打好，让身体处在更适合的状态，再一起规划下一步。"
-              : "这个阶段我们先陪你专注在饮食、饮水和生活规律，把每天的好习惯慢慢稳定下来，为之后的改变打好基础。"}
-          </p>
-        </div>
-      ) : weightGoalRange ? (
+      {showLossCard && weightGoalRange && (
         <>
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
             <div className="flex items-baseline justify-between">
@@ -727,8 +692,28 @@ function StepStageGoal({
             </div>
           )}
         </>
-      ) : (
+      )}
+
+      {showRuleMissing && (
         <p className="text-sm text-slate-400">目前体重区间暂无建议规则，请联系客服。</p>
+      )}
+
+      {showMaintenance && (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+          <div className="flex items-baseline justify-between">
+            <span className="text-xs text-slate-500">目前体重</span>
+            <span className="text-lg font-semibold text-slate-900">{currentWeight} kg</span>
+          </div>
+          <div className="mt-2 flex items-baseline justify-between gap-3">
+            <span className="shrink-0 text-xs text-slate-500">第一阶段目标</span>
+            <span className="text-right text-sm font-semibold text-emerald-700">维持现在的状态，慢慢养成好习惯</span>
+          </div>
+          <p className="mt-3 text-xs text-slate-500">
+            {goalStatus === "goal_restricted"
+              ? "考虑到你现在填写的资料，第一阶段我们先陪你把饮食、饮水和作息的基础打好，让身体处在更适合的状态，再一起规划下一步。"
+              : "这个阶段我们先陪你专注在饮食、饮水和生活规律，把每天的好习惯慢慢稳定下来，为之后的改变打好基础。"}
+          </p>
+        </div>
       )}
 
       <p className="text-xs text-slate-400">建议先完成第一阶段，再继续下一阶段。</p>
