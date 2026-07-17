@@ -58,6 +58,19 @@ export function GuidedCameraCapture({
   const [capturedUrl, setCapturedUrl] = useState<string | null>(null);
   const capturedFileRef = useRef<File | null>(null);
 
+  // Front ("user") is the default (self-capture on a tripod). The customer can
+  // switch to the rear ("environment") camera for assisted capture. A ref mirrors
+  // the state so the capture/detection callbacks read it without dependency churn.
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
+  const [switchError, setSwitchError] = useState<string | null>(null);
+  const facingModeRef = useRef<"user" | "environment">("user");
+  const lastGoodFacingRef = useRef<"user" | "environment">("user");
+  const mirrored = facingMode === "user"; // only the front camera is mirrored
+  useEffect(() => {
+    facingModeRef.current = facingMode;
+  }, [facingMode]);
+
   const setPhase = useCallback((p: Phase) => {
     phaseRef.current = p;
     setPhaseState(p);
@@ -92,11 +105,15 @@ export function GuidedCameraCapture({
     canvas.height = Math.round(cropH);
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    // Mirror the capture to match the selfie-mirrored preview the customer saw,
-    // drawing only the visible (cover-cropped) portrait region of the frame.
+    // Draw only the visible (cover-cropped) portrait region. Mirror ONLY for the
+    // front camera, matching its mirrored preview — the rear camera is never
+    // mirrored, so its saved photo keeps the true (un-mirrored) orientation and
+    // is never double-mirrored.
     ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
+    if (facingModeRef.current === "user") {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
     ctx.restore();
     canvas.toBlob(
@@ -151,7 +168,7 @@ export function GuidedCameraCapture({
         result = null;
       }
       const lm = result?.landmarks?.[0] ?? null;
-      const a = computeAlignment(lm, { mirrored: true, profile });
+      const a = computeAlignment(lm, { mirrored: facingModeRef.current === "user", profile });
       setAligned(a.aligned);
       setMessage(a.message);
 
@@ -192,39 +209,11 @@ export function GuidedCameraCapture({
     });
   }, [phase]);
 
+  // Mount once: load the pose model (best-effort) and start the frame loop. Kept
+  // separate from stream acquisition so switching cameras never reloads the model.
   useEffect(() => {
     let cancelled = false;
-
-    async function start() {
-      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-        setPhase("unsupported");
-        return;
-      }
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 1280 } }, audio: false });
-      } catch {
-        if (!cancelled) setPhase("denied");
-        return;
-      }
-      if (cancelled) {
-        stream.getTracks().forEach((t) => t.stop());
-        return;
-      }
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        try {
-          await videoRef.current.play();
-        } catch {
-          /* autoplay may need a tap; the preview still renders */
-        }
-      }
-      setPhase("guiding");
-      setMessage("请站进画面里");
-
-      // Load the pose model (best-effort). If it fails, the camera still works
-      // with a manual shutter.
+    (async () => {
       try {
         const vision = await import("@mediapipe/tasks-vision");
         const fileset = await vision.FilesetResolver.forVisionTasks(WASM_CDN);
@@ -243,23 +232,91 @@ export function GuidedCameraCapture({
         // manual shutter (always shown) still works for assisted capture.
         if (!cancelled) setMessage("自动对位暂时不可用，可点圆钮手动拍摄");
       }
-      rafRef.current = requestAnimationFrame(() => detectLoopRef.current());
-    }
-
-    start();
-
+    })();
+    rafRef.current = requestAnimationFrame(() => detectLoopRef.current());
     return () => {
       cancelled = true;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
       landmarkerRef.current?.close();
       landmarkerRef.current = null;
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
       if (capturedUrlRef.current) URL.revokeObjectURL(capturedUrlRef.current);
     };
-    // Mount once: acquire camera + model. The frame loop runs via detectLoopRef.
-  }, [setPhase]);
+  }, []);
+
+  // Acquire the camera for the current facingMode. Re-runs whenever facingMode
+  // changes (the camera switch): the cleanup stops every track of the old stream
+  // before the new one is requested, then the new stream is attached to the SAME
+  // video element and the preview resumes. If a switch to the rear camera fails,
+  // we fall back to the last working camera with a short, non-blocking message.
+  useEffect(() => {
+    let cancelled = false;
+    async function acquire() {
+      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+        setPhase("unsupported");
+        return;
+      }
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: facingMode }, width: { ideal: 720 }, height: { ideal: 1280 } },
+          audio: false,
+        });
+      } catch {
+        if (cancelled) return;
+        if (facingMode !== lastGoodFacingRef.current) {
+          // A switch failed — restore the last working camera, don't block capture.
+          setSwitchError(facingMode === "environment" ? "无法开启后置镜头，已切回原镜头" : "无法开启前置镜头，已切回原镜头");
+          setFacingMode(lastGoodFacingRef.current);
+        } else {
+          setPhase("denied");
+        }
+        return;
+      }
+      if (cancelled) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      streamRef.current = stream;
+      lastGoodFacingRef.current = facingMode;
+      setSwitchError(null);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        try {
+          await videoRef.current.play();
+        } catch {
+          /* autoplay may need a tap; the preview still renders */
+        }
+      }
+      setPhase("guiding");
+      setMessage("请站进画面里");
+      // Permission is granted now, so device labels/kinds are reliable — decide
+      // whether to show the flip button.
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        if (!cancelled) setHasMultipleCameras(devices.filter((d) => d.kind === "videoinput").length > 1);
+      } catch {
+        /* enumeration best-effort */
+      }
+    }
+    acquire();
+    return () => {
+      cancelled = true;
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    };
+  }, [facingMode, setPhase]);
+
+  // Flip between front and rear. Cancels any countdown and resets alignment so
+  // detection only restarts once the new preview is ready (via the stream effect).
+  function switchCamera() {
+    clearCountdown();
+    alignedSinceRef.current = null;
+    setAligned(false);
+    setCount(0);
+    setPhase("starting");
+    setFacingMode((m) => (m === "user" ? "environment" : "user"));
+  }
 
   function retake() {
     if (capturedUrlRef.current) URL.revokeObjectURL(capturedUrlRef.current);
@@ -316,19 +373,27 @@ export function GuidedCameraCapture({
   // overlay, status and countdown float over it, and the bottom nav is covered.
   return (
     <div className="fixed inset-0 z-[60] overflow-hidden bg-black">
-      <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" style={{ transform: "scaleX(-1)" }} />
+      <video
+        ref={videoRef}
+        playsInline
+        muted
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{ transform: mirrored ? "scaleX(-1)" : "none" }}
+      />
 
       {/* The ONLY visual alignment guide: the actual reference photo for this
           angle (front/left/right/back), drawn translucent over the live preview
-          so the customer lines up with the ghost person. Mirrored to share the
-          selfie preview's coordinate space. No drawn outline / skeleton. */}
+          so the customer lines up with the ghost person. It shares the preview's
+          coordinate space by mirroring exactly when the preview is mirrored
+          (front camera only), so ghost and customer always stay aligned on both
+          cameras. No drawn outline / skeleton. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={BODY_PROGRESS_GUIDE_BY_ANGLE[angle].src}
         alt=""
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-        style={{ opacity: OVERLAY_OPACITY, transform: "scaleX(-1)" }}
+        style={{ opacity: OVERLAY_OPACITY, transform: mirrored ? "scaleX(-1)" : "none" }}
       />
 
       {/* Alignment feedback that never touches the photo itself: a thin
@@ -350,6 +415,32 @@ export function GuidedCameraCapture({
         <span className="text-sm font-semibold">{angleLabel}</span>
         <span className="min-w-9 text-right text-sm font-medium text-white/85">{stepText ?? ""}</span>
       </div>
+
+      {/* Camera flip — front ↔ rear. Shown only when the device has more than one
+          camera. Sits clear of the centred body/overlay. */}
+      {hasMultipleCameras && (
+        <button
+          type="button"
+          onClick={switchCamera}
+          aria-label="切换前后镜头"
+          className="absolute right-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white active:bg-black/60"
+          style={{ top: "calc(env(safe-area-inset-top) + 3.75rem)" }}
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 9a8 8 0 0 1 13-3l3 3" />
+            <path d="M20 4v5h-5" />
+            <path d="M20 15a8 8 0 0 1-13 3l-3-3" />
+            <path d="M4 20v-5h5" />
+          </svg>
+        </button>
+      )}
+
+      {/* Non-blocking switch error (e.g. rear camera unavailable). */}
+      {switchError && (
+        <div className="pointer-events-none absolute inset-x-0 flex justify-center px-4" style={{ top: "calc(env(safe-area-inset-top) + 3.5rem)" }}>
+          <span className="rounded-full bg-rose-500/90 px-3 py-1 text-xs font-medium text-white shadow-lg">{switchError}</span>
+        </div>
+      )}
 
       {/* Countdown — big, centred, auto-driven (no shutter button). */}
       {phase === "countdown" && count > 0 && (
