@@ -28,6 +28,7 @@ export const adminNav: NavItem[] = [
   { href: "/admin", label: "概览", icon: "📊", key: "dashboard" },
   { href: "/admin/users", label: "用户", icon: "🧾", key: "users" },
   { href: "/admin/coaches", label: "教练", icon: "🌿", key: "coaches" },
+  { href: "/admin/coach-applications", label: "申请", icon: "📥", key: "coach-applications" },
   { href: "/admin/customers", label: "顾客", icon: "🧑‍🤝‍🧑", key: "customers" },
   { href: "/cms", label: "知识 CMS", icon: "📚", key: "cms" },
   { href: "/admin/settings", label: "设置", icon: "⚙️", key: "settings" },

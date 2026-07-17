@@ -6,6 +6,7 @@ import { AccountSettingsSection } from "@/components/AccountSettingsSection";
 import { SignOutButton } from "@/components/SignOutButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InventoryStatusCard } from "@/components/inventory/InventoryStatusCard";
+import { JourneyCoachCard } from "@/components/customer/JourneyCoachCard";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
 import { useHasInventoryRecords, useCustomerInventory } from "@/lib/inventory/hooks";
@@ -16,6 +17,7 @@ const inventoryProducts: ProductCode[] = ["MISU_N_PLUS", "MISU_DX_PLUS"];
 const linkItems = [
   { href: "/customer/progress", label: "我的成长", icon: "📈" },
   { href: "/customer/coach", label: "我的 Journey Coach", icon: "🌿" },
+  { href: "/customer/notifications", label: "通知中心", icon: "🔔" },
   { href: "/customer/learn/guide", label: "产品使用指南", icon: "📦" },
   { href: "/customer/learn/faq", label: "常见问题", icon: "💬" },
 ];
@@ -93,6 +95,8 @@ export default function CustomerProfilePage() {
           </Link>
         )}
       </div>
+
+      <JourneyCoachCard />
 
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
         {linkItems.map((item) => (

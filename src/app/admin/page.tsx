@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { ProgressCard } from "@/components/ui/ProgressCard";
 import { useAdminOverviewStats } from "@/lib/admin/overview";
+import { usePendingCoachApplicationCount } from "@/lib/coach-application/hooks";
 
 const contentShortcuts = [
   { href: "/admin/content/faq", label: "FAQ 管理", icon: "💬" },
@@ -13,6 +14,7 @@ const contentShortcuts = [
 
 export default function AdminDashboardPage() {
   const { data: o } = useAdminOverviewStats();
+  const { count: pendingApplications } = usePendingCoachApplicationCount();
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
@@ -24,6 +26,25 @@ export default function AdminDashboardPage() {
         <StatCard label="今日活跃人数" value={o.activeToday} icon="✨" accent="bg-violet-50 text-violet-600" />
         <StatCard label="待处理异常" value={o.pendingIssues} icon="⚠️" accent="bg-rose-50 text-rose-500" />
       </div>
+
+      <Link
+        href="/admin/coach-applications"
+        className="flex items-center gap-4 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm transition hover:border-sky-200"
+      >
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-50 text-2xl">🌿</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-slate-800">教练申请 Coach Applications</p>
+          <p className="text-xs text-slate-400">待审核 Pending Review</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {pendingApplications > 0 && (
+            <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-rose-500 px-2 text-sm font-semibold text-white">
+              {pendingApplications}
+            </span>
+          )}
+          <span className="text-slate-300">→</span>
+        </div>
+      </Link>
 
       <div className="grid gap-3 md:grid-cols-3">
         <ProgressCard label="平均打卡率" percent={o.avgCheckinRate} icon="✅" barColor="bg-emerald-500" trackColor="bg-emerald-100" />

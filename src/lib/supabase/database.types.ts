@@ -463,6 +463,63 @@ export type Database = {
           },
         ]
       }
+      coach_applications: {
+        Row: {
+          applicant_id: string
+          application_number: number
+          created_at: string
+          id: string
+          internal_note: string | null
+          reject_reason: string | null
+          reseller_username: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["coach_application_status"]
+          submitted_at: string
+        }
+        Insert: {
+          applicant_id: string
+          application_number?: number
+          created_at?: string
+          id?: string
+          internal_note?: string | null
+          reject_reason?: string | null
+          reseller_username: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["coach_application_status"]
+          submitted_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          application_number?: number
+          created_at?: string
+          id?: string
+          internal_note?: string | null
+          reject_reason?: string | null
+          reseller_username?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["coach_application_status"]
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_ai_insights: {
         Row: {
           analysis_type: string
@@ -1237,6 +1294,53 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_href: string | null
+          action_label: string | null
+          body: string
+          created_at: string
+          id: string
+          read_at: string | null
+          reject_reason: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_href?: string | null
+          action_label?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          reject_reason?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_href?: string | null
+          action_label?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          reject_reason?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_guides: {
         Row: {
           category: string
@@ -1531,6 +1635,10 @@ export type Database = {
         Args: { p_coach_id: string; p_customer_id: string }
         Returns: undefined
       }
+      approve_coach_application: {
+        Args: { p_application_id: string; p_internal_note?: string }
+        Returns: undefined
+      }
       calculate_bmr: {
         Args: {
           p_age: number
@@ -1571,6 +1679,10 @@ export type Database = {
         }
         Returns: number
       }
+      coach_can_manage_customer: {
+        Args: { p_customer_id: string }
+        Returns: boolean
+      }
       complete_registration_goals: {
         Args: {
           p_activity_level: Database["public"]["Enums"]["activity_level"]
@@ -1595,6 +1707,7 @@ export type Database = {
         Args: { p_content_id: string }
         Returns: undefined
       }
+      count_pending_coach_applications: { Args: never; Returns: number }
       create_revision_draft: { Args: { p_content_id: string }; Returns: string }
       current_role: {
         Args: never
@@ -1634,6 +1747,19 @@ export type Database = {
           p_remaining: number
         }
         Returns: string
+      }
+      get_my_coach_applications: {
+        Args: never
+        Returns: {
+          application_number: number
+          created_at: string
+          id: string
+          reject_reason: string
+          reseller_username: string
+          reviewed_at: string
+          status: Database["public"]["Enums"]["coach_application_status"]
+          submitted_at: string
+        }[]
       }
       get_my_coach_contact: {
         Args: never
@@ -1681,6 +1807,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      is_active_coach: { Args: never; Returns: boolean }
       manual_adjustment: {
         Args: {
           p_customer_id: string
@@ -1694,6 +1821,7 @@ export type Database = {
         Args: { p_alert_id: string }
         Returns: undefined
       }
+      mark_notification_read: { Args: { p_id: string }; Returns: undefined }
       normalize_international_phone_number: {
         Args: { p_country_calling_code: string; p_local_phone_number: string }
         Returns: string
@@ -1742,6 +1870,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      reject_coach_application: {
+        Args: {
+          p_application_id: string
+          p_internal_note?: string
+          p_reject_reason: string
+        }
+        Returns: undefined
+      }
       review_content: {
         Args: {
           p_approve: boolean
@@ -1766,8 +1902,34 @@ export type Database = {
         Args: { p_photos: Json; p_record_id: string }
         Returns: Json
       }
+      submit_coach_application: {
+        Args: { p_reseller_username: string }
+        Returns: {
+          applicant_id: string
+          application_number: number
+          created_at: string
+          id: string
+          internal_note: string | null
+          reject_reason: string | null
+          reseller_username: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["coach_application_status"]
+          submitted_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coach_applications"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       submit_content_for_review: {
         Args: { p_content_id: string }
+        Returns: undefined
+      }
+      update_application_internal_note: {
+        Args: { p_application_id: string; p_internal_note: string }
         Returns: undefined
       }
       update_coach_whatsapp_contact: {
@@ -1788,6 +1950,10 @@ export type Database = {
           p_journey_days: number
           p_journey_name: string
         }
+        Returns: undefined
+      }
+      withdraw_coach_application: {
+        Args: { p_application_id: string }
         Returns: undefined
       }
     }
@@ -1815,6 +1981,11 @@ export type Database = {
         | "quiz"
         | "true_false"
         | "daily_challenge"
+      coach_application_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "withdrawn"
       diet_type:
         | "regular"
         | "vegetarian"
@@ -1997,6 +2168,12 @@ export const Constants = {
         "quiz",
         "true_false",
         "daily_challenge",
+      ],
+      coach_application_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "withdrawn",
       ],
       diet_type: [
         "regular",

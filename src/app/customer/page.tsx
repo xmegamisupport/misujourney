@@ -7,6 +7,7 @@ import { ProgressCard } from "@/components/ui/ProgressCard";
 import { NutritionCard } from "@/components/ui/NutritionCard";
 import { LockedTaskCard } from "@/components/ui/LockedTaskCard";
 import { CoachContactSheet } from "@/components/CoachContactSheet";
+import { NotificationBell } from "@/components/customer/NotificationBell";
 import { TodayContentCard } from "@/components/cms/TodayContentCard";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
@@ -143,6 +144,7 @@ export default function CustomerDashboardPage() {
         subtitle={`Day ${currentDay} / ${planLength} · Every Day Is A New Journey`}
         action={
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <button
               type="button"
               onClick={() => setCoachSheetOpen(true)}
