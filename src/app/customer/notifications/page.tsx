@@ -22,7 +22,7 @@ export default function CustomerNotificationsPage() {
 
   return (
     <div className="flex flex-col gap-4 px-4 pb-8 md:px-8">
-      <PageHeader title="通知中心" />
+      <PageHeader title="通知中心" backHref="/customer" />
 
       {!loading && notifications.length === 0 ? (
         <EmptyState icon="🔔" title="还没有通知" description="有新的消息时会显示在这里。" />

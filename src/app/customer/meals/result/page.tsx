@@ -115,7 +115,9 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
     }
 
     sessionStorage.removeItem("misu-meal-scored");
-    router.push("/customer/meals");
+    // Dashboard is home: a completed task returns the customer to their home
+    // base (where 今日营养 now reflects this meal), not deeper into the module.
+    router.push("/customer");
   }
 
   return (
