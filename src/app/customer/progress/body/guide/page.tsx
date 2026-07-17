@@ -43,11 +43,11 @@ function BodyProgressGuideContent() {
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
-      <PageHeader title="拍摄指南" backHref="/customer/progress/body" />
+      <PageHeader title="📷 留下今天的自己，作为 Journey 的起点" backHref="/customer/progress/body" />
 
       <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5 text-sm leading-relaxed text-slate-700">
-        <p>我们不是要评判你的身材。</p>
-        <p className="mt-2">我们只是想帮你留下一个起点 —— 一个未来的你会感谢现在的你的起点。</p>
+        <p>今天的照片，将会成为未来对比改变的重要起点。</p>
+        <p className="mt-2">请根据参考角度拍摄，未来会更容易看见自己的变化。</p>
       </div>
 
       <PhotoGuideExamples />
@@ -70,7 +70,7 @@ function BodyProgressGuideContent() {
           onClick={() => goToCapture("camera")}
           className="rounded-2xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600"
         >
-          📷 立即拍摄（推荐）
+          开始拍照
         </button>
         <button
           type="button"
