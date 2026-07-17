@@ -9,6 +9,12 @@ import { parseNonNegativeInt } from "@/lib/inventory/validation";
 import { lookupCoachByReferral, normalizeReferralCode, isReferralCodeShape, type ReferralCoach } from "@/lib/referral";
 
 const PENDING_INVENTORY_KEY = "misu_pending_inventory_init";
+/** Set the moment an account is created so onboarding knows this is a brand-new
+ * sign-up (skip the "welcome back" resume screen). Scoped to the tab session:
+ * it survives a mid-onboarding refresh but is gone when the customer closes the
+ * tab and returns later — exactly when the resume screen SHOULD appear.
+ * Must match the literal read in src/app/onboarding/page.tsx. */
+const FRESH_SIGNUP_KEY = "misu_onboarding_fresh";
 
 type Mode = "choose" | "customer";
 
@@ -101,6 +107,7 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(false);
+  const [existingAccount, setExistingAccount] = useState(false);
 
   // Referral link mode: validate the ?ref= code before allowing sign-up.
   const linkMode = refParam !== null;
@@ -212,7 +219,11 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
     if (signUpError) {
       setSubmitting(false);
       if (signUpError.message === "User already registered") {
-        setError("该邮箱已被注册，请直接登录");
+        // Creating an auth account isn't the same as finishing registration.
+        // A returning customer who left mid-onboarding lands here — don't treat
+        // it as an error or ask for another email; welcome them back and send
+        // them to login, which resumes onboarding right where they left off.
+        setExistingAccount(true);
       } else {
         console.error("Sign up failed:", signUpError);
         setError("注册失败，请稍后再试或联系客服");
@@ -230,6 +241,7 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
         setError(`账号已创建，但初始库存设置失败：${result.error}`);
         return;
       }
+      window.sessionStorage.setItem(FRESH_SIGNUP_KEY, "1");
       router.push("/customer");
       router.refresh();
       return;
@@ -239,8 +251,24 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
     // numbers so the first successful login can complete the setup. The
     // referral code rides along in user_metadata, so it survives confirmation.
     window.localStorage.setItem(PENDING_INVENTORY_KEY, JSON.stringify({ boxesN: parsedN, boxesDX: parsedDX }));
+    window.sessionStorage.setItem(FRESH_SIGNUP_KEY, "1");
     setSubmitting(false);
     setPendingConfirmation(true);
+  }
+
+  if (existingAccount) {
+    return (
+      <div className="flex min-h-screen flex-1 items-center justify-center bg-gradient-to-b from-emerald-50 via-white to-sky-50 px-6 py-12">
+        <div className="w-full max-w-sm rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-sm">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-2xl mx-auto mb-3">👋</span>
+          <p className="mb-2 text-base font-semibold text-slate-900">欢迎回来</p>
+          <p className="mb-5 text-sm text-slate-500">看起来你之前已经用这个邮箱创建了账号。直接登录就能继续完成你的资料填写。</p>
+          <Link href="/login" className="block w-full rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600">
+            前往登录继续
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (pendingConfirmation) {

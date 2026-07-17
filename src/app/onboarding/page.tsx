@@ -64,6 +64,11 @@ const EMPTY_DRAFT: WizardDraft = {
 };
 
 const DRAFT_STORAGE_KEY = "misu-onboarding-draft";
+/** Written by the registration page for a brand-new sign-up (same tab session).
+ * Its presence means "fresh sign-up → skip the welcome-back screen"; its
+ * absence means the customer is returning to finish (logged in later), so the
+ * resume screen is shown. Must match the literal in src/app/register/page.tsx. */
+const FRESH_SIGNUP_KEY = "misu_onboarding_fresh";
 
 /** Safe to call synchronously in a lazy useState initializer: OnboardingWizard
  * only ever mounts client-side (see OnboardingPage's loading gate above), so
@@ -117,8 +122,36 @@ function StepIndicator({ step }: { step: number }) {
   );
 }
 
+/** Shown when a customer returns to finish an account they created earlier —
+ * welcoming, never framed as an error or an "incomplete Journey" (they haven't
+ * started the Journey yet, only the profile). */
+function ResumeWelcome({ onContinue }: { onContinue: () => void }) {
+  return (
+    <div className="flex min-h-screen flex-1 items-center justify-center bg-gradient-to-b from-emerald-50 via-white to-sky-50 px-6 py-10">
+      <div className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-sm">
+        <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-3xl">👋</span>
+        <p className="text-lg font-semibold text-slate-900">欢迎回来</p>
+        <p className="mt-2 text-sm text-slate-500">看起来你上次还没完成资料填写。没关系，我们一起继续完成吧。</p>
+        <button
+          type="button"
+          onClick={onContinue}
+          className="mt-6 w-full rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+        >
+          继续完成资料填写
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function OnboardingWizard({ customerId, defaultName, defaultPhone, defaultReferral }: { customerId: string; defaultName: string; defaultPhone: string | null; defaultReferral: string | null }) {
   const initial = useState(() => readStoredDraft(defaultName ?? "", defaultPhone, defaultReferral))[0];
+  // A brand-new sign-up carries the fresh marker (skip the welcome-back
+  // screen); a customer returning to finish does not (show it). Read-only in
+  // the initializer — the marker is left in place so a mid-onboarding refresh
+  // stays "fresh" and only a real return (new tab session) triggers resume.
+  const startedFresh = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem(FRESH_SIGNUP_KEY) !== null)[0];
+  const [resumed, setResumed] = useState(startedFresh);
   const [step, setStep] = useState(initial.step);
   const [draft, setDraft] = useState<WizardDraft>(initial.draft);
   const [error, setError] = useState<string | null>(null);
@@ -258,6 +291,12 @@ function OnboardingWizard({ customerId, defaultName, defaultPhone, defaultReferr
 
   if (result) {
     return <OnboardingResult result={result} />;
+  }
+
+  // Returning customer who created an account but never finished — welcome them
+  // back before dropping them into the wizard. Fresh sign-ups skip this.
+  if (!resumed) {
+    return <ResumeWelcome onContinue={() => setResumed(true)} />;
   }
 
   return (
