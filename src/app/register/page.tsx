@@ -39,28 +39,34 @@ function RoleChoice({ onChoose }: { onChoose: (mode: Mode) => void }) {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-2 text-center">
           <span className="text-4xl">🌱</span>
-          <h1 className="text-xl font-semibold text-slate-900">加入 MISU Journey</h1>
+          <h1 className="text-xl font-semibold text-slate-900">欢迎来到 MISU Journey</h1>
           <p className="text-sm text-emerald-600">Every Day Is A New Journey</p>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <h2 className="text-base font-semibold leading-relaxed text-slate-900">
+            谢谢你选择相信 MISU，也谢谢你愿意让我们陪伴你完成这段 Journey ❤️
+          </h2>
+          <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-slate-600">
+            <p>MISU Journey，不只是记录每一天。</p>
+            <p>它会陪伴你更了解自己的身体、看见每一点改变，并把每天一点点的努力，慢慢累积成真正的改变。</p>
+            <p>无论你的目标是培养更健康的生活习惯、维持理想状态，还是完成属于自己的健康目标，我们都会陪着你，一步一步走完整段 Journey。</p>
+          </div>
+
           <button
             type="button"
             onClick={() => onChoose("customer")}
-            className="flex items-center gap-4 rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-sm transition hover:border-emerald-300 hover:shadow-md"
+            className="mt-6 w-full rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-white transition hover:bg-emerald-600"
           >
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-2xl">🙋</span>
-            <div>
-              <p className="text-base font-semibold text-slate-900">开始我的 MISU Journey</p>
-              <p className="text-sm text-slate-500">注册并记录你的健康旅程</p>
-            </div>
+            开启我的 MISU Journey
           </button>
+          <p className="mt-3 text-center text-sm text-emerald-600">今天，就是属于你的新开始。</p>
         </div>
 
         <p className="mt-6 text-center text-sm text-slate-500">
-          已经有账号？{" "}
+          已经有账号了？{" "}
           <Link href="/login" className="font-medium text-emerald-600">
-            直接登录
+            回到登入首页
           </Link>
         </p>
       </div>
