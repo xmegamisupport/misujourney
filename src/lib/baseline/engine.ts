@@ -34,9 +34,13 @@ export async function getJourneyBaselineStatus(customerId: string): Promise<Jour
 }
 
 export interface RecordBaselineInput {
-  weight: number;
+  /** Usual routine, not just last night — overnight ranges (e.g. 23:30 →
+   * 07:00) are valid; the two times are stored independently. */
   bedtime: string;
   wakeTime: string;
+  /** Lifestyle habit codes (see baseline/constants). */
+  bowelHabit: string;
+  hydrationHabit: string;
 }
 
 export interface RecordBaselineResult {
@@ -44,12 +48,15 @@ export interface RecordBaselineResult {
   error?: string;
 }
 
+/** Weight is deliberately NOT sent — it was captured at registration and is
+ * the fixed basis for the water target; this only records lifestyle habits. */
 export async function recordJourneyBaseline(input: RecordBaselineInput): Promise<RecordBaselineResult> {
   const supabase = createClient();
   const { error } = await supabase.rpc("record_journey_baseline", {
-    p_weight: input.weight,
     p_bedtime: input.bedtime,
     p_wake_time: input.wakeTime,
+    p_bowel_habit: input.bowelHabit,
+    p_hydration_habit: input.hydrationHabit,
   });
   if (error) return { ok: false, error: error.message };
   return { ok: true };

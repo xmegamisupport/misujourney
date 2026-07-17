@@ -1,105 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneyBaselineStatus } from "@/lib/baseline/hooks";
-import { recordJourneyBaseline } from "@/lib/baseline/engine";
-import { cn } from "@/lib/utils";
 
 function DoneBadge() {
   return <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">已完成 ✓</span>;
 }
 
-function BaselineDataModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const [weight, setWeight] = useState("");
-  const [bedtime, setBedtime] = useState("23:00");
-  const [wakeTime, setWakeTime] = useState("07:00");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleSave() {
-    const w = Number(weight);
-    if (!weight || w <= 0) {
-      setError("请输入有效的当前体重");
-      return;
-    }
-    setError(null);
-    setSubmitting(true);
-    const result = await recordJourneyBaseline({ weight: w, bedtime, wakeTime });
-    setSubmitting(false);
-    if (!result.ok) {
-      setError(result.error ?? "保存失败，请重试");
-      return;
-    }
-    onSaved();
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-      <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
-        <p className="text-lg font-semibold text-slate-900">Journey 起点资料</p>
-        <p className="mt-1 text-sm text-slate-500">留下今天的起点，未来就能看见自己的改变。</p>
-
-        <label className="mt-4 flex flex-col gap-1.5 text-sm text-slate-600">
-          当前体重（kg）
-          <input
-            type="number"
-            inputMode="decimal"
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-            placeholder="例如 68"
-            className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
-          />
-        </label>
-
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1.5 text-sm text-slate-600">
-            平常入睡时间
-            <input
-              type="time"
-              value={bedtime}
-              onChange={(e) => setBedtime(e.target.value)}
-              className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm text-slate-600">
-            平常起床时间
-            <input
-              type="time"
-              value={wakeTime}
-              onChange={(e) => setWakeTime(e.target.value)}
-              className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
-            />
-          </label>
-        </div>
-
-        {error && <p className="mt-3 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-600">{error}</p>}
-
-        <div className="mt-5 grid grid-cols-2 gap-2">
-          <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
-            取消
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={submitting}
-            className="rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
-          >
-            {submitting ? "保存中..." : "保存"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function JourneyStartPage() {
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
-  const { status, refresh } = useJourneyBaselineStatus(customerId);
-  const [dataModalOpen, setDataModalOpen] = useState(false);
+  const { status } = useJourneyBaselineStatus(customerId);
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
@@ -136,27 +49,25 @@ export default function JourneyStartPage() {
         )}
       </div>
 
-      {/* Item 2 — starting data */}
+      {/* Item 2 — lifestyle baseline */}
       <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-800">📊 Journey 起点资料</p>
-            <p className="mt-1 text-xs text-slate-500">记录 当前体重 与 平常睡眠时间。</p>
+            <p className="text-sm font-semibold text-slate-800">📊 了解你的生活习惯</p>
+            <p className="mt-1 text-xs text-slate-500">先了解你平常的睡眠、排便与喝水习惯。</p>
           </div>
           {status.dataDone && <DoneBadge />}
         </div>
-        <button
-          type="button"
-          onClick={() => setDataModalOpen(true)}
-          className={cn(
-            "mt-4 block w-full rounded-xl py-3 text-center text-sm font-semibold transition",
+        <Link
+          href="/customer/journey-start/lifestyle"
+          className={
             status.dataDone
-              ? "border border-emerald-200 text-emerald-600 hover:bg-emerald-50"
-              : "bg-emerald-500 text-white hover:bg-emerald-600",
-          )}
+              ? "mt-4 block w-full rounded-xl border border-emerald-200 py-2.5 text-center text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50"
+              : "mt-4 block w-full rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-white transition hover:bg-emerald-600"
+          }
         >
-          {status.dataDone ? "更新起点资料" : "开始记录"}
-        </button>
+          {status.dataDone ? "更新我的生活习惯" : "开始记录"}
+        </Link>
       </div>
 
       {status.complete ? (
@@ -170,16 +81,6 @@ export default function JourneyStartPage() {
         <Link href="/customer" className="py-1 text-center text-sm font-medium text-slate-400 transition hover:text-slate-600">
           以后再完成
         </Link>
-      )}
-
-      {dataModalOpen && (
-        <BaselineDataModal
-          onClose={() => setDataModalOpen(false)}
-          onSaved={() => {
-            setDataModalOpen(false);
-            refresh();
-          }}
-        />
       )}
     </div>
   );

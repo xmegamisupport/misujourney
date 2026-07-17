@@ -1398,9 +1398,10 @@ export type Database = {
           age: number | null
           avatar: string | null
           baseline_bedtime: string | null
+          baseline_bowel_habit: string | null
           baseline_data_completed_at: string | null
+          baseline_hydration_habit: string | null
           baseline_wake_time: string | null
-          baseline_weight: number | null
           coach_activated_at: string | null
           coach_activated_by: string | null
           coach_id: string | null
@@ -1435,9 +1436,10 @@ export type Database = {
           age?: number | null
           avatar?: string | null
           baseline_bedtime?: string | null
+          baseline_bowel_habit?: string | null
           baseline_data_completed_at?: string | null
+          baseline_hydration_habit?: string | null
           baseline_wake_time?: string | null
-          baseline_weight?: number | null
           coach_activated_at?: string | null
           coach_activated_by?: string | null
           coach_id?: string | null
@@ -1472,9 +1474,10 @@ export type Database = {
           age?: number | null
           avatar?: string | null
           baseline_bedtime?: string | null
+          baseline_bowel_habit?: string | null
           baseline_data_completed_at?: string | null
+          baseline_hydration_habit?: string | null
           baseline_wake_time?: string | null
-          baseline_weight?: number | null
           coach_activated_at?: string | null
           coach_activated_by?: string | null
           coach_id?: string | null
@@ -1839,7 +1842,12 @@ export type Database = {
         Returns: string
       }
       record_journey_baseline: {
-        Args: { p_bedtime: string; p_wake_time: string; p_weight: number }
+        Args: {
+          p_bedtime: string
+          p_bowel_habit: string
+          p_hydration_habit: string
+          p_wake_time: string
+        }
         Returns: undefined
       }
       record_meal: {
