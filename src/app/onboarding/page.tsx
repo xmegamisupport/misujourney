@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { SignOutButton } from "@/components/SignOutButton";
 import { cn } from "@/lib/utils";
@@ -661,12 +660,18 @@ function OnboardingResult({ result }: { result: CompleteRegistrationGoalsResult 
           <p>✓ {result.targetMisuDays} 天 MISU 打卡</p>
         </div>
 
-        <Link
+        {/* Plain <a>, NOT next/link: onboarding just flipped
+            onboarding_completed_at server-side via a client RPC, so the App
+            Router's prefetched/cached routing decision for /customer is stale.
+            A soft <Link> navigation can resolve straight back to this page
+            (the reported "开始 Journey does nothing"). A raw anchor forces a
+            full document load so the proxy re-evaluates with fresh state. */}
+        <a
           href="/customer"
           className="mt-6 block w-full rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-white transition hover:bg-emerald-600"
         >
           开始 Journey →
-        </Link>
+        </a>
       </div>
     </div>
   );
