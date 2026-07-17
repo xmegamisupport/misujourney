@@ -35,10 +35,12 @@ function BodyProgressGuideContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const existingRecordId = searchParams.get("recordId");
+  const from = searchParams.get("from");
 
   function goToCapture(mode: "camera" | "library") {
     const recordId = existingRecordId || crypto.randomUUID();
-    router.push(`/customer/progress/body/capture?recordId=${recordId}&mode=${mode}`);
+    const fromParam = from ? `&from=${from}` : "";
+    router.push(`/customer/progress/body/capture?recordId=${recordId}&mode=${mode}${fromParam}`);
   }
 
   return (

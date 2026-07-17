@@ -36,6 +36,7 @@ export default function BodyProgressReviewPage() {
 function BodyProgressReviewContent() {
   const searchParams = useSearchParams();
   const recordId = searchParams.get("recordId");
+  const isBaseline = searchParams.get("from") === "baseline";
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
 
@@ -129,12 +130,27 @@ function BodyProgressReviewContent() {
           </div>
         </div>
 
-        <Link href="/customer" className="rounded-2xl bg-emerald-500 py-3.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600">
-          继续今天的 Journey
-        </Link>
-        <Link href="/customer/progress/body/history" className="rounded-2xl border border-slate-200 bg-white py-3.5 text-center text-sm font-semibold text-slate-700 transition hover:border-emerald-200">
-          查看我的成长记录
-        </Link>
+        {isBaseline ? (
+          <>
+            {/* Entered from the Journey Baseline flow — keep momentum: return to
+                the baseline hub (updated status) rather than the Dashboard. */}
+            <Link href="/customer/journey-start?saved=1" className="rounded-2xl bg-emerald-500 py-3.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600">
+              继续建立 Journey 起点 →
+            </Link>
+            <Link href="/customer" className="rounded-2xl border border-slate-200 bg-white py-3.5 text-center text-sm font-semibold text-slate-700 transition hover:border-emerald-200">
+              先回首页
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link href="/customer" className="rounded-2xl bg-emerald-500 py-3.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600">
+              继续今天的 Journey
+            </Link>
+            <Link href="/customer/progress/body/history" className="rounded-2xl border border-slate-200 bg-white py-3.5 text-center text-sm font-semibold text-slate-700 transition hover:border-emerald-200">
+              查看我的成长记录
+            </Link>
+          </>
+        )}
       </div>
     );
   }

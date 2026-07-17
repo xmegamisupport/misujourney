@@ -33,6 +33,8 @@ function BodyProgressCaptureFlow() {
   const searchParams = useSearchParams();
   const recordId = searchParams.get("recordId");
   const mode = (searchParams.get("mode") as "camera" | "library" | null) ?? "library";
+  const from = searchParams.get("from");
+  const fromSuffix = from ? `&from=${from}` : "";
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
 
@@ -50,7 +52,7 @@ function BodyProgressCaptureFlow() {
     listUploadedBodyProgressPhotos(customerId, recordId).then(async (uploaded) => {
       if (cancelled) return;
       if (uploaded.length === BODY_PROGRESS_ANGLES.length) {
-        router.replace(`/customer/progress/body/review?recordId=${recordId}`);
+        router.replace(`/customer/progress/body/review?recordId=${recordId}${fromSuffix}`);
         return;
       }
       const urls = await Promise.all(uploaded.map(async (p) => [p.angle, await getBodyProgressPhotoSignedUrl(p.path)] as const));
@@ -62,7 +64,7 @@ function BodyProgressCaptureFlow() {
     return () => {
       cancelled = true;
     };
-  }, [customerId, recordId, router]);
+  }, [customerId, recordId, router, fromSuffix]);
 
   if (!recordId) {
     return (
@@ -93,7 +95,7 @@ function BodyProgressCaptureFlow() {
       const next = { ...prev, [currentAngle]: url };
       const stillMissing = BODY_PROGRESS_ANGLES.some((a) => !next[a]);
       if (!stillMissing) {
-        router.push(`/customer/progress/body/review?recordId=${recordId}`);
+        router.push(`/customer/progress/body/review?recordId=${recordId}${fromSuffix}`);
       }
       return next;
     });

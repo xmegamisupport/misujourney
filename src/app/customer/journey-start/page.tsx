@@ -1,6 +1,8 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneyBaselineStatus } from "@/lib/baseline/hooks";
@@ -10,13 +12,28 @@ function DoneBadge() {
 }
 
 export default function JourneyStartPage() {
+  return (
+    <Suspense>
+      <JourneyStartContent />
+    </Suspense>
+  );
+}
+
+function JourneyStartContent() {
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
   const { status } = useJourneyBaselineStatus(customerId);
+  const justSaved = useSearchParams().get("saved") === "1";
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
       <PageHeader title="🌱 建立你的 Journey 起点" />
+
+      {justSaved && !status.complete && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          ✓ 已保存，继续完成下面这一项，你的 Journey 起点就完整了。
+        </div>
+      )}
 
       <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-5 text-sm leading-relaxed text-slate-600">
         <p>未来每一次的改变，都会从今天开始记录。</p>
@@ -41,10 +58,10 @@ export default function JourneyStartPage() {
           </Link>
         ) : (
           <Link
-            href="/customer/progress/body/guide"
+            href="/customer/progress/body/guide?from=baseline"
             className="mt-4 block w-full rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-white transition hover:bg-emerald-600"
           >
-            开始拍照
+            {status.dataDone ? "继续 · 拍摄起点照片" : "开始拍照"}
           </Link>
         )}
       </div>
@@ -66,7 +83,7 @@ export default function JourneyStartPage() {
               : "mt-4 block w-full rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-white transition hover:bg-emerald-600"
           }
         >
-          {status.dataDone ? "更新我的生活习惯" : "开始记录"}
+          {status.dataDone ? "更新我的生活习惯" : status.photosDone ? "继续 · 了解你的生活习惯" : "开始记录"}
         </Link>
       </div>
 

@@ -81,9 +81,10 @@ export default function BaselineLifestylePage() {
       setError(result.error ?? "保存失败，请重试");
       return;
     }
-    // Dashboard is Home. The reminder card re-checks status on mount and
-    // updates / retires accordingly.
-    router.push("/customer");
+    // Keep the customer inside the Journey Baseline flow — return to the
+    // baseline hub (with updated status), not the Dashboard. They leave only
+    // when both tasks are done or they explicitly choose "以后再完成".
+    router.push("/customer/journey-start?saved=1");
   }
 
   return (
