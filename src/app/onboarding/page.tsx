@@ -76,6 +76,11 @@ const FRESH_SIGNUP_KEY = "misu_onboarding_fresh";
  * only ever mounts client-side (see OnboardingPage's loading gate above), so
  * there is no server-rendered version of this subtree to hydration-mismatch
  * against — same pattern as the meal-check confirm/result pages. */
+// Step 2 is now single-select over exactly these two directions. A draft saved
+// by an earlier build (4-option multi-select) could carry a goal we no longer
+// offer (e.g. improve_diet), which would silently drive Step 5 to maintenance.
+const VALID_STEP2_GOALS: GoalType[] = ["lose_weight", "maintain_weight"];
+
 function readStoredDraft(defaultName: string, defaultPhone: string | null, defaultReferral: string | null): { step: number; draft: WizardDraft } {
   // Name, phone and referral code are captured at registration and are the
   // source of truth here — they always win over any stored draft value and
@@ -87,14 +92,21 @@ function readStoredDraft(defaultName: string, defaultPhone: string | null, defau
     phone: defaultPhone ?? draft.phone,
     referralCode: defaultReferral ?? draft.referralCode,
   });
-  if (typeof window === "undefined") return { step: 1, draft: seed({ ...EMPTY_DRAFT }) };
+  // Drop any goal a legacy draft carried that isn't a current Step 2 option;
+  // if that empties the selection, don't let the customer resume past Step 2
+  // without re-choosing a valid direction.
+  const sanitize = (step: number, draft: WizardDraft): { step: number; draft: WizardDraft } => {
+    const goalTypes = draft.goalTypes.filter((g) => VALID_STEP2_GOALS.includes(g));
+    return { step: goalTypes.length === 0 ? Math.min(step, 2) : step, draft: { ...draft, goalTypes } };
+  };
+  if (typeof window === "undefined") return sanitize(1, seed({ ...EMPTY_DRAFT }));
   try {
     const raw = window.sessionStorage.getItem(DRAFT_STORAGE_KEY);
-    if (!raw) return { step: 1, draft: seed({ ...EMPTY_DRAFT }) };
+    if (!raw) return sanitize(1, seed({ ...EMPTY_DRAFT }));
     const parsed = JSON.parse(raw) as { step: number; draft: WizardDraft };
-    return { step: parsed.step ?? 1, draft: seed({ ...EMPTY_DRAFT, ...parsed.draft }) };
+    return sanitize(parsed.step ?? 1, seed({ ...EMPTY_DRAFT, ...parsed.draft }));
   } catch {
-    return { step: 1, draft: seed({ ...EMPTY_DRAFT }) };
+    return sanitize(1, seed({ ...EMPTY_DRAFT }));
   }
 }
 
@@ -232,9 +244,13 @@ function OnboardingWizard({ customerId, defaultName, defaultPhone, defaultReferr
   function validateStep(): string | null {
     if (step === 1) {
       // Name / phone are collected at registration and not re-asked here.
-      if (!draft.age || age <= 0) return "请输入年龄";
-      if (!draft.height || height <= 0) return "请输入身高";
-      if (!draft.currentWeight || currentWeight <= 0) return "请输入当前体重";
+      // Bounds mirror isAbnormalInput() in goal-calculator: an out-of-range
+      // value (e.g. height typed as 1.65 m, or a blank age) would otherwise
+      // slip through and be silently downgraded to a restricted/maintenance
+      // Step 5 goal with no explanation. Catch it here with a clear message.
+      if (!draft.age || age < 13 || age > 100) return "请输入有效的年龄（13-100 岁）";
+      if (!draft.height || height < 100 || height > 250) return "请输入有效的身高（100-250 cm）";
+      if (!draft.currentWeight || currentWeight < 20 || currentWeight > 300) return "请输入有效的当前体重（20-300 kg）";
       if (!draft.dietType) return "请选择饮食类型";
       if (!draft.activityLevel) return "请选择活动量";
     }
