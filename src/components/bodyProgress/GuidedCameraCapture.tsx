@@ -75,15 +75,29 @@ export function GuidedCameraCapture({
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
-    canvas.width = video.videoWidth || 720;
-    canvas.height = video.videoHeight || 960;
+    const vw = video.videoWidth || 720;
+    const vh = video.videoHeight || 1280;
+    // Phone cameras deliver natively LANDSCAPE frames; the preview only looks
+    // portrait because the <video> is object-cover-cropped into the portrait
+    // viewport. Reproduce that exact crop here so the captured image is portrait
+    // and matches what the customer saw (otherwise it saves landscape).
+    const boxW = video.clientWidth || vw;
+    const boxH = video.clientHeight || vh;
+    const scale = Math.max(boxW / vw, boxH / vh);
+    const cropW = Math.min(vw, boxW / scale);
+    const cropH = Math.min(vh, boxH / scale);
+    const sx = (vw - cropW) / 2;
+    const sy = (vh - cropH) / 2;
+    canvas.width = Math.round(cropW);
+    canvas.height = Math.round(cropH);
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    // Mirror the capture to match the selfie-mirrored preview the customer saw.
+    // Mirror the capture to match the selfie-mirrored preview the customer saw,
+    // drawing only the visible (cover-cropped) portrait region of the frame.
     ctx.save();
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
     ctx.restore();
     canvas.toBlob(
       (blob) => {
@@ -162,6 +176,21 @@ export function GuidedCameraCapture({
   useEffect(() => {
     detectLoopRef.current = detectLoop;
   }, [detectLoop]);
+
+  // Keep the live stream attached to the <video>. srcObject is first set in the
+  // mount effect, but the captured-confirm screen unmounts the video element;
+  // returning to the live view (Retake, or countdown→guiding) mounts a FRESH
+  // <video> that has no stream — so re-attach it here or the preview stays black.
+  useEffect(() => {
+    if (phase !== "starting" && phase !== "guiding" && phase !== "countdown") return;
+    const video = videoRef.current;
+    const stream = streamRef.current;
+    if (!video || !stream) return;
+    if (video.srcObject !== stream) video.srcObject = stream;
+    video.play().catch(() => {
+      /* autoplay may need a tap; the preview still renders */
+    });
+  }, [phase]);
 
   useEffect(() => {
     let cancelled = false;
