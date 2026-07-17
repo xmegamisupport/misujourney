@@ -12,7 +12,7 @@ import {
   isCustomLossWithinRange,
   validateLongTermGoal,
 } from "@/lib/goals/goal-calculator";
-import { DIET_TYPE_LABELS, ACTIVITY_LEVEL_LABELS, GOAL_TYPE_LABELS, GOAL_TYPE_ICONS, JOURNEY_PLAN_OPTIONS } from "@/lib/goals/constants";
+import { DIET_TYPE_LABELS, ACTIVITY_LEVEL_LABELS, JOURNEY_PLAN_OPTIONS } from "@/lib/goals/constants";
 import { completeRegistrationGoals, type CompleteRegistrationGoalsResult } from "@/lib/goals/engine";
 import { useWeightGoalRules } from "@/lib/goals/hooks";
 import { lookupCoachByReferral, type ReferralCoach } from "@/lib/referral";
@@ -20,10 +20,11 @@ import type { ActivityLevel, DietType, GoalStatus, GoalType, JourneyDays, Weight
 
 const TOTAL_STEPS = 5;
 
-/** goal_type is stored as a single enum column, but the wizard now lets the
- * customer pick more than one — lose_weight always wins (it's the only
- * selection that drives a numeric target), otherwise the first pick applies
- * since every other goal type behaves identically (habit-based maintain). */
+/** Step 2 is now single-select, so goalTypes holds exactly one value
+ * ([lose_weight] or [maintain_weight]); this returns it. The includes-check is
+ * kept as a harmless safety net so any legacy multi-value draft still resolves
+ * to lose_weight when present. Feeds goalStatus / canSuggestLoss and the
+ * complete_registration_goals p_goal_type argument unchanged. */
 function deriveEffectiveGoalType(goalTypes: GoalType[]): GoalType | "" {
   if (goalTypes.includes("lose_weight")) return "lose_weight";
   return goalTypes[0] ?? "";
@@ -237,7 +238,7 @@ function OnboardingWizard({ customerId, defaultName, defaultPhone, defaultReferr
       if (!draft.dietType) return "请选择饮食类型";
       if (!draft.activityLevel) return "请选择活动量";
     }
-    if (step === 2 && draft.goalTypes.length === 0) return "请选择主要目标";
+    if (step === 2 && draft.goalTypes.length === 0) return "请选择一个方向";
     if (step === 4 && !draft.journeyDays) return "请选择 MISU JOURNEY 计划";
     return null;
   }
@@ -450,29 +451,41 @@ function StepBasicInfo({ draft, update, referralCoach }: { draft: WizardDraft; u
   );
 }
 
+// Single-select direction. Two options only — kept as GoalType values so the
+// whole existing pipeline (deriveEffectiveGoalType → goalStatus / canSuggestLoss
+// → complete_registration_goals p_goal_type) works unchanged.
+//   改善身形    → lose_weight
+//   维持目前状态 → maintain_weight
+const STEP2_DIRECTIONS: { value: GoalType; title: string; description: string }[] = [
+  { value: "lose_weight", title: "改善身形", description: "希望慢慢改善体态，建立更健康、更有自信的自己。" },
+  { value: "maintain_weight", title: "维持目前状态", description: "希望维持目前成果，养成更健康、更稳定的生活习惯。" },
+];
+
 function StepGoalType({ draft, update }: { draft: WizardDraft; update: <K extends keyof WizardDraft>(key: K, value: WizardDraft[K]) => void }) {
-  function toggle(value: GoalType) {
-    update("goalTypes", draft.goalTypes.includes(value) ? draft.goalTypes.filter((g) => g !== value) : [...draft.goalTypes, value]);
-  }
+  // Single select: exactly one direction lives in goalTypes[0].
+  const selected = draft.goalTypes[0] ?? null;
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 2：告诉我们，你最想完成什么</h2>
-      <p className="text-sm text-slate-500">选择最符合你现在想改变的方向。可以选择一个或多个目标，我们会根据你的选择，更了解你现在需要的陪伴。</p>
-      <div className="grid grid-cols-2 gap-3">
-        {(Object.entries(GOAL_TYPE_LABELS) as [GoalType, string][]).map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => toggle(value)}
-            className={cn(
-              "flex flex-col items-center gap-2 rounded-2xl border px-3 py-5 text-center text-sm font-medium transition",
-              draft.goalTypes.includes(value) ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-100 text-slate-500 hover:border-slate-200",
-            )}
-          >
-            <span className="text-2xl">{GOAL_TYPE_ICONS[value]}</span>
-            {label}
-          </button>
-        ))}
+      <h2 className="text-base font-semibold text-slate-900">Step 2：告诉我们，你最想完成什么？</h2>
+      <p className="text-sm text-slate-500">选择最符合你现在目标的方向，剩下的，就交给我们陪你一步一步完成。</p>
+      <div className="flex flex-col gap-3">
+        {STEP2_DIRECTIONS.map((option) => {
+          const isSelected = selected === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => update("goalTypes", [option.value])}
+              className={cn(
+                "flex flex-col gap-1 rounded-2xl border p-4 text-left transition",
+                isSelected ? "border-emerald-300 bg-emerald-50" : "border-slate-100 hover:border-slate-200",
+              )}
+            >
+              <span className={cn("text-sm font-semibold", isSelected ? "text-emerald-700" : "text-slate-800")}>{option.title}</span>
+              <p className="text-xs text-slate-500">{option.description}</p>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
