@@ -166,6 +166,10 @@ function OnboardingWizard({ customerId, defaultName, defaultPhone, defaultReferr
   // stays "fresh" and only a real return (new tab session) triggers resume.
   const startedFresh = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem(FRESH_SIGNUP_KEY) !== null)[0];
   const [resumed, setResumed] = useState(startedFresh);
+  // Opt-in on-screen trace (append ?debug=1 to the onboarding URL). Invisible
+  // to real customers — a QA aid to see exactly what Step 5 computes. Remove
+  // once the goal-recommendation issue is confirmed resolved.
+  const debugMode = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "1")[0];
   const [step, setStep] = useState(initial.step);
   const [draft, setDraft] = useState<WizardDraft>(initial.draft);
   const [error, setError] = useState<string | null>(null);
@@ -358,6 +362,30 @@ function OnboardingWizard({ customerId, defaultName, defaultPhone, defaultReferr
               customWithinRange={customWithinRange}
               journeyDays={draft.journeyDays}
             />
+          )}
+
+          {debugMode && step === 5 && (
+            <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-900 p-3 text-[10px] leading-relaxed text-emerald-300">
+              {JSON.stringify(
+                {
+                  "draft.goalTypes": draft.goalTypes,
+                  effectiveGoalType: effectiveGoalType || "(none)",
+                  age,
+                  height,
+                  currentWeight,
+                  bmi,
+                  goalStatus,
+                  canSuggestLoss,
+                  "draft.journeyDays": draft.journeyDays,
+                  longTermGoalWeight,
+                  weightGoalRange,
+                  sessionStorageDraft:
+                    typeof window !== "undefined" ? window.sessionStorage.getItem(DRAFT_STORAGE_KEY) : null,
+                },
+                null,
+                2,
+              )}
+            </pre>
           )}
 
           {error && (
