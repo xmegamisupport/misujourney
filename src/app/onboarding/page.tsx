@@ -774,11 +774,18 @@ function OnboardingResult({ result }: { result: CompleteRegistrationGoalsResult 
           </div>
         )}
 
-        <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600">
-          <p>✓ {result.targetCheckInDays} 天打卡</p>
-          <p>✓ {result.target211Meals} 餐 211 餐盘</p>
-          <p>✓ {result.targetWaterDays} 天饮水达标</p>
-          <p>✓ {result.targetMisuDays} 天 MISU 打卡</p>
+        {/* Not a task list — the emotional bridge between onboarding and Day 1.
+            Warm, light, companion-like: "I just need to begin." */}
+        <div className="mt-4 space-y-1.5 text-sm leading-relaxed text-slate-600">
+          <p>你的长期目标，我们已经帮你拆成更容易完成的小目标。</p>
+          <p>未来的每一天，MISU Journey 都会陪着你。</p>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-2.5 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 text-left text-sm text-slate-700">
+          <p>❤️ 每天记录一点改变</p>
+          <p>🌱 慢慢养成健康的生活习惯</p>
+          <p>🥗 找到更轻松、更没有压力的饮食方式</p>
+          <p>🎯 每天一点点，慢慢靠近第一阶段目标</p>
         </div>
 
         {/* Plain <a>, NOT next/link: onboarding just flipped
