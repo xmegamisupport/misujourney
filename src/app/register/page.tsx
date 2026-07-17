@@ -45,12 +45,14 @@ function RoleChoice({ onChoose }: { onChoose: (mode: Mode) => void }) {
 
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
           <h2 className="text-base font-semibold leading-relaxed text-slate-900">
-            谢谢你选择相信 MISU，也谢谢你愿意让我们陪伴你完成这段 Journey ❤️
+            谢谢你选择相信 MISU ❤️
+            <br />
+            很开心，能够陪你一起开启这段 Journey。
           </h2>
           <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-slate-600">
             <p>MISU Journey，不只是记录每一天。</p>
-            <p>它会陪伴你更了解自己的身体、看见每一点改变，并把每天一点点的努力，慢慢累积成真正的改变。</p>
-            <p>无论你的目标是培养更健康的生活习惯、维持理想状态，还是完成属于自己的健康目标，我们都会陪着你，一步一步走完整段 Journey。</p>
+            <p>它会陪伴你更了解自己的身体、看见每一点改变，一步一步养成更健康的生活方式。</p>
+            <p>接下来的 Journey，我们一起慢慢完成。</p>
           </div>
 
           <button
@@ -60,7 +62,7 @@ function RoleChoice({ onChoose }: { onChoose: (mode: Mode) => void }) {
           >
             开启我的 MISU Journey
           </button>
-          <p className="mt-3 text-center text-sm text-emerald-600">今天，就是属于你的新开始。</p>
+          <p className="mt-3 text-center text-sm text-emerald-600">我们会陪着你，一步一步开始。</p>
         </div>
 
         <p className="mt-6 text-center text-sm text-slate-500">
