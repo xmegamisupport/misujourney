@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { AnglePhotoSlot } from "@/components/bodyProgress/AnglePhotoSlot";
+import { GuidedCameraCapture } from "@/components/bodyProgress/GuidedCameraCapture";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { uploadBodyProgressPhoto, listUploadedBodyProgressPhotos, getBodyProgressPhotoSignedUrl } from "@/lib/bodyProgress/engine";
 import { BODY_PROGRESS_ANGLES } from "@/lib/bodyProgress/constants";
@@ -39,6 +40,9 @@ function BodyProgressCaptureFlow() {
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Guided-camera mode can be switched to plain gallery upload per the
+  // customer's choice ("改用相册上传").
+  const [useGallery, setUseGallery] = useState(false);
 
   useEffect(() => {
     if (!customerId || !recordId) return;
@@ -119,23 +123,39 @@ function BodyProgressCaptureFlow() {
         <div className="flex flex-col items-center gap-4 py-2">
           <p className="text-base font-semibold text-slate-800">请拍摄：{ANGLE_LABELS[currentAngle]}</p>
 
-          {/* Real example photo for this angle (from the guide manifest) so the
-              customer copies a consistent angle. Reference only — not analysis. */}
-          <figure className="w-56 max-w-full">
-            <div className="aspect-[3/4] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={BODY_PROGRESS_GUIDE_BY_ANGLE[currentAngle].src}
-                alt={`${ANGLE_LABELS[currentAngle]}参考示范`}
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <figcaption className="mt-1 text-center text-xs text-slate-400">参考示范</figcaption>
-          </figure>
+          {mode === "camera" && !useGallery ? (
+            // Hands-free guided camera: stand inside the overlay, hold the pose,
+            // auto-countdown, auto-capture. Falls back to gallery/manual inside.
+            <GuidedCameraCapture
+              key={currentAngle}
+              angleLabel={ANGLE_LABELS[currentAngle]}
+              onCapture={handleSelectFile}
+              onUseGallery={() => setUseGallery(true)}
+              fallback={
+                <AnglePhotoSlot angle={currentAngle} label={ANGLE_LABELS[currentAngle]} photoUrl={null} uploading={uploading} mode="library" onSelectFile={handleSelectFile} variant="current" />
+              }
+            />
+          ) : (
+            <>
+              {/* Real example photo for this angle (from the guide manifest) so the
+                  customer copies a consistent angle. Reference only — not analysis. */}
+              <figure className="w-56 max-w-full">
+                <div className="aspect-[3/4] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={BODY_PROGRESS_GUIDE_BY_ANGLE[currentAngle].src}
+                    alt={`${ANGLE_LABELS[currentAngle]}参考示范`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <figcaption className="mt-1 text-center text-xs text-slate-400">参考示范</figcaption>
+              </figure>
 
-          <AnglePhotoSlot angle={currentAngle} label={ANGLE_LABELS[currentAngle]} photoUrl={null} uploading={uploading} mode={mode} onSelectFile={handleSelectFile} variant="current" />
+              <AnglePhotoSlot angle={currentAngle} label={ANGLE_LABELS[currentAngle]} photoUrl={null} uploading={uploading} mode="library" onSelectFile={handleSelectFile} variant="current" />
 
-          <p className="max-w-xs text-center text-xs text-slate-400">照着示范的角度拍摄，方便日后对比，不影响提交</p>
+              <p className="max-w-xs text-center text-xs text-slate-400">照着示范的角度拍摄，方便日后对比，不影响提交</p>
+            </>
+          )}
         </div>
       )}
 
