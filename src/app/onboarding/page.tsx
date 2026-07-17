@@ -57,7 +57,8 @@ const EMPTY_DRAFT: WizardDraft = {
   dietType: "",
   activityLevel: "",
   goalTypes: [],
-  journeyDays: 0,
+  // 60 days is the guided default — preselected and highlighted in Step 4.
+  journeyDays: 60,
   longTermGoalWeight: "",
   useCustomGoal: false,
   customLossKg: "",
@@ -332,6 +333,7 @@ function OnboardingWizard({ customerId, defaultName, defaultPhone, defaultReferr
             <StepStageGoal
               currentWeight={currentWeight}
               canSuggestLoss={canSuggestLoss}
+              goalStatus={goalStatus}
               weightGoalRange={weightGoalRange}
               finalTarget={finalTarget}
               draft={draft}
@@ -454,8 +456,8 @@ function StepGoalType({ draft, update }: { draft: WizardDraft; update: <K extend
   }
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 2 · 选择主要目标</h2>
-      <p className="text-xs text-slate-400">可以选择一个或多个目标</p>
+      <h2 className="text-base font-semibold text-slate-900">Step 2：告诉我们，你最想完成什么</h2>
+      <p className="text-sm text-slate-500">选择最符合你现在想改变的方向。可以选择一个或多个目标，我们会根据你的选择，更了解你现在需要的陪伴。</p>
       <div className="grid grid-cols-2 gap-3">
         {(Object.entries(GOAL_TYPE_LABELS) as [GoalType, string][]).map(([value, label]) => (
           <button
@@ -479,24 +481,35 @@ function StepGoalType({ draft, update }: { draft: WizardDraft; update: <K extend
 function StepJourneyPlan({ draft, update }: { draft: WizardDraft; update: <K extends keyof WizardDraft>(key: K, value: WizardDraft[K]) => void }) {
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 4 · 选择 MISU JOURNEY 计划</h2>
+      <h2 className="text-base font-semibold text-slate-900">Step 4：你想陪自己走多久？</h2>
+      <p className="text-sm text-slate-500">每一段 Journey 都有不同的收获。选择你想从哪里开始，我们会陪你一步一步走下去。</p>
       <div className="flex flex-col gap-3">
-        {JOURNEY_PLAN_OPTIONS.map((option) => (
-          <button
-            key={option.days}
-            type="button"
-            onClick={() => update("journeyDays", option.days)}
-            className={cn(
-              "flex items-center justify-between rounded-2xl border px-4 py-4 text-left text-sm font-medium transition",
-              draft.journeyDays === option.days ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-100 text-slate-500 hover:border-slate-200",
-            )}
-          >
-            {option.label}
-            {option.recommended && (
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">推荐</span>
-            )}
-          </button>
-        ))}
+        {JOURNEY_PLAN_OPTIONS.map((option) => {
+          // Two independent states: the badge is social proof (always on the
+          // 60-day card); the emerald border/background is the customer's
+          // active selection (moves as they choose).
+          const selected = draft.journeyDays === option.days;
+          return (
+            <button
+              key={option.days}
+              type="button"
+              onClick={() => update("journeyDays", option.days)}
+              className={cn(
+                "flex flex-col gap-1 rounded-2xl border p-4 text-left transition",
+                selected ? "border-emerald-300 bg-emerald-50" : "border-slate-100 hover:border-slate-200",
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className={cn("text-sm font-semibold", selected ? "text-emerald-700" : "text-slate-800")}>{option.label}</span>
+                {option.badge && (
+                  <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">{option.badge}</span>
+                )}
+              </div>
+              <p className={cn("text-sm font-medium", selected ? "text-emerald-800" : "text-slate-700")}>{option.title}</p>
+              <p className="text-xs text-slate-500">{option.description}</p>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -509,6 +522,7 @@ function formatRange(min: number, max: number): string {
 function StepStageGoal({
   currentWeight,
   canSuggestLoss,
+  goalStatus,
   weightGoalRange,
   finalTarget,
   draft,
@@ -518,6 +532,7 @@ function StepStageGoal({
 }: {
   currentWeight: number;
   canSuggestLoss: boolean;
+  goalStatus: GoalStatus | null;
   weightGoalRange: WeightGoalRange | null;
   finalTarget: { min: number; max: number };
   draft: WizardDraft;
@@ -531,7 +546,7 @@ function StepStageGoal({
   if (!currentWeight || !journeyDays) {
     return (
       <div className="flex flex-col gap-4">
-        <h2 className="text-base font-semibold text-slate-900">Step 5 · 第一阶段目标建议</h2>
+        <h2 className="text-base font-semibold text-slate-900">Step 5：这是属于你的第一阶段目标</h2>
         <p className="text-sm text-slate-400">请先完成前面几步</p>
       </div>
     );
@@ -539,23 +554,46 @@ function StepStageGoal({
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 5 · 第一阶段目标建议</h2>
+      <h2 className="text-base font-semibold text-slate-900">Step 5：这是属于你的第一阶段目标</h2>
+      <p className="text-sm text-slate-500">根据你刚刚填写的资料，我们已经帮你规划好第一阶段。不用一次做到所有改变，我们会陪你一步一步完成。</p>
 
       {!canSuggestLoss ? (
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 text-center">
-          <p className="text-xs text-slate-500">目前 {currentWeight}kg</p>
-          <p className="mt-1 text-sm font-medium text-emerald-700">第一阶段目标</p>
-          <p className="text-xl font-semibold text-slate-900">维持体重，专注习惯养成</p>
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+          <div className="flex items-baseline justify-between">
+            <span className="text-xs text-slate-500">目前体重</span>
+            <span className="text-lg font-semibold text-slate-900">{currentWeight} kg</span>
+          </div>
+          <div className="mt-2 flex items-baseline justify-between gap-3">
+            <span className="shrink-0 text-xs text-slate-500">第一阶段目标</span>
+            <span className="text-right text-sm font-semibold text-emerald-700">维持现在的状态，慢慢养成好习惯</span>
+          </div>
+          <p className="mt-3 text-xs text-slate-500">
+            {goalStatus === "goal_restricted"
+              ? "考虑到你现在填写的资料，第一阶段我们先陪你把饮食、饮水和作息的基础打好，让身体处在更适合的状态，再一起规划下一步。"
+              : "这个阶段我们先陪你专注在饮食、饮水和生活规律，把每天的好习惯慢慢稳定下来，为之后的改变打好基础。"}
+          </p>
         </div>
       ) : weightGoalRange ? (
         <>
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 text-center">
-            <p className="text-xs text-slate-500">根据你的资料，我们建议第一阶段目标：</p>
-            <p className="mt-3 text-xs font-medium text-slate-500">减重</p>
-            <p className="text-2xl font-semibold text-slate-900">{formatRange(weightGoalRange.minLossKg, weightGoalRange.maxLossKg)}kg</p>
-            <p className="mt-3 text-xs font-medium text-slate-500">预计体重</p>
-            <p className="text-2xl font-semibold text-slate-900">{formatRange(weightGoalRange.minTargetWeightKg, weightGoalRange.maxTargetWeightKg)}kg</p>
-            <p className="mt-3 text-xs text-slate-400">这个目标属于健康且较容易坚持的减重速度。实际成果会受到饮食、睡眠、运动、执行率及个人体质影响。</p>
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+            <div className="flex items-baseline justify-between">
+              <span className="text-xs text-slate-500">目前体重</span>
+              <span className="text-lg font-semibold text-slate-900">{currentWeight} kg</span>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-xs text-slate-500">第一阶段目标</span>
+              <span className="text-lg font-semibold text-slate-900">{formatRange(weightGoalRange.minTargetWeightKg, weightGoalRange.maxTargetWeightKg)} kg</span>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-xs text-slate-500">计划减重</span>
+              <span className="text-lg font-semibold text-emerald-700">{formatRange(weightGoalRange.minLossKg, weightGoalRange.maxLossKg)} kg</span>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-xs text-slate-500">Journey 时长</span>
+              <span className="text-sm font-medium text-slate-700">{journeyDays} 天</span>
+            </div>
+            <p className="mt-3 text-xs text-slate-500">这一次，我们先从这里开始。不需要急着一次达到最终目标，我们会陪你一步一步完成。</p>
+            <p className="mt-2 text-[11px] text-slate-400">这个目标属于健康且较容易坚持的减重速度。实际成果会受到饮食、睡眠、运动、执行率及个人体质影响。</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

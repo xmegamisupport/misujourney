@@ -29,10 +29,29 @@ export const GOAL_TYPE_ICONS: Record<GoalType, string> = {
   maintain_weight: "🌿",
 };
 
-export const JOURNEY_PLAN_OPTIONS: { days: JourneyDays; label: string; recommended?: boolean }[] = [
-  { days: 30, label: "30天习惯", recommended: true },
-  { days: 60, label: "60天进阶" },
-  { days: 90, label: "90天长期" },
+// Journey duration values (30/60/90) are unchanged — only the customer-facing
+// framing. 60 is the guided default; its badge is social proof and is separate
+// from the "selected" highlight (see Step 4).
+export const JOURNEY_PLAN_OPTIONS: { days: JourneyDays; label: string; title: string; description: string; badge?: string }[] = [
+  {
+    days: 30,
+    label: "30 天",
+    title: "先把每天的小习惯做好",
+    description: "从饮食、饮水和生活规律开始，让身体慢慢进入状态。",
+  },
+  {
+    days: 60,
+    label: "60 天",
+    title: "让改变慢慢开始发生",
+    description: "当习惯逐渐稳定下来，身体也会开始进入更稳定的减脂节奏。",
+    badge: "最多人开始的 Journey",
+  },
+  {
+    days: 90,
+    label: "90 天",
+    title: "让成果慢慢稳定下来",
+    description: "给自己多一点时间，让好的习惯真正稳定，也让改变更容易保持下去。",
+  },
 ];
 
 export const BMI_CATEGORY_LABELS: Record<BmiCategory, string> = {
