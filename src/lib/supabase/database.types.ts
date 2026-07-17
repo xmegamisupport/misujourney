@@ -1397,6 +1397,10 @@ export type Database = {
           activity_level: Database["public"]["Enums"]["activity_level"] | null
           age: number | null
           avatar: string | null
+          baseline_bedtime: string | null
+          baseline_data_completed_at: string | null
+          baseline_wake_time: string | null
+          baseline_weight: number | null
           coach_activated_at: string | null
           coach_activated_by: string | null
           coach_id: string | null
@@ -1430,6 +1434,10 @@ export type Database = {
           activity_level?: Database["public"]["Enums"]["activity_level"] | null
           age?: number | null
           avatar?: string | null
+          baseline_bedtime?: string | null
+          baseline_data_completed_at?: string | null
+          baseline_wake_time?: string | null
+          baseline_weight?: number | null
           coach_activated_at?: string | null
           coach_activated_by?: string | null
           coach_id?: string | null
@@ -1463,6 +1471,10 @@ export type Database = {
           activity_level?: Database["public"]["Enums"]["activity_level"] | null
           age?: number | null
           avatar?: string | null
+          baseline_bedtime?: string | null
+          baseline_data_completed_at?: string | null
+          baseline_wake_time?: string | null
+          baseline_weight?: number | null
           coach_activated_at?: string | null
           coach_activated_by?: string | null
           coach_id?: string | null
@@ -1825,6 +1837,10 @@ export type Database = {
       normalize_international_phone_number: {
         Args: { p_country_calling_code: string; p_local_phone_number: string }
         Returns: string
+      }
+      record_journey_baseline: {
+        Args: { p_bedtime: string; p_wake_time: string; p_weight: number }
+        Returns: undefined
       }
       record_meal: {
         Args: {

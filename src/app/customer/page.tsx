@@ -8,6 +8,7 @@ import { NutritionCard } from "@/components/ui/NutritionCard";
 import { LockedTaskCard } from "@/components/ui/LockedTaskCard";
 import { CoachContactSheet } from "@/components/CoachContactSheet";
 import { NotificationBell } from "@/components/customer/NotificationBell";
+import { JourneyBaselineReminder } from "@/components/customer/JourneyBaselineReminder";
 import { TodayContentCard } from "@/components/cms/TodayContentCard";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
@@ -164,6 +165,8 @@ export default function CustomerDashboardPage() {
       />
 
       <CoachContactSheet open={coachSheetOpen} onClose={() => setCoachSheetOpen(false)} />
+
+      {customerId && <JourneyBaselineReminder customerId={customerId} />}
 
       {!todayJourneyLoading && !journeyActive && tooEarlyForMorning && (
         <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
