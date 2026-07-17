@@ -407,11 +407,6 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
               </div>
             </div>
 
-            <label className="flex items-start gap-2 text-xs text-slate-500">
-              <input type="checkbox" required className="mt-0.5" />
-              我已阅读并同意《服务条款》与《隐私政策》
-            </label>
-
             {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
 
             <button
