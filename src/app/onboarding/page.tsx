@@ -69,19 +69,25 @@ const DRAFT_STORAGE_KEY = "misu-onboarding-draft";
  * only ever mounts client-side (see OnboardingPage's loading gate above), so
  * there is no server-rendered version of this subtree to hydration-mismatch
  * against — same pattern as the meal-check confirm/result pages. */
-function readStoredDraft(defaultName: string, defaultReferral: string | null): { step: number; draft: WizardDraft } {
-  // The referral code is captured at sign-up (user_metadata) and is the sole
-  // source of truth here — it always wins over any stored draft value, and the
-  // customer never edits it in onboarding.
-  const seedReferral = (draft: WizardDraft): WizardDraft => ({ ...draft, referralCode: defaultReferral ?? draft.referralCode });
-  if (typeof window === "undefined") return { step: 1, draft: seedReferral({ ...EMPTY_DRAFT, name: defaultName }) };
+function readStoredDraft(defaultName: string, defaultPhone: string | null, defaultReferral: string | null): { step: number; draft: WizardDraft } {
+  // Name, phone and referral code are captured at registration and are the
+  // source of truth here — they always win over any stored draft value and
+  // the customer never re-enters them during onboarding. They still ride
+  // through to complete_registration_goals so nothing is lost.
+  const seed = (draft: WizardDraft): WizardDraft => ({
+    ...draft,
+    name: defaultName || draft.name,
+    phone: defaultPhone ?? draft.phone,
+    referralCode: defaultReferral ?? draft.referralCode,
+  });
+  if (typeof window === "undefined") return { step: 1, draft: seed({ ...EMPTY_DRAFT }) };
   try {
     const raw = window.sessionStorage.getItem(DRAFT_STORAGE_KEY);
-    if (!raw) return { step: 1, draft: seedReferral({ ...EMPTY_DRAFT, name: defaultName }) };
+    if (!raw) return { step: 1, draft: seed({ ...EMPTY_DRAFT }) };
     const parsed = JSON.parse(raw) as { step: number; draft: WizardDraft };
-    return { step: parsed.step ?? 1, draft: seedReferral({ ...EMPTY_DRAFT, ...parsed.draft }) };
+    return { step: parsed.step ?? 1, draft: seed({ ...EMPTY_DRAFT, ...parsed.draft }) };
   } catch {
-    return { step: 1, draft: seedReferral({ ...EMPTY_DRAFT, name: defaultName }) };
+    return { step: 1, draft: seed({ ...EMPTY_DRAFT }) };
   }
 }
 
@@ -92,7 +98,7 @@ export default function OnboardingPage() {
     return <div className="px-4 py-10 text-center text-sm text-slate-400">加载中...</div>;
   }
 
-  return <OnboardingWizard customerId={user.id} defaultName={user.name} defaultReferral={user.referralCode} />;
+  return <OnboardingWizard customerId={user.id} defaultName={user.name} defaultPhone={user.phone} defaultReferral={user.referralCode} />;
 }
 
 function StepIndicator({ step }: { step: number }) {
@@ -111,8 +117,8 @@ function StepIndicator({ step }: { step: number }) {
   );
 }
 
-function OnboardingWizard({ customerId, defaultName, defaultReferral }: { customerId: string; defaultName: string; defaultReferral: string | null }) {
-  const initial = useState(() => readStoredDraft(defaultName ?? "", defaultReferral))[0];
+function OnboardingWizard({ customerId, defaultName, defaultPhone, defaultReferral }: { customerId: string; defaultName: string; defaultPhone: string | null; defaultReferral: string | null }) {
+  const initial = useState(() => readStoredDraft(defaultName ?? "", defaultPhone, defaultReferral))[0];
   const [step, setStep] = useState(initial.step);
   const [draft, setDraft] = useState<WizardDraft>(initial.draft);
   const [error, setError] = useState<string | null>(null);
@@ -190,9 +196,8 @@ function OnboardingWizard({ customerId, defaultName, defaultReferral }: { custom
 
   function validateStep(): string | null {
     if (step === 1) {
-      if (!draft.name.trim()) return "请输入姓名";
+      // Name / phone are collected at registration and not re-asked here.
       if (!draft.age || age <= 0) return "请输入年龄";
-      if (!draft.phone.trim()) return "请输入电话号码";
       if (!draft.height || height <= 0) return "请输入身高";
       if (!draft.currentWeight || currentWeight <= 0) return "请输入当前体重";
       if (!draft.dietType) return "请选择饮食类型";
@@ -342,6 +347,11 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 const inputClass =
   "rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100";
 
+// MVP: only 一般饮食 / 素食 are offered — the finer categories (蛋奶素/全素/其他)
+// don't yet change any recommendation, so we don't ask users to distinguish
+// them. The full DIET_TYPE_LABELS map is kept for displaying existing values.
+const ONBOARDING_DIET_TYPES: DietType[] = ["regular", "vegetarian"];
+
 function StepBasicInfo({ draft, update, referralCoach }: { draft: WizardDraft; update: <K extends keyof WizardDraft>(key: K, value: WizardDraft[K]) => void; referralCoach: ReferralCoach | null }) {
   return (
     <div className="flex flex-col gap-4">
@@ -354,10 +364,6 @@ function StepBasicInfo({ draft, update, referralCoach }: { draft: WizardDraft; u
           </p>
         </div>
       )}
-      <FieldLabel>
-        姓名
-        <input value={draft.name} onChange={(e) => update("name", e.target.value)} className={inputClass} />
-      </FieldLabel>
       <div className="grid grid-cols-2 gap-3">
         <FieldLabel>
           年龄
@@ -371,10 +377,6 @@ function StepBasicInfo({ draft, update, referralCoach }: { draft: WizardDraft; u
           </select>
         </FieldLabel>
       </div>
-      <FieldLabel>
-        电话号码
-        <input value={draft.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+60 1x-xxx xxxx" className={inputClass} />
-      </FieldLabel>
       <div className="grid grid-cols-2 gap-3">
         <FieldLabel>
           身高 (cm)
@@ -389,8 +391,8 @@ function StepBasicInfo({ draft, update, referralCoach }: { draft: WizardDraft; u
         饮食类型
         <select value={draft.dietType} onChange={(e) => update("dietType", e.target.value as DietType)} className={inputClass}>
           <option value="" disabled>请选择</option>
-          {(Object.entries(DIET_TYPE_LABELS) as [DietType, string][]).map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
+          {ONBOARDING_DIET_TYPES.map((value) => (
+            <option key={value} value={value}>{DIET_TYPE_LABELS[value]}</option>
           ))}
         </select>
       </FieldLabel>

@@ -11,6 +11,9 @@ export interface AuthUser {
   /** Referral code captured at sign-up (user_metadata) — the customer→coach
    * binding source carried through email confirmation into onboarding. */
   referralCode: string | null;
+  /** Phone captured at registration — onboarding passes it straight back to
+   * complete_registration_goals so it is preserved, not re-asked. */
+  phone: string | null;
   /** Admin-granted Coach capability (independent of role). */
   isCoach: boolean;
   /** When the one-time Coach welcome was acknowledged (null = not yet). */
@@ -37,7 +40,7 @@ export function useAuthUser(): { user: AuthUser | null; loading: boolean } {
         if (!authUser) return;
         const { data: profile } = await supabase
           .from("profiles")
-          .select("role, name, is_coach, coach_welcome_ack_at")
+          .select("role, name, phone, is_coach, coach_welcome_ack_at")
           .eq("id", authUser.id)
           .single();
         if (!cancelled && profile) {
@@ -47,6 +50,7 @@ export function useAuthUser(): { user: AuthUser | null; loading: boolean } {
             role: profile.role,
             name: profile.name,
             referralCode,
+            phone: profile.phone,
             isCoach: profile.is_coach,
             coachWelcomeAckAt: profile.coach_welcome_ack_at,
           });
