@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { initializeInventoryFromRegistration } from "@/lib/inventory/engine";
-import { UNITS_PER_BOX } from "@/lib/inventory/constants";
 import { parseNonNegativeInt } from "@/lib/inventory/validation";
 import { lookupCoachByReferral, normalizeReferralCode, isReferralCodeShape, type ReferralCoach } from "@/lib/referral";
 
@@ -94,6 +93,7 @@ type RefStatus = "loading" | "valid" | "invalid";
 function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; onBack: () => void }) {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [boxesN, setBoxesN] = useState("0");
@@ -178,6 +178,10 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
       setError("请输入姓名");
       return;
     }
+    if (!phone.trim()) {
+      setError("请输入电话号码");
+      return;
+    }
     if (!email.trim() || !password) {
       setError("请输入邮箱和密码");
       return;
@@ -202,7 +206,7 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { name: name.trim(), ...(referralCode ? { referral_code: referralCode } : {}) } },
+      options: { data: { name: name.trim(), phone: phone.trim(), ...(referralCode ? { referral_code: referralCode } : {}) } },
     });
 
     if (signUpError) {
@@ -312,6 +316,17 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm text-slate-600">
+              电话号码
+              <input
+                type="tel"
+                inputMode="tel"
+                placeholder="+60 1x-xxx xxxx"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm text-slate-600">
               邮箱
               <input
                 type="email"
@@ -363,7 +378,7 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
 
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
               <p className="mb-1 text-sm font-semibold text-slate-800">我的 MISU 产品</p>
-              <p className="mb-3 text-xs text-slate-500">MISU N+ 代餐 1盒 = 20包 · MISU DX+ 排毒 1盒 = 20包</p>
+              <p className="mb-3 text-xs text-slate-500">请填写你目前购买的产品数量。</p>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1.5 text-xs text-slate-600">
                   MISU N+ 代餐（盒）
@@ -376,9 +391,6 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
                     onChange={(e) => setBoxesN(e.target.value)}
                     className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                   />
-                  <span className="text-[11px] font-medium text-emerald-600">
-                    {parsedN !== null ? `= 初始库存 ${parsedN * UNITS_PER_BOX} 包` : "只能填 0 或正整数"}
-                  </span>
                 </label>
                 <label className="flex flex-col gap-1.5 text-xs text-slate-600">
                   MISU DX+ 排毒（盒）
@@ -391,9 +403,6 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
                     onChange={(e) => setBoxesDX(e.target.value)}
                     className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                   />
-                  <span className="text-[11px] font-medium text-emerald-600">
-                    {parsedDX !== null ? `= 初始库存 ${parsedDX * UNITS_PER_BOX} 包` : "只能填 0 或正整数"}
-                  </span>
                 </label>
               </div>
             </div>
