@@ -649,10 +649,10 @@ function customLossKgValid(value: string): boolean {
 function StepLongTermGoal({ value, onChange, valid }: { value: string; onChange: (v: string) => void; valid: boolean }) {
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-slate-900">Step 3 · 最终目标（可选）</h2>
-      <p className="text-sm text-slate-500">如果你希望填写最终理想体重，可以填写。这不会直接成为当前执行目标，会在你完成第一阶段后重新规划。</p>
+      <h2 className="text-base font-semibold text-slate-900">Step 3：一起设定你的目标</h2>
+      <p className="text-sm text-slate-500">这是你心中的长期目标。不用担心，我们会陪你一步一步慢慢靠近。</p>
       <FieldLabel>
-        最终目标体重 (kg)
+        我的理想体重（kg）
         <input
           type="number"
           inputMode="decimal"
@@ -663,8 +663,8 @@ function StepLongTermGoal({ value, onChange, valid }: { value: string; onChange:
         />
       </FieldLabel>
       {!valid && (
-        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          这个长期目标偏低，我们会把你的第一阶段目标改为习惯养成，而不是体重目标。
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          🌱 这是一个很棒的目标。为了让你更容易坚持，我们会先陪你完成第一阶段的小目标，再一步一步靠近你的理想目标。
         </div>
       )}
     </div>
