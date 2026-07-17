@@ -4,12 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { PoseLandmarker } from "@mediapipe/tasks-vision";
 import { computeAlignment, isProfileAngle } from "@/lib/bodyProgress/alignment";
 import type { BodyProgressAngle } from "@/lib/bodyProgress/types";
-import { AlignmentOverlay } from "./AlignmentOverlay";
+import { BODY_PROGRESS_GUIDE_BY_ANGLE } from "@/lib/bodyProgress/guide-assets";
 
 const WASM_CDN = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
 const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
 const STABILITY_MS = 2000; // must hold the aligned pose this long before the countdown
 const COUNTDOWN_START = 5;
+// Translucent ghost-template opacity for the reference photo drawn over the live
+// camera. Single easy-to-tune constant (founder spec: start 18–22%).
+const OVERLAY_OPACITY = 0.2;
 
 type Phase = "starting" | "guiding" | "countdown" | "captured" | "unsupported" | "denied" | "error";
 
@@ -286,7 +289,26 @@ export function GuidedCameraCapture({
     <div className="fixed inset-0 z-[60] overflow-hidden bg-black">
       <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" style={{ transform: "scaleX(-1)" }} />
 
-      <AlignmentOverlay angle={angle} aligned={aligned} />
+      {/* The ONLY visual alignment guide: the actual reference photo for this
+          angle (front/left/right/back), drawn translucent over the live preview
+          so the customer lines up with the ghost person. Mirrored to share the
+          selfie preview's coordinate space. No drawn outline / skeleton. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={BODY_PROGRESS_GUIDE_BY_ANGLE[angle].src}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        style={{ opacity: OVERLAY_OPACITY, transform: "scaleX(-1)" }}
+      />
+
+      {/* Alignment feedback that never touches the photo itself: a thin
+          cyan-green border ring appears around the preview once the position is
+          acceptable (the "✓ 位置正确" pill below is the small text indicator). */}
+      <div
+        className="pointer-events-none absolute inset-0 transition-all duration-300"
+        style={{ boxShadow: aligned ? "inset 0 0 0 4px #34d399" : "inset 0 0 0 0 rgba(52,211,153,0)" }}
+      />
 
       {/* Minimal top bar: exit · title · progress. No instruction cards. */}
       <div
