@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ContentCardViewer } from "./ContentCardViewer";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { buildCards } from "@/lib/cms/templates";
 import type { CmsContentCreationMode, CmsContentFields, CmsPosterMediaItem, CmsTemplateType } from "@/lib/cms/types";
 import { cn } from "@/lib/utils";
+import { TemplateCardPage } from "./TemplateCardPage";
 
 interface LearningContentModalProps {
   title: string;
@@ -26,22 +27,20 @@ interface LearningContentModalProps {
   onOpenHistory?: () => void;
 }
 
-/** The learning READER — a structured lesson, not a long scrolling page.
+/** THE Learning Reader — the single reading experience for every lesson in MISU
+ * Journey. A poster lesson and a template lesson differ only in what a page
+ * *contains*; the reader around them is identical:
  *
- * Layout is three fixed regions around one scroll area:
- *   header (title · Day · 第 X / Y 页)  ← always visible
- *   lesson body                          ← the ONLY thing that scrolls
- *   sticky nav (◀ 上一页 · dots · 下一页 ▶ / 我看完了) + 学习历史
+ *   header (title · Day · 第 X / Y 页)   ← always visible
+ *   lesson body                           ← the ONLY thing that scrolls
+ *   sticky nav (◀ 上一页 · dots · 下一页 ▶ / 我看完了)
+ *   📚 学习历史 →
  *
- * The reader owns the page index (it used to live inside PosterCardViewer,
- * which put the navigation *inside* the scroll area and left scrollTop
- * untouched between pages — so the next poster opened half-way down). Owning it
- * here lets the nav stay pinned and lets every page change reset the body to
- * the top, so each poster always starts at its title/main visual.
- *
- * Poster lessons page through their images. Template lessons keep their own
- * interactive card stepper (its gating is integral) but report position back
- * via onStepChange, so the header count and the scroll reset work there too. */
+ * The reader owns the page index for BOTH types (poster images and template
+ * cards are both just "pages"), so navigation position, the page indicator and
+ * the scroll-reset-on-page-change behave the same everywhere. Interactive
+ * template cards gate 下一页/我看完了 until the customer answers — the answer is
+ * held here too, and cleared on every page change. */
 export function LearningContentModal({
   title,
   dayLabel,
@@ -57,33 +56,40 @@ export function LearningContentModal({
   onOpenHistory,
 }: LearningContentModalProps) {
   const isPoster = contentCreationMode === "poster_upload";
-  const pages = useMemo(() => [...posterMedia].sort((a, b) => a.sortOrder - b.sortOrder), [posterMedia]);
 
-  const [page, setPage] = useState(0);
-  const [templateIndex, setTemplateIndex] = useState(0);
-  const [templateTotal, setTemplateTotal] = useState(1);
+  const posters = useMemo(() => [...posterMedia].sort((a, b) => a.sortOrder - b.sortOrder), [posterMedia]);
+  const cards = useMemo(() => (!isPoster && templateType ? buildCards(templateType, fields) : []), [isPoster, templateType, fields]);
+
+  const pageCount = isPoster ? posters.length : cards.length;
+  const totalPages = Math.max(1, pageCount);
+
+  const [index, setIndex] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  const totalPages = isPoster ? Math.max(1, pages.length) : templateTotal;
-  const currentIndex = isPoster ? page : templateIndex;
-  const isLastPage = currentIndex >= totalPages - 1;
-
   // Every page is a fresh reading page. The scroll container persists across
-  // page changes, so without this reset its scrollTop carries over and drops the
-  // customer into the middle of the next poster.
+  // page changes, so without this reset its scrollTop carries over and the
+  // customer lands in the middle of the next page.
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: 0 });
-  }, [currentIndex]);
+  }, [index]);
 
-  const handleStepChange = useCallback((index: number, total: number) => {
-    setTemplateIndex(index);
-    setTemplateTotal(total);
-  }, []);
+  /** Turn to a page: the answer belongs to the page being left, so it's cleared
+   * here (in the event) rather than in an effect. */
+  function goToPage(next: number) {
+    setIndex(next);
+    setSelected(null);
+  }
+
+  const currentPoster = isPoster ? posters[index] : undefined;
+  const currentCard = !isPoster ? cards[index] : undefined;
+  const isLastPage = index >= totalPages - 1;
+  // Interactive cards must be answered before moving on / finishing.
+  const canAdvance = !currentCard?.interactive || selected !== null;
 
   // Review mode → "我看完了" just closes; nothing is recorded.
   const handleComplete = onComplete ?? onClose;
-  const currentPoster = pages[page];
-  const headerMeta = [dayLabel, `第 ${currentIndex + 1} / ${totalPages} 页`].filter(Boolean).join(" · ");
+  const headerMeta = [dayLabel, `第 ${index + 1} / ${totalPages} 页`].filter(Boolean).join(" · ");
 
   return (
     <div
@@ -129,62 +135,57 @@ export function LearningContentModal({
             ) : (
               <p className="px-4 py-10 text-center text-sm text-slate-400">这篇内容还没有上传海报</p>
             )
+          ) : currentCard ? (
+            <TemplateCardPage card={currentCard} selected={selected} onSelect={setSelected} pageKey={index} />
           ) : (
-            <ContentCardViewer
-              templateType={templateType!}
-              fields={fields}
-              onComplete={handleComplete}
-              completing={completing}
-              onStepChange={handleStepChange}
-            />
+            <p className="px-4 py-10 text-center text-sm text-slate-400">内容还没有填写完整</p>
           )}
         </div>
 
-        {/* ── Sticky reader navigation (poster lessons) ── */}
-        {isPoster && (
-          <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 px-4 py-3">
-            <div className="flex flex-1 justify-start">
-              {page > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => p - 1)}
-                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition active:bg-slate-50"
-                >
-                  ◀ 上一页
-                </button>
-              )}
-            </div>
-
-            {totalPages > 1 && (
-              <div className="flex shrink-0 items-center gap-1.5" aria-label={`第 ${page + 1} / ${totalPages} 页`}>
-                {pages.map((_, i) => (
-                  <span key={i} className={cn("h-2 rounded-full transition-all", i === page ? "w-4 bg-emerald-500" : "w-2 bg-slate-200")} />
-                ))}
-              </div>
+        {/* ── Sticky reader navigation — identical for every lesson type ── */}
+        <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 px-4 py-3">
+          <div className="flex flex-1 justify-start">
+            {index > 0 && (
+              <button
+                type="button"
+                onClick={() => goToPage(index - 1)}
+                className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition active:bg-slate-50"
+              >
+                ◀ 上一页
+              </button>
             )}
-
-            <div className="flex flex-1 justify-end">
-              {isLastPage ? (
-                <button
-                  type="button"
-                  disabled={completing}
-                  onClick={handleComplete}
-                  className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition active:bg-emerald-600 disabled:opacity-50"
-                >
-                  {completing ? "完成中..." : "我看完了"}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => p + 1)}
-                  className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition active:bg-emerald-600"
-                >
-                  下一页 ▶
-                </button>
-              )}
-            </div>
           </div>
-        )}
+
+          {totalPages > 1 && (
+            <div className="flex shrink-0 items-center gap-1.5" aria-label={`第 ${index + 1} / ${totalPages} 页`}>
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <span key={i} className={cn("h-2 rounded-full transition-all", i === index ? "w-4 bg-emerald-500" : "w-2 bg-slate-200")} />
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-1 justify-end">
+            {isLastPage ? (
+              <button
+                type="button"
+                disabled={completing || !canAdvance}
+                onClick={handleComplete}
+                className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition active:bg-emerald-600 disabled:opacity-50"
+              >
+                {completing ? "完成中..." : "我看完了"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={!canAdvance}
+                onClick={() => goToPage(index + 1)}
+                className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition active:bg-emerald-600 disabled:opacity-50"
+              >
+                下一页 ▶
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* ── Secondary navigation, never competing with the reading flow ── */}
         {onOpenHistory && (
