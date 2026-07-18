@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useJourneySummary } from "@/lib/journey";
 import { useMyTodayContent } from "@/lib/cms/hooks";
 import { completeTodayContent } from "@/lib/cms/engine";
 import { TEMPLATE_LIST } from "@/lib/cms/templates";
@@ -14,6 +16,8 @@ import { LearningContentModal } from "./LearningContentModal";
  * review (completed ≠ hidden). Empty when the day has nothing scheduled. */
 export function TodayContentCard() {
   const router = useRouter();
+  const { user } = useAuthUser();
+  const { data: journey } = useJourneySummary(user?.id ?? "");
   const { data: items, loading, refresh } = useMyTodayContent();
   const [viewItem, setViewItem] = useState<TodayContentItem | null>(null);
   const [viewMode, setViewMode] = useState<"complete" | "review">("complete");
@@ -98,7 +102,14 @@ export function TodayContentCard() {
       {viewItem && (
         <LearningContentModal
           title={viewItem.title}
-          subtitle={viewItem.totalToday > 1 ? `今日内容 ${viewItem.positionInDay} / ${viewItem.totalToday}` : undefined}
+          dayLabel={
+            [
+              journey?.currentDay ? `Day ${journey.currentDay}` : null,
+              viewItem.totalToday > 1 ? `今日第 ${viewItem.positionInDay} 篇` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || undefined
+          }
           contentCreationMode={viewItem.contentCreationMode}
           templateType={viewItem.templateType}
           fields={viewItem.fields}

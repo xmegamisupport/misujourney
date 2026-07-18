@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { buildCards } from "@/lib/cms/templates";
 import type { CmsContentFields, CmsTemplateType } from "@/lib/cms/types";
 import { cn } from "@/lib/utils";
@@ -15,17 +15,24 @@ interface ContentCardViewerProps {
    * review modals (待审核/已发布/编辑预览) where Admin needs to actually
    * inspect photo quality, not just simulate the customer's phone size. */
   imageSize?: "sm" | "lg";
+  /** Reports the current card position to a parent reader shell, so it can show
+   * "第 X / Y 页" in its header and reset the scroll to the top on each step. */
+  onStepChange?: (index: number, total: number) => void;
 }
 
 /** Card1 图片+一句重点 → Card2 ... → 互动 → 完成 — one component drives both
  * the CMS "预览" (onComplete is a no-op that just closes the modal) and the
  * real customer-facing viewer (onComplete calls complete_today_content). */
-export function ContentCardViewer({ templateType, fields, onComplete, completing, imageSize = "sm" }: ContentCardViewerProps) {
+export function ContentCardViewer({ templateType, fields, onComplete, completing, imageSize = "sm", onStepChange }: ContentCardViewerProps) {
   const cards = useMemo(() => buildCards(templateType, fields), [templateType, fields]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const card = cards[index];
   const isLast = index === cards.length - 1;
+
+  useEffect(() => {
+    onStepChange?.(index, cards.length);
+  }, [index, cards.length, onStepChange]);
 
   if (!card) {
     return <p className="px-4 py-10 text-center text-sm text-slate-400">内容还没有填写完整</p>;

@@ -4,6 +4,8 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useJourneySummary } from "@/lib/journey";
 import { useMyTodayContent, useMyLearningHistory } from "@/lib/cms/hooks";
 import { completeTodayContent } from "@/lib/cms/engine";
 import { TEMPLATE_LIST } from "@/lib/cms/templates";
@@ -19,7 +21,7 @@ import { LearningContentModal } from "@/components/cms/LearningContentModal";
 
 interface ViewerContent {
   title: string;
-  subtitle?: string;
+  dayLabel?: string;
   contentCreationMode: CmsContentCreationMode;
   templateType: CmsTemplateType | null;
   fields: CmsContentFields;
@@ -53,6 +55,8 @@ export default function LearnPage() {
 }
 
 function LearnCentre() {
+  const { user } = useAuthUser();
+  const { data: journey } = useJourneySummary(user?.id ?? "");
   const { data: todayItems, loading: todayLoading, refresh: refreshToday } = useMyTodayContent();
   const { data: history, loading: historyLoading, refresh: refreshHistory } = useMyLearningHistory();
   const [viewer, setViewer] = useState<ViewerContent | null>(null);
@@ -124,7 +128,10 @@ function LearnCentre() {
               onClick={() =>
                 setViewer({
                   title: item.title,
-                  subtitle: item.totalToday > 1 ? `今日内容 ${item.positionInDay} / ${item.totalToday}` : undefined,
+                  dayLabel:
+                    [journey?.currentDay ? `Day ${journey.currentDay}` : null, item.totalToday > 1 ? `今日第 ${item.positionInDay} 篇` : null]
+                      .filter(Boolean)
+                      .join(" · ") || undefined,
                   contentCreationMode: item.contentCreationMode,
                   templateType: item.templateType,
                   fields: item.fields,
@@ -166,7 +173,7 @@ function LearnCentre() {
               onClick={() =>
                 setViewer({
                   title: item.title,
-                  subtitle: `Day ${item.dayNumber}`,
+                  dayLabel: `Day ${item.dayNumber}`,
                   contentCreationMode: item.contentCreationMode,
                   templateType: item.templateType,
                   fields: item.fields,
@@ -199,7 +206,7 @@ function LearnCentre() {
       {viewer && (
         <LearningContentModal
           title={viewer.title}
-          subtitle={viewer.subtitle}
+          dayLabel={viewer.dayLabel}
           contentCreationMode={viewer.contentCreationMode}
           templateType={viewer.templateType}
           fields={viewer.fields}
