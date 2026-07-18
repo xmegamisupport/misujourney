@@ -8,7 +8,8 @@ import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { todayDateStr, yesterdayDateStr } from "@/lib/inventory/engine";
 import { useCheckoutForDate } from "@/lib/checkout/hooks";
 import { submitEveningCheckout } from "@/lib/checkout/engine";
-import { BOWEL_MOVEMENT_LABELS, SPECIAL_CONDITION_OPTIONS } from "@/lib/checkout/constants";
+import { BOWEL_MOVEMENT_LABELS, SPECIAL_CONDITION_OPTIONS, REFLECTION_UNLOCK_HOUR } from "@/lib/checkout/constants";
+import { useLocalHour } from "@/lib/useLocalHour";
 import type { BowelMovementLevel, SpecialCondition } from "@/lib/checkout/types";
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import { buildCustomerTrendSummary, syncAttentionFlags } from "@/lib/insights/summary";
@@ -48,6 +49,10 @@ function EveningCheckoutForm() {
   const { data: todayJourney, loading: journeyLoading } = useTodayJourneyDay(customerId, today);
   const journeyActive = (todayJourney?.status ?? "waiting_for_morning") === "active";
   const blockedByJourney = !isMakeUp && !journeyLoading && !journeyActive;
+  // Today's reflection is a real evening feature — gated here too, not only on
+  // the Dashboard card, so the two can't disagree. Yesterday's make-up is exempt.
+  const localHour = useLocalHour();
+  const blockedByTime = !isMakeUp && localHour !== null && localHour < REFLECTION_UNLOCK_HOUR;
 
   const [bowelMovement, setBowelMovement] = useState<BowelMovementLevel | "">("");
   const [conditions, setConditions] = useState<SpecialCondition[]>([]);
@@ -102,18 +107,33 @@ function EveningCheckoutForm() {
     router.push("/customer");
   }
 
-  if (loading || existing || (!isMakeUp && journeyLoading)) {
+  // Hold until the real local hour is known, so the evening gate never flashes
+  // the wrong state during hydration.
+  if (loading || existing || (!isMakeUp && (journeyLoading || localHour === null))) {
     return <div className="px-4 py-10 text-center text-sm text-slate-400">加载中...</div>;
   }
 
   if (blockedByJourney) {
     return (
       <div className="px-4 py-10 md:px-8">
-        <PageHeader title="🌙 睡前回顾" backHref="/customer" />
+        <PageHeader title="🌙 今日回顾" backHref="/customer" />
         <EmptyState
           icon="🌱"
           title="今天的 Journey 还没开始"
-          description="请先回到首页完成或跳过晨重，今天结束后再来完成睡前回顾。"
+          description="请先回到首页完成或跳过晨重，今天结束后再来完成今日回顾。"
+        />
+      </div>
+    );
+  }
+
+  if (blockedByTime) {
+    return (
+      <div className="px-4 py-10 md:px-8">
+        <PageHeader title="🌙 今日回顾" backHref="/customer" />
+        <EmptyState
+          icon="🌙"
+          title="今日回顾会在每天晚上开放"
+          description={`今天还在进行中，先好好过完这一天。晚上 ${REFLECTION_UNLOCK_HOUR}:00 后再回来，花一点时间回顾今天，为今天的 Journey 收尾。`}
         />
       </div>
     );
@@ -121,7 +141,7 @@ function EveningCheckoutForm() {
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
-      <PageHeader title={isMakeUp ? `补充${formatMonthDay(targetDate)}睡前回顾` : "🌙 睡前回顾"} backHref="/customer" />
+      <PageHeader title={isMakeUp ? `补充${formatMonthDay(targetDate)}回顾` : "🌙 今日回顾"} backHref="/customer" />
 
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-6">

@@ -28,7 +28,7 @@ export function TodayContentCard() {
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-        <p className="mb-1 text-sm font-semibold text-slate-700">📚 今日小知识</p>
+        <p className="mb-1 text-sm font-semibold text-slate-700">📚 今日学习</p>
         <p className="text-sm text-slate-400">今天没有新的小知识，继续完成你的 Journey 任务就好。</p>
       </div>
     );
@@ -55,7 +55,7 @@ export function TodayContentCard() {
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-sm font-semibold text-slate-700">📚 今日小知识</p>
+        <p className="text-sm font-semibold text-slate-700">📚 今日学习</p>
         {items[0].totalToday > 1 && (
           <span className="text-xs text-slate-400">今日内容 {completedCount}/{items[0].totalToday}</span>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ProgressCard } from "@/components/ui/ProgressCard";
@@ -26,6 +26,9 @@ import { countVegetableServings, VEGETABLE_SERVINGS_TARGET } from "@/lib/meal-ch
 import { useBodyProgressHomeState } from "@/lib/bodyProgress/hooks";
 import { BODY_PROGRESS_CTA_LABEL, bodyProgressCtaHref } from "@/lib/bodyProgress/engine";
 import { useJourneyBaselineStatus } from "@/lib/baseline/hooks";
+import { useMyTodayContent } from "@/lib/cms/hooks";
+import { REFLECTION_UNLOCK_HOUR } from "@/lib/checkout/constants";
+import { useLocalHour } from "@/lib/useLocalHour";
 
 const waterPresets = [100, 200, 300];
 /** Only used for the brief window before the real per-customer target
@@ -39,35 +42,16 @@ const MORNING_WINDOW_START_HOUR = 4;
 const WEIGH_IN_CUTOFF_HOUR = 12;
 const LOCKED_HINT_TOO_EARLY = "明早 4:00 开放";
 const LOCKED_HINT_PENDING_MORNING = "完成晨重后开放";
-/** 今日回顾 belongs to tonight: the Dashboard keeps it locked until this hour so
- * the customer reads it as "this one is for later". Dashboard presentation only —
- * /customer/checkout itself is unchanged and still reachable. Single knob. */
-const REFLECTION_UNLOCK_HOUR = 19;
 const LOCKED_HINT_REFLECTION = "今晚开放";
+/** Today's Journey = these five tasks. The progress card counts exactly them, so
+ * the percentage can never disagree with what the customer sees in the list. */
+const TODAY_JOURNEY_TASK_COUNT = 5;
 
 function getGreeting(hour: number): string {
   if (hour >= 5 && hour < 12) return "早安";
   if (hour >= 12 && hour < 18) return "午安";
   if (hour >= 18 && hour < 23) return "晚上好";
   return "夜深了";
-}
-
-/** The server has no notion of the customer's local clock, so reading
- * `new Date().getHours()` directly in render would mismatch between the
- * server-rendered HTML and the client's first paint. useSyncExternalStore's
- * getServerSnapshot exists exactly for this: render a neutral hour during
- * SSR/hydration, then swap to the real local hour right after mount. */
-function subscribeNoop() {
-  return () => {};
-}
-function getClientHour() {
-  return new Date().getHours();
-}
-function getServerHour() {
-  return 8;
-}
-function useLocalHour(): number {
-  return useSyncExternalStore(subscribeNoop, getClientHour, getServerHour);
 }
 
 export default function CustomerDashboardPage() {
@@ -106,9 +90,14 @@ export default function CustomerDashboardPage() {
   const weighInDone = Boolean(todayCheckIn);
   const mealDone = addedMeals.length > 0;
   const waterDone = water >= waterTarget;
-  const todayTasksDone = [weighInDone, mealDone, waterDone].filter(Boolean).length;
-  const journeyProgressPercent = Math.round((todayTasksDone / 3) * 100);
-  const currentHour = useLocalHour();
+  // A day with nothing scheduled has no learning to do, so it isn't held against
+  // the customer — otherwise 5/5 would be unreachable on those days.
+  const { data: todayLearning } = useMyTodayContent();
+  const learningDone = todayLearning.length === 0 || todayLearning.every((i) => i.completed);
+  const reflectionDone = Boolean(todayCheckout);
+  const todayTasksDone = [weighInDone, mealDone, waterDone, learningDone, reflectionDone].filter(Boolean).length;
+  const journeyProgressPercent = Math.round((todayTasksDone / TODAY_JOURNEY_TASK_COUNT) * 100);
+  const currentHour = useLocalHour() ?? 8;
   const tooEarlyForMorning = currentHour < MORNING_WINDOW_START_HOUR;
   const pastWeighInWindow = currentHour >= WEIGH_IN_CUTOFF_HOUR;
   const inMorningWindow = !tooEarlyForMorning && !pastWeighInWindow;
@@ -197,7 +186,12 @@ export default function CustomerDashboardPage() {
         </div>
       )}
 
-      <ProgressCard label="今日 Journey 完成度" percent={journeyProgressPercent} icon="🌱" sublabel="完成今天的任务，保持你的 Journey" />
+      <ProgressCard
+        label="今日 Journey 完成度"
+        percent={journeyProgressPercent}
+        icon="🌱"
+        sublabel={`今日 Journey ${todayTasksDone} / ${TODAY_JOURNEY_TASK_COUNT} 项已完成`}
+      />
 
       {currentGoal && (
         <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
@@ -373,7 +367,7 @@ export default function CustomerDashboardPage() {
           )}
 
           {/* 4. 今日学习 — completed state stays visible + reopenable. */}
-          {journeyActive ? <TodayContentCard /> : <LockedTaskCard icon="📚" label="今日小知识" hint={lockedHint} />}
+          {journeyActive ? <TodayContentCard /> : <LockedTaskCard icon="📚" label="今日学习" hint={lockedHint} />}
 
           {/* 5. 今日回顾 — this one belongs to tonight: locked until the evening
               hour, then active, then completed. */}
