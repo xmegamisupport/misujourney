@@ -25,6 +25,7 @@ import { buildDailyNutritionAdvice } from "@/lib/nutrition/daily-advice";
 import { countVegetableServings, VEGETABLE_SERVINGS_TARGET } from "@/lib/meal-check/plate-analysis";
 import { useBodyProgressHomeState } from "@/lib/bodyProgress/hooks";
 import { BODY_PROGRESS_CTA_LABEL, bodyProgressCtaHref } from "@/lib/bodyProgress/engine";
+import { useJourneyBaselineStatus } from "@/lib/baseline/hooks";
 
 const waterPresets = [100, 200, 300];
 /** Only used for the brief window before the real per-customer target
@@ -38,6 +39,11 @@ const MORNING_WINDOW_START_HOUR = 4;
 const WEIGH_IN_CUTOFF_HOUR = 12;
 const LOCKED_HINT_TOO_EARLY = "明早 4:00 开放";
 const LOCKED_HINT_PENDING_MORNING = "完成晨重后开放";
+/** 今日回顾 belongs to tonight: the Dashboard keeps it locked until this hour so
+ * the customer reads it as "this one is for later". Dashboard presentation only —
+ * /customer/checkout itself is unchanged and still reachable. Single knob. */
+const REFLECTION_UNLOCK_HOUR = 19;
+const LOCKED_HINT_REFLECTION = "今晚开放";
 
 function getGreeting(hour: number): string {
   if (hour >= 5 && hour < 12) return "早安";
@@ -91,6 +97,8 @@ export default function CustomerDashboardPage() {
   const { data: todayJourney, loading: todayJourneyLoading, refresh: refreshJourney } = useTodayJourneyDay(customerId, today);
   const { cta: bodyProgressCta, loading: bodyProgressLoading } = useBodyProgressHomeState(customerId);
   const bodyProgressActionable = bodyProgressCta.kind !== "view_growth_journey";
+  // Journey 起点 and 身形记录 are the same workflow — exactly one may show.
+  const { status: baselineStatus } = useJourneyBaselineStatus(customerId);
   const journeyActive = (todayJourney?.status ?? "waiting_for_morning") === "active";
   const [skipping, setSkipping] = useState(false);
   const [skipError, setSkipError] = useState<string | null>(null);
@@ -106,6 +114,7 @@ export default function CustomerDashboardPage() {
   const inMorningWindow = !tooEarlyForMorning && !pastWeighInWindow;
   const greeting = getGreeting(currentHour);
   const lockedHint = tooEarlyForMorning ? LOCKED_HINT_TOO_EARLY : LOCKED_HINT_PENDING_MORNING;
+  const reflectionUnlocked = currentHour >= REFLECTION_UNLOCK_HOUR;
 
   async function handleSkipMorning() {
     setSkipping(true);
@@ -165,8 +174,6 @@ export default function CustomerDashboardPage() {
       />
 
       <CoachContactSheet open={coachSheetOpen} onClose={() => setCoachSheetOpen(false)} />
-
-      {customerId && <JourneyBaselineReminder customerId={customerId} />}
 
       {!todayJourneyLoading && !journeyActive && tooEarlyForMorning && (
         <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
@@ -232,7 +239,7 @@ export default function CustomerDashboardPage() {
       )}
 
       <div>
-        <p className="mb-2 text-sm font-semibold text-slate-700">今日任务</p>
+        <p className="mb-2 text-sm font-semibold text-slate-700">🌱 Today&apos;s Journey</p>
         <div className="flex flex-col gap-2">
           {weighInDone ? (
             <Link
@@ -301,88 +308,122 @@ export default function CustomerDashboardPage() {
           ) : (
             <LockedTaskCard icon="🥗" label="饮食打卡" hint={lockedHint} />
           )}
+
+          {/* 3. 饮水打卡 */}
+          {journeyActive ? (
+            <div className={`rounded-2xl border p-4 shadow-sm ${waterDone ? "border-emerald-100 bg-emerald-50/60" : "border-sky-100 bg-white"}`}>
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">💧</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-800">饮水打卡</p>
+                  <p className="text-2xl font-bold leading-tight text-sky-600">
+                    {water}
+                    <span className="ml-1 text-sm font-normal text-slate-400">/ {waterTarget}ml</span>
+                  </p>
+                </div>
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${waterDone ? "border-emerald-400 bg-emerald-400 text-white" : "border-slate-300 text-transparent"}`}>✓</span>
+              </div>
+
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-sky-50">
+                <div
+                  className="h-full rounded-full bg-sky-400 transition-all"
+                  style={{ width: `${Math.min(100, Math.round((water / waterTarget) * 100))}%` }}
+                />
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {waterPresets.map((amount) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => addWater(amount)}
+                    className="rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-xs font-medium text-sky-700 transition hover:border-sky-300 active:scale-95"
+                  >
+                    +{amount}ml
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  inputMode="numeric"
+                  value={customWater}
+                  onChange={(e) => setCustomWater(e.target.value)}
+                  placeholder="自定义 ml"
+                  className="w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const amount = Number(customWater);
+                    if (amount > 0) {
+                      addWater(amount);
+                      setCustomWater("");
+                    }
+                  }}
+                  className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600"
+                >
+                  添加
+                </button>
+              </div>
+            </div>
+          ) : (
+            <LockedTaskCard icon="💧" label="饮水打卡" hint={lockedHint} />
+          )}
+
+          {/* 4. 今日学习 — completed state stays visible + reopenable. */}
+          {journeyActive ? <TodayContentCard /> : <LockedTaskCard icon="📚" label="今日小知识" hint={lockedHint} />}
+
+          {/* 5. 今日回顾 — this one belongs to tonight: locked until the evening
+              hour, then active, then completed. */}
+          {!journeyActive ? (
+            <LockedTaskCard icon="🌙" label="今日回顾" hint={lockedHint} />
+          ) : todayCheckout ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3.5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">🌙</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-500 line-through">今日回顾</p>
+                <p className="text-xs text-slate-400">✅ 今日已完成</p>
+              </div>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400 bg-emerald-400 text-xs text-white">✓</span>
+            </div>
+          ) : !reflectionUnlocked ? (
+            <LockedTaskCard icon="🌙" label="今日回顾" hint={LOCKED_HINT_REFLECTION} />
+          ) : (
+            <Link
+              href="/customer/checkout"
+              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 transition hover:border-emerald-200"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-lg">🌙</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-800">今日回顾</p>
+                <p className="text-xs text-slate-400">记录今天的身体变化与生活情况</p>
+              </div>
+              <span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">开始 →</span>
+            </Link>
+          )}
         </div>
       </div>
 
-      {!bodyProgressLoading && bodyProgressActionable && (
-        <Link
-          href={bodyProgressCtaHref(bodyProgressCta)}
-          className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm transition hover:border-emerald-200"
-        >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">🧍</span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-slate-800">身形记录</p>
-            <p className="text-xs text-slate-400">记录你的身形变化，为自己留下一个参考</p>
-          </div>
-          <span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">{BODY_PROGRESS_CTA_LABEL[bodyProgressCta.kind]}</span>
-        </Link>
-      )}
-
-      {journeyActive ? (
-        <div className={`rounded-2xl border p-4 shadow-sm ${waterDone ? "border-emerald-100 bg-emerald-50/60" : "border-sky-100 bg-white"}`}>
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">💧</span>
+      {/* Journey 起点 and 身形记录 are the same workflow, so exactly one shows:
+          the baseline until it's complete, then the long-term body tracker. */}
+      {baselineStatus.loaded &&
+        (!baselineStatus.complete ? (
+          customerId && <JourneyBaselineReminder customerId={customerId} />
+        ) : !bodyProgressLoading && bodyProgressActionable ? (
+          <Link
+            href={bodyProgressCtaHref(bodyProgressCta)}
+            className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm transition hover:border-emerald-200"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">📷</span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-slate-800">饮水打卡</p>
-              <p className="text-2xl font-bold leading-tight text-sky-600">
-                {water}
-                <span className="ml-1 text-sm font-normal text-slate-400">/ {waterTarget}ml</span>
-              </p>
+              <p className="text-sm font-semibold text-slate-800">身形记录</p>
+              <p className="text-xs text-slate-400">记录你的身形变化，为自己留下一个参考</p>
             </div>
-            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${waterDone ? "border-emerald-400 bg-emerald-400 text-white" : "border-slate-300 text-transparent"}`}>✓</span>
-          </div>
-
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-sky-50">
-            <div
-              className="h-full rounded-full bg-sky-400 transition-all"
-              style={{ width: `${Math.min(100, Math.round((water / waterTarget) * 100))}%` }}
-            />
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            {waterPresets.map((amount) => (
-              <button
-                key={amount}
-                type="button"
-                onClick={() => addWater(amount)}
-                className="rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-xs font-medium text-sky-700 transition hover:border-sky-300 active:scale-95"
-              >
-                +{amount}ml
-              </button>
-            ))}
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            <input
-              type="number"
-              min={1}
-              inputMode="numeric"
-              value={customWater}
-              onChange={(e) => setCustomWater(e.target.value)}
-              placeholder="自定义 ml"
-              className="w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                const amount = Number(customWater);
-                if (amount > 0) {
-                  addWater(amount);
-                  setCustomWater("");
-                }
-              }}
-              className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600"
-            >
-              添加
-            </button>
-          </div>
-        </div>
-      ) : (
-        <LockedTaskCard icon="💧" label="饮水打卡" hint={lockedHint} />
-      )}
-
-      {/* 今日小知识 — a daily Journey task (learning is a required daily action,
-          not a standalone section). Completed state stays visible + reopenable. */}
-      {journeyActive ? <TodayContentCard /> : <LockedTaskCard icon="📚" label="今日小知识" hint={lockedHint} />}
+            <span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">{BODY_PROGRESS_CTA_LABEL[bodyProgressCta.kind]}</span>
+          </Link>
+        ) : null)}
 
       <div>
         <div className="mb-2 flex items-center justify-between">
@@ -421,31 +462,6 @@ export default function CustomerDashboardPage() {
             </p>
           </div>
         </div>
-      )}
-
-      {journeyActive ? (
-        todayCheckout ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 shadow-sm">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl">✅</span>
-            <p className="text-sm font-semibold text-slate-700">今日回顾已完成</p>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">🌙</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-800">睡前回顾</p>
-              <p className="text-xs text-slate-400">今天还没有完成今天的回顾。</p>
-            </div>
-            <Link
-              href="/customer/checkout"
-              className="shrink-0 rounded-full bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
-            >
-              立即填写
-            </Link>
-          </div>
-        )
-      ) : (
-        <LockedTaskCard icon="🌙" label="睡前回顾" hint={lockedHint} />
       )}
 
       <Link
