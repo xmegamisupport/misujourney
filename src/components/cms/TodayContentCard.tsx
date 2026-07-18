@@ -69,7 +69,7 @@ export function TodayContentCard() {
             <p className="text-sm font-medium text-emerald-700">今日已完成</p>
             <p className="text-xs text-emerald-600/70">点这里可以再看一次今天的内容</p>
           </div>
-          <span className="shrink-0 text-xs font-medium text-emerald-600">回顾 →</span>
+          <span className="shrink-0 text-xs font-medium text-emerald-600">查看 →</span>
         </button>
       ) : (
         <div className="flex items-center gap-3">

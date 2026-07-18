@@ -98,17 +98,17 @@ export function LearningContentModal({
           )}
         </div>
 
-        {/* Secondary action, always visible under the content. The primary
-            "我看完了 / 完成" button belongs to the viewer above (it drives the
-            multi-card / multi-poster flow), so this stacks beneath it. */}
+        {/* Secondary action, always visible under the content. Deliberately a
+            ghost/text link, not a second button: the primary focus stays on the
+            viewer's green "我看完了 / 完成" above, and this reads as navigation. */}
         {onOpenHistory && (
-          <div className="shrink-0 border-t border-slate-100 px-4 py-3">
+          <div className="shrink-0 border-t border-slate-100 px-4 py-2.5">
             <button
               type="button"
               onClick={onOpenHistory}
-              className="w-full rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition active:bg-slate-50"
+              className="w-full py-1.5 text-center text-sm font-medium text-slate-500 transition active:text-slate-700"
             >
-              学习历史
+              📚 学习历史 →
             </button>
           </div>
         )}
