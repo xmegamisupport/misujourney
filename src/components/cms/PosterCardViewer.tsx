@@ -10,13 +10,18 @@ interface PosterCardViewerProps {
   altText?: string | null;
   onComplete?: () => void;
   completing?: boolean;
+  /** Customer-facing large modal: drop the max-height cap so the poster uses the
+   * full modal width and its natural height (never cropped — the modal body
+   * scrolls if the poster is taller than the viewport). CMS staff previews keep
+   * the default capped height. */
+  fill?: boolean;
 }
 
 /** poster_upload's customer-facing viewer — the whole knowledge content is
  * one designed image, so no per-field Card Layout like ContentCardViewer:
  * just the poster (object-contain, never cropped), its optional short
  * description, and a page indicator + prev/next when there's more than one. */
-export function PosterCardViewer({ media, description, altText, onComplete, completing }: PosterCardViewerProps) {
+export function PosterCardViewer({ media, description, altText, onComplete, completing, fill }: PosterCardViewerProps) {
   const sorted = useMemo(() => [...media].sort((a, b) => a.sortOrder - b.sortOrder), [media]);
   const [index, setIndex] = useState(0);
   const current = sorted[index];
@@ -38,9 +43,13 @@ export function PosterCardViewer({ media, description, altText, onComplete, comp
     <div className="flex flex-col gap-3">
       {sorted.length > 1 && <p className="text-center text-xs text-slate-400">{index + 1} / {sorted.length}</p>}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
+      <div className="flex justify-center overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={current.fileUrl} alt={altText ?? ""} className="max-h-[70vh] w-full object-contain" />
+        <img
+          src={current.fileUrl}
+          alt={altText ?? ""}
+          className={cn("w-full object-contain", fill ? "h-auto" : "max-h-[70vh]")}
+        />
       </div>
 
       {description && <p className="text-sm text-slate-600">{description}</p>}

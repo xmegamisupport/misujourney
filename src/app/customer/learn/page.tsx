@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useMyTodayContent, useMyLearningHistory } from "@/lib/cms/hooks";
 import { completeTodayContent } from "@/lib/cms/engine";
@@ -44,10 +45,37 @@ function Thumb({ url, icon }: { url: string | null; icon: string }) {
 }
 
 export default function LearnPage() {
+  return (
+    <Suspense>
+      <LearnCentre />
+    </Suspense>
+  );
+}
+
+function LearnCentre() {
   const { data: todayItems, loading: todayLoading, refresh: refreshToday } = useMyTodayContent();
   const { data: history, loading: historyLoading, refresh: refreshHistory } = useMyLearningHistory();
   const [viewer, setViewer] = useState<ViewerContent | null>(null);
   const [completing, setCompleting] = useState(false);
+
+  // Deep link from the Dashboard modal's "学习历史": /customer/learn?section=history
+  // lands directly on the history section instead of the top of the page. The
+  // section also carries id="history", so /customer/learn#history works natively.
+  const searchParams = useSearchParams();
+  const wantsHistory = searchParams.get("section") === "history";
+  const historyRef = useRef<HTMLElement>(null);
+
+  const scrollToHistory = useCallback(() => {
+    historyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  useEffect(() => {
+    // Wait until the history rows have rendered, otherwise we'd scroll to a
+    // placeholder-height section and land in the wrong place.
+    if (!wantsHistory || historyLoading) return;
+    const id = window.setTimeout(scrollToHistory, 50);
+    return () => window.clearTimeout(id);
+  }, [wantsHistory, historyLoading, scrollToHistory]);
 
   function iconFor(templateType: CmsTemplateType | null): string {
     return TEMPLATE_LIST.find((t) => t.type === templateType)?.icon ?? "🖼️";
@@ -124,7 +152,7 @@ export default function LearnPage() {
       </section>
 
       {/* ── 学习历史 ── */}
-      <section className="flex flex-col gap-3">
+      <section id="history" ref={historyRef} className="flex scroll-mt-4 flex-col gap-3">
         <p className="text-sm font-semibold text-slate-700">学习历史</p>
         {historyLoading ? null : history.length === 0 ? (
           <div className="rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-400 shadow-sm">
@@ -181,6 +209,12 @@ export default function LearnPage() {
           onClose={() => setViewer(null)}
           onComplete={viewer.completeContentId ? handleComplete : undefined}
           completing={completing}
+          onOpenHistory={() => {
+            // Already on the 学习 page — just close and scroll to the section.
+            // Navigation only; completion state is untouched.
+            setViewer(null);
+            setTimeout(scrollToHistory, 50);
+          }}
         />
       )}
     </div>

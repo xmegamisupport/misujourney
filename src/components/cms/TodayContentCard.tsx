@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMyTodayContent } from "@/lib/cms/hooks";
 import { completeTodayContent } from "@/lib/cms/engine";
 import { TEMPLATE_LIST } from "@/lib/cms/templates";
@@ -12,6 +13,7 @@ import { LearningContentModal } from "./LearningContentModal";
  * completed state that stays tappable, so today's content can be reopened for
  * review (completed ≠ hidden). Empty when the day has nothing scheduled. */
 export function TodayContentCard() {
+  const router = useRouter();
   const { data: items, loading, refresh } = useMyTodayContent();
   const [viewItem, setViewItem] = useState<TodayContentItem | null>(null);
   const [viewMode, setViewMode] = useState<"complete" | "review">("complete");
@@ -106,6 +108,12 @@ export function TodayContentCard() {
           onClose={() => setViewItem(null)}
           onComplete={viewMode === "complete" ? handleComplete : undefined}
           completing={completing}
+          onOpenHistory={() => {
+            // Navigation only — never records or resets a completion. The 学习
+            // page stays the single place to review previous content.
+            setViewItem(null);
+            router.push("/customer/learn?section=history");
+          }}
         />
       )}
     </div>
