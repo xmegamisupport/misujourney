@@ -4,15 +4,17 @@ import { useState } from "react";
 import { useMyTodayContent } from "@/lib/cms/hooks";
 import { completeTodayContent } from "@/lib/cms/engine";
 import { TEMPLATE_LIST } from "@/lib/cms/templates";
-import { ContentCardViewer } from "./ContentCardViewer";
-import { PosterCardViewer } from "./PosterCardViewer";
+import type { TodayContentItem } from "@/lib/cms/types";
+import { LearningContentModal } from "./LearningContentModal";
 
-/** "今日小知识" — one card, one piece of content, ~30秒~1分钟. Not shown at
- * all if the day has nothing scheduled (empty-state text, never an error);
- * shows 今日内容 X/Y only once the daily limit is raised above 1. */
+/** "今日小知识" — a daily Journey task on the Dashboard. One card, one piece of
+ * content, ~30秒~1分钟. After completion it does NOT disappear: it flips to a
+ * completed state that stays tappable, so today's content can be reopened for
+ * review (completed ≠ hidden). Empty when the day has nothing scheduled. */
 export function TodayContentCard() {
   const { data: items, loading, refresh } = useMyTodayContent();
-  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewItem, setViewItem] = useState<TodayContentItem | null>(null);
+  const [viewMode, setViewMode] = useState<"complete" | "review">("complete");
   const [completing, setCompleting] = useState(false);
 
   if (loading) return null;
@@ -28,13 +30,19 @@ export function TodayContentCard() {
 
   const current = items.find((i) => !i.completed);
   const template = current ? TEMPLATE_LIST.find((t) => t.type === current.templateType) : undefined;
+  const completedCount = items.filter((i) => i.completed).length;
+
+  function open(item: TodayContentItem, mode: "complete" | "review") {
+    setViewItem(item);
+    setViewMode(mode);
+  }
 
   async function handleComplete() {
-    if (!current) return;
+    if (!viewItem) return;
     setCompleting(true);
-    await completeTodayContent(current.contentId);
+    await completeTodayContent(viewItem.contentId);
     setCompleting(false);
-    setViewerOpen(false);
+    setViewItem(null);
     refresh();
   }
 
@@ -43,17 +51,24 @@ export function TodayContentCard() {
       <div className="mb-2 flex items-center justify-between">
         <p className="text-sm font-semibold text-slate-700">📚 今日小知识</p>
         {items[0].totalToday > 1 && (
-          <span className="text-xs text-slate-400">
-            今日内容 {items.filter((i) => i.completed).length}/{items[0].totalToday}
-          </span>
+          <span className="text-xs text-slate-400">今日内容 {completedCount}/{items[0].totalToday}</span>
         )}
       </div>
 
       {!current ? (
-        <div className="flex items-center gap-3 rounded-xl bg-emerald-50 p-3">
+        // All done — stays visible AND reopenable for review (never removed).
+        <button
+          type="button"
+          onClick={() => open(items[0], "review")}
+          className="flex w-full items-center gap-3 rounded-xl bg-emerald-50 p-3 text-left transition hover:bg-emerald-100/70"
+        >
           <span className="text-xl">✅</span>
-          <p className="text-sm font-medium text-emerald-700">今日内容已完成</p>
-        </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-emerald-700">今日已完成</p>
+            <p className="text-xs text-emerald-600/70">点这里可以再看一次今天的内容</p>
+          </div>
+          <span className="shrink-0 text-xs font-medium text-emerald-600">回顾 →</span>
+        </button>
       ) : (
         <div className="flex items-center gap-3">
           <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 text-2xl">
@@ -70,7 +85,7 @@ export function TodayContentCard() {
           </div>
           <button
             type="button"
-            onClick={() => setViewerOpen(true)}
+            onClick={() => open(current, "complete")}
             className="shrink-0 rounded-full bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
           >
             开始看看
@@ -78,27 +93,20 @@ export function TodayContentCard() {
         </div>
       )}
 
-      {viewerOpen && current && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={() => setViewerOpen(false)}>
-          <div className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-800">{current.title}</p>
-              <button type="button" onClick={() => setViewerOpen(false)} className="text-slate-400">
-                ✕
-              </button>
-            </div>
-            {current.totalToday > 1 && (
-              <p className="mb-3 text-center text-xs text-slate-400">
-                今日内容 {current.positionInDay} / {current.totalToday}
-              </p>
-            )}
-            {current.contentCreationMode === "poster_upload" ? (
-              <PosterCardViewer media={current.posterMedia} description={current.posterDescription} altText={current.posterAltText} onComplete={handleComplete} completing={completing} />
-            ) : (
-              <ContentCardViewer templateType={current.templateType!} fields={current.fields} onComplete={handleComplete} completing={completing} />
-            )}
-          </div>
-        </div>
+      {viewItem && (
+        <LearningContentModal
+          title={viewItem.title}
+          subtitle={viewItem.totalToday > 1 ? `今日内容 ${viewItem.positionInDay} / ${viewItem.totalToday}` : undefined}
+          contentCreationMode={viewItem.contentCreationMode}
+          templateType={viewItem.templateType}
+          fields={viewItem.fields}
+          posterMedia={viewItem.posterMedia}
+          posterDescription={viewItem.posterDescription}
+          posterAltText={viewItem.posterAltText}
+          onClose={() => setViewItem(null)}
+          onComplete={viewMode === "complete" ? handleComplete : undefined}
+          completing={completing}
+        />
       )}
     </div>
   );

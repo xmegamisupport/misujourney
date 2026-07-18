@@ -1787,6 +1787,25 @@ export type Database = {
           whatsapp_normalized_number: string
         }[]
       }
+      get_my_learning_history: {
+        Args: never
+        Returns: {
+          category: Database["public"]["Enums"]["cms_content_category"]
+          completed: boolean
+          completed_at: string
+          content_creation_mode: string
+          content_id: string
+          cover_image_url: string
+          day_number: number
+          estimated_seconds: number
+          fields: Json
+          poster_alt_text: string
+          poster_description: string
+          poster_media: Json
+          template_type: Database["public"]["Enums"]["cms_template_type"]
+          title: string
+        }[]
+      }
       get_my_today_content: {
         Args: never
         Returns: {

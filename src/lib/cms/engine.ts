@@ -11,6 +11,7 @@ import type {
   CmsPosterMediaItem,
   CmsScheduleEntry,
   CmsTemplateType,
+  LearningHistoryItem,
   TodayContentItem,
 } from "./types";
 
@@ -372,4 +373,29 @@ export async function completeTodayContent(contentId: string): Promise<CmsResult
   const { error } = await supabase.rpc("complete_today_content", { p_content_id: contentId });
   if (error) return { ok: false, error: error.message };
   return { ok: true };
+}
+
+/** Previously-unlocked learning content (past Journey days only — future days
+ * are never returned), newest day first, for the 学习 centre's history section.
+ * Reuses the same completion records as today's feed; adds no new data. */
+export async function getMyLearningHistory(): Promise<LearningHistoryItem[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("get_my_learning_history");
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    dayNumber: row.day_number,
+    contentId: row.content_id,
+    title: row.title,
+    category: row.category,
+    contentCreationMode: row.content_creation_mode as CmsContentCreationMode,
+    templateType: row.template_type,
+    fields: (row.fields as unknown as CmsContentFields) ?? {},
+    coverImageUrl: row.cover_image_url,
+    estimatedSeconds: row.estimated_seconds,
+    posterDescription: row.poster_description,
+    posterAltText: row.poster_alt_text,
+    posterMedia: ((row.poster_media as unknown as CmsPosterMediaItem[]) ?? []).sort((a, b) => a.sortOrder - b.sortOrder),
+    completed: row.completed,
+    completedAt: row.completed_at,
+  }));
 }

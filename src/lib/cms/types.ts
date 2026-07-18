@@ -87,6 +87,27 @@ export interface TodayContentItem {
   completed: boolean;
 }
 
+/** A previously-unlocked learning item (a PAST Journey day), returned by
+ * get_my_learning_history() for the 学习 centre's history section. Same content
+ * shape as TodayContentItem so one viewer renders both; carries the Journey day
+ * it belonged to and, when finished, the completion timestamp. */
+export interface LearningHistoryItem {
+  dayNumber: number;
+  contentId: string;
+  title: string;
+  category: CmsContentCategory;
+  contentCreationMode: CmsContentCreationMode;
+  templateType: CmsTemplateType | null;
+  fields: CmsContentFields;
+  coverImageUrl: string | null;
+  estimatedSeconds: number;
+  posterDescription: string | null;
+  posterAltText: string | null;
+  posterMedia: CmsPosterMediaItem[];
+  completed: boolean;
+  completedAt: string | null;
+}
+
 export const CATEGORY_LABELS: Record<CmsContentCategory, string> = {
   nutrition_knowledge: "营养知识",
   life_tips: "生活技巧",

@@ -9,8 +9,9 @@ import {
   getJourneySettings,
   getSchedule,
   getMyTodayContent,
+  getMyLearningHistory,
 } from "./engine";
-import type { CmsContentItem, CmsJourneySettings, CmsScheduleEntry, TodayContentItem } from "./types";
+import type { CmsContentItem, CmsJourneySettings, CmsScheduleEntry, LearningHistoryItem, TodayContentItem } from "./types";
 
 function useRefreshable<T>(fetcher: () => Promise<T>, initial: T, deps: React.DependencyList = []): { data: T; loading: boolean; refresh: () => void } {
   const [data, setData] = useState<T>(initial);
@@ -62,4 +63,8 @@ export function useSchedule() {
 
 export function useMyTodayContent() {
   return useRefreshable<TodayContentItem[]>(getMyTodayContent, []);
+}
+
+export function useMyLearningHistory() {
+  return useRefreshable<LearningHistoryItem[]>(getMyLearningHistory, []);
 }

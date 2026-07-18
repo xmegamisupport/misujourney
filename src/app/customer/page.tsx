@@ -380,6 +380,10 @@ export default function CustomerDashboardPage() {
         <LockedTaskCard icon="💧" label="饮水打卡" hint={lockedHint} />
       )}
 
+      {/* 今日小知识 — a daily Journey task (learning is a required daily action,
+          not a standalone section). Completed state stays visible + reopenable. */}
+      {journeyActive ? <TodayContentCard /> : <LockedTaskCard icon="📚" label="今日小知识" hint={lockedHint} />}
+
       <div>
         <div className="mb-2 flex items-center justify-between">
           <p className="text-sm font-semibold text-slate-700">今日营养</p>
@@ -418,19 +422,6 @@ export default function CustomerDashboardPage() {
           </div>
         </div>
       )}
-
-      {journeyActive ? <TodayContentCard /> : <LockedTaskCard icon="📚" label="今日小知识" hint={lockedHint} />}
-
-      <Link
-        href="/customer/learn"
-        className="flex items-center gap-3 rounded-2xl bg-sky-500 p-4 text-white shadow-sm transition hover:bg-sky-600"
-      >
-        <span className="text-xl">📚</span>
-        <div>
-          <p className="text-sm font-semibold">今日学习</p>
-          <p className="text-xs text-sky-50">继续你的学习进度 →</p>
-        </div>
-      </Link>
 
       {journeyActive ? (
         todayCheckout ? (
