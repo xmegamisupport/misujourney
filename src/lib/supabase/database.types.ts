@@ -1220,6 +1220,78 @@ export type Database = {
           },
         ]
       }
+      journey_point_events: {
+        Row: {
+          action: string
+          created_at: string
+          customer_id: string
+          earned_on: string
+          event_key: string
+          id: string
+          journey_day: number | null
+          points: number
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          customer_id: string
+          earned_on: string
+          event_key: string
+          id?: string
+          journey_day?: number | null
+          points: number
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          customer_id?: string
+          earned_on?: string
+          event_key?: string
+          id?: string
+          journey_day?: number | null
+          points?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_point_events_action_fkey"
+            columns: ["action"]
+            isOneToOne: false
+            referencedRelation: "journey_point_values"
+            referencedColumns: ["action"]
+          },
+          {
+            foreignKeyName: "journey_point_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_point_values: {
+        Row: {
+          action: string
+          emoji: string
+          label: string
+          points: number
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          emoji?: string
+          label: string
+          points: number
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          emoji?: string
+          label?: string
+          points?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       meals: {
         Row: {
           ai_advice: string
@@ -1654,6 +1726,16 @@ export type Database = {
         Args: { p_application_id: string; p_internal_note?: string }
         Returns: undefined
       }
+      award_journey_points: {
+        Args: {
+          p_action: string
+          p_customer: string
+          p_earned_on: string
+          p_event_key: string
+          p_journey_day: number
+        }
+        Returns: Json
+      }
       calculate_bmr: {
         Args: {
           p_age: number
@@ -1732,6 +1814,14 @@ export type Database = {
         Args: { p_customer_id: string }
         Returns: number
       }
+      customer_day_learning_completed: {
+        Args: { p_content_id: string; p_customer_id: string; p_day: number }
+        Returns: boolean
+      }
+      customer_day_learning_completed_at: {
+        Args: { p_content_id: string; p_customer_id: string; p_day: number }
+        Returns: string
+      }
       customer_journey_date: {
         Args: { p_customer_id: string }
         Returns: string
@@ -1787,6 +1877,7 @@ export type Database = {
           whatsapp_normalized_number: string
         }[]
       }
+      get_my_journey_points: { Args: never; Returns: Json }
       get_my_learning_history: {
         Args: never
         Returns: {
@@ -1913,6 +2004,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      refresh_journey_rewards: { Args: never; Returns: Json }
       reject_coach_application: {
         Args: {
           p_application_id: string

@@ -31,3 +31,34 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Journey Points reward toast — rises into view, holds, then lifts away.
+   The whole gesture is ~2s: long enough to read a label, short enough that it
+   never becomes something to dismiss. */
+@keyframes journey-points-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  12%,
+  82% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+
+.journey-points-toast {
+  animation: journey-points-pop 2.1s ease-out forwards;
+}
+
+/* Someone who has asked their device for less motion still gets the reward —
+   it simply appears and leaves instead of travelling. */
+@media (prefers-reduced-motion: reduce) {
+  .journey-points-toast {
+    animation: none;
+  }
+}

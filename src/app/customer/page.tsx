@@ -27,6 +27,8 @@ import { REFLECTION_UNLOCK_HOUR } from "@/lib/checkout/constants";
 import { useLocalHour } from "@/lib/useLocalHour";
 import { selectMisuMessage } from "@/lib/misu-voice/engine";
 import { MisuVoiceCard } from "@/components/customer/MisuVoiceCard";
+import { useJourneyPoints } from "@/lib/journey-points/hooks";
+import { JourneyPointsToast } from "@/components/customer/JourneyPointsToast";
 
 const waterPresets = [100, 200, 300];
 /** Only used for the brief window before the real per-customer target
@@ -69,6 +71,11 @@ export default function CustomerDashboardPage() {
 
   const { data: todayCheckIn } = useTodayCheckIn(customerId);
   const { data: checkIns } = useCustomerCheckIns(customerId);
+
+  // Settles every reward the customer is owed and reports the balance. Called
+  // here and nowhere else — every task flow returns to this page, so one call
+  // site covers all of them and none of them can drift out of sync.
+  const { balance: points, newAwards, clearAwards } = useJourneyPoints(customerId);
 
   const today = todayDateStr();
   const yesterday = yesterdayDateStr();
@@ -191,8 +198,18 @@ export default function CustomerDashboardPage() {
           <h1 className="truncate text-lg font-semibold text-slate-900">
             {greeting}，{journey?.name ?? ""}
           </h1>
-          <p className="mt-0.5 text-xs font-medium text-slate-400">
-            Day {currentDay} / {planLength}
+          {/* Points share the context line with Day X rather than taking a card
+              of their own. They are background information: the customer should
+              always be able to see them, but her weight — not her score — is
+              what the first three seconds belong to. If real usage ever shows
+              customers actively chasing points, promote it to a card then. */}
+          <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 text-xs font-medium text-slate-400">
+            <span>
+              Day {currentDay} / {planLength}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span className="text-emerald-600">🌱 {points.total.toLocaleString()} pts</span>
+            {points.today > 0 && <span className="text-slate-400">今天 +{points.today}</span>}
           </p>
           <p className="mt-1.5 text-xs font-medium text-emerald-600/90">Every Day Is A New Journey</p>
         </div>
@@ -213,6 +230,7 @@ export default function CustomerDashboardPage() {
       </header>
 
       <CoachContactSheet open={coachSheetOpen} onClose={() => setCoachSheetOpen(false)} />
+      <JourneyPointsToast awards={newAwards} onDone={clearAwards} />
 
       {/* Weight — no longer "what is my weight today?" but "what does today's
           weight mean?". The number, the progress it has produced, and MISU's

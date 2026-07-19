@@ -16,6 +16,83 @@ October; entries past their review date are **BELIEVE** until re-confirmed.
 
 ---
 
+## 2026-07-19 · Journey Points are derived from a ledger, never incremented
+
+**Observation** — V1 needs a points system. The obvious implementation is a counter on `profiles`.
+
+**Evidence** — **KNOW** every point value in the system is a guess; we have no customer
+behaviour data. **KNOW** retries and double-submits happen.
+
+**Decision — `BUILD`** (shipped) Append-only `journey_point_events` with
+`unique (customer_id, event_key)`; values in `journey_point_values`; one
+`refresh_journey_rewards()` recomputes everything from real table state.
+
+**Reason** — A counter cannot be re-tuned without splitting customers into two eras, cannot
+be audited, and needs application code to defend it against double-payment forever. The
+ledger gets idempotency from a database constraint, re-scoring from a re-run, and is also
+the per-customer per-day instrumentation we have been missing all along.
+
+**Owner** Claude · **Priority** — · **Review** 2026-09-01
+
+---
+
+## 2026-07-19 · Consistency is a window, not a streak
+
+**Observation** — Founder's spec asked for streak bonuses under the heading "reward
+consistency instead of perfection".
+
+**Evidence** — **BELIEVE** streaks work through loss aversion, which is the lever MISU
+deliberately does not pull. **KNOW** MISU's voice says "出差几天不会让 Journey 中断".
+
+**Decision — `BUILD`** (shipped) "5 of the last 7 days", "10 of 14", "21 of 30", "42 of 60",
+each paid once. Founder's values kept unchanged.
+
+**Reason** — The heading and the mechanic contradicted each other: a chain rewards only
+perfection, and a 60-day chain punishes one sick day by 1500 points. A window can never
+reset to zero, so a missed day costs a day. Founder chose the window.
+
+**Owner** Founder · **Priority** — · **Review** 2026-09-01
+
+---
+
+## 2026-07-19 · Points ranked by (hard to fake × data value)
+
+**Observation** — Founder required that random clicks not be rewarded, but the proposed
+values paid 20 for a water goal (four taps) and 25 for a meal (photo + AI + confirm).
+
+**Evidence** — **KNOW** the water total is a client-side upsert with one-tap presets.
+**KNOW** `analyze-meal` returns empty arrays for a photo with no food in it.
+
+**Decision — `BUILD`** (shipped) meal 30 · weigh-in 20 · reflection 20 · water 15 ·
+learning 10 · all-five bonus 30 (125/day). A meal pays only if the stored record contains at
+least one recognised item — checked server-side, from what was stored.
+
+**Reason** — Paying most for the easiest action teaches customers that tapping beats
+recording. Body records pay 200 and are gated to the existing 14-day checkpoint; without
+that gate four photos a day would out-earn the entire Journey.
+
+**Owner** Founder · **Priority** — · **Review** 2026-09-01
+
+---
+
+## 2026-07-19 · Serious fraud defence waits for redemption
+
+**Observation** — A determined customer can photograph someone else's meal, or re-upload an
+old photo, and be paid.
+
+**Evidence** — **KNOW** V1 points buy nothing: no levels, badges, redemption or leaderboard.
+
+**Decision — `DEFER`** Image hashing / EXIF / coach review are not built.
+
+**Reason** — Nobody commits fraud for a number that is not spendable. Building the defence
+now solves a problem we have not yet created. **Trigger, not a date: this must be redesigned
+BEFORE points become redeemable in any form** — after that, historical data is already
+polluted.
+
+**Owner** Founder · **Priority** High · **Review** when redemption enters development
+
+---
+
 ## 2026-07-19 · MISU moves into the weight card, and gains a tone
 
 **Observation** — ❤️ MISU 想告诉你 sat at the bottom of the Dashboard, read only by
