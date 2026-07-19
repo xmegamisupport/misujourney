@@ -3,8 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ProgressCard } from "@/components/ui/ProgressCard";
-import { NutritionCard } from "@/components/ui/NutritionCard";
 import { JourneyTaskCard } from "@/components/ui/JourneyTaskCard";
 import { CoachContactSheet } from "@/components/CoachContactSheet";
 import { NotificationBell } from "@/components/customer/NotificationBell";
@@ -99,7 +97,6 @@ export default function CustomerDashboardPage() {
   const learningDone = todayLearning.length === 0 || todayLearning.every((i) => i.completed);
   const reflectionDone = Boolean(todayCheckout);
   const todayTasksDone = [weighInDone, mealDone, waterDone, learningDone, reflectionDone].filter(Boolean).length;
-  const journeyProgressPercent = Math.round((todayTasksDone / TODAY_JOURNEY_TASK_COUNT) * 100);
   const currentHour = useLocalHour() ?? 8;
   const tooEarlyForMorning = currentHour < MORNING_WINDOW_START_HOUR;
   const pastWeighInWindow = currentHour >= WEIGH_IN_CUTOFF_HOUR;
@@ -107,6 +104,21 @@ export default function CustomerDashboardPage() {
   const greeting = getGreeting(currentHour);
   const lockedHint = tooEarlyForMorning ? LOCKED_HINT_TOO_EARLY : LOCKED_HINT_PENDING_MORNING;
   const reflectionUnlocked = currentHour >= REFLECTION_UNLOCK_HOUR;
+
+  // The single next recommended task — the first one the customer can actually
+  // act on right now, in daily order. Drives one quiet NEXT badge, nothing more.
+  const morningSkipped = todayJourney?.morningWeightStatus === "skipped";
+  const nextTask = !weighInDone && !morningSkipped && inMorningWindow
+    ? "weigh"
+    : journeyActive && !mealDone
+      ? "meal"
+      : journeyActive && !waterDone
+        ? "water"
+        : journeyActive && !learningDone
+          ? "learning"
+          : journeyActive && !reflectionDone && reflectionUnlocked
+            ? "reflection"
+            : null;
 
   async function handleSkipMorning() {
     setSkipping(true);
@@ -140,7 +152,7 @@ export default function CustomerDashboardPage() {
   const needsCatchup = currentDay > 1 && !yesterdayCheckoutLoading && !yesterdayCheckout;
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-6 md:px-8">
+    <div className="flex flex-col gap-6 px-4 pb-6 md:px-8">
       <PageHeader
         title={`${greeting}，${journey?.name ?? ""} ${journey?.avatar ?? ""}`}
         subtitle={`Day ${currentDay} / ${planLength} · Every Day Is A New Journey`}
@@ -189,78 +201,81 @@ export default function CustomerDashboardPage() {
         </div>
       )}
 
-      <ProgressCard
-        label="今日 Journey 完成度"
-        percent={journeyProgressPercent}
-        icon="🌱"
-        sublabel={`今日 Journey ${todayTasksDone} / ${TODAY_JOURNEY_TASK_COUNT} 项已完成`}
-      />
-
+      {/* Goal — a light two-fact summary. The full analytics live on 成长旅程. */}
       {currentGoal && (
-        <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
-          <p className="mb-3 text-sm font-semibold text-slate-700">🎯 第一阶段目标</p>
+        <Link href="/customer/progress" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-emerald-200">
           {!hasWeightGoal ? (
-            <p className="text-sm text-slate-500">目前专注在习惯养成，暂无体重目标。每一个阶段完成以后，再重新评估下一阶段目标。</p>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs text-slate-400">🎯 第一阶段目标</p>
+                <p className="mt-0.5 truncate text-sm font-medium text-slate-700">专注习惯养成</p>
+              </div>
+              <span className="shrink-0 text-xs font-medium text-emerald-600">查看 →</span>
+            </div>
           ) : (
-            <div className="grid grid-cols-2 gap-y-3 text-sm">
-              <div>
-                <p className="text-xs text-slate-400">今日体重</p>
-                <p className="text-lg font-semibold text-slate-900">{currentGoal.baseWeightKg}kg</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">第一阶段目标</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {currentGoal.stageGoalWeightMin === currentGoal.stageGoalWeightMax
-                    ? `${currentGoal.stageGoalWeightMin}`
-                    : `${currentGoal.stageGoalWeightMin} ~ ${currentGoal.stageGoalWeightMax}`}
-                  kg
+            <div className="flex items-center gap-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-slate-400">目前体重</p>
+                <p className="mt-0.5 text-2xl font-bold leading-tight text-slate-900">
+                  {latestWeight !== null ? `${latestWeight}` : "—"}
+                  {latestWeight !== null && <span className="ml-0.5 text-sm font-medium text-slate-400">kg</span>}
                 </p>
               </div>
-              <div>
-                <p className="text-xs text-slate-400">目前进度</p>
-                <p className="text-lg font-semibold text-emerald-600">{latestWeight !== null ? `${latestWeight}kg` : "尚未打卡"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">距离建议目标</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {goalReached
-                    ? "🎉 已达成"
-                    : remaining
-                      ? `还有 ${remaining.min === remaining.max ? remaining.min : `${remaining.min} ~ ${remaining.max}`}kg`
-                      : "—"}
+              <div className="h-9 w-px shrink-0 bg-slate-100" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-slate-400">距离目标</p>
+                <p className="mt-0.5 truncate text-2xl font-bold leading-tight text-emerald-600">
+                  {goalReached ? (
+                    "🎉 已达成"
+                  ) : remaining ? (
+                    <>
+                      {remaining.min === remaining.max ? remaining.min : `${remaining.min}~${remaining.max}`}
+                      <span className="ml-0.5 text-sm font-medium text-slate-400">kg</span>
+                    </>
+                  ) : (
+                    "—"
+                  )}
                 </p>
               </div>
+              <span className="shrink-0 self-center text-xs font-medium text-emerald-600">查看 →</span>
             </div>
           )}
-        </div>
+        </Link>
       )}
 
       <div>
-        <p className="mb-2 text-sm font-semibold text-slate-700">🌱 Today&apos;s Journey</p>
-        <div className="flex flex-col gap-2">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <p className="text-base font-semibold text-slate-800">🌱 Today&apos;s Journey</p>
+          <p className="shrink-0 text-xs font-medium text-slate-500">
+            <span className="text-sm font-bold text-emerald-600">{todayTasksDone}</span> / {TODAY_JOURNEY_TASK_COUNT} 已完成
+          </p>
+        </div>
+
+        {/* Grid: 晨重 | 饮食 · 饮水 (full) · 学习 | 回顾 */}
+        <div className="grid grid-cols-2 gap-2">
           {/* 1. 今日晨重 */}
           {weighInDone ? (
             <JourneyTaskCard icon="⚖️" label="今日晨重" status="completed" value={`${todayCheckIn?.weight}kg`} href="/customer/checkin" />
-          ) : todayJourney?.morningWeightStatus === "skipped" ? (
+          ) : morningSkipped ? (
             <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" value="已跳过" />
           ) : tooEarlyForMorning ? (
             <JourneyTaskCard icon="⚖️" label="今日晨重" status="locked" value={LOCKED_HINT_TOO_EARLY} />
           ) : inMorningWindow ? (
-            <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" href="/customer/checkin" actionLabel="开始 →" />
+            <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" href="/customer/checkin" actionLabel="开始 →" isNext={nextTask === "weigh"} />
           ) : (
             <JourneyTaskCard
               icon="⚖️"
               label="今日晨重"
               status="attention"
-              value={skipError ?? "已错过晨重时间"}
+              value={skipError ?? "已错过"}
               actionSlot={
                 <button
                   type="button"
                   disabled={skipping}
                   onClick={handleSkipMorning}
-                  className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
+                  className="shrink-0 rounded-full bg-emerald-500 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
                 >
-                  {skipping ? "处理中..." : "跳过"}
+                  {skipping ? "..." : "跳过"}
                 </button>
               }
             />
@@ -272,71 +287,79 @@ export default function CustomerDashboardPage() {
           ) : mealDone ? (
             <JourneyTaskCard icon="🍽️" label="饮食打卡" status="completed" value={`${addedMeals.length} 餐`} href="/customer/meals/add" />
           ) : (
-            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="available" href="/customer/meals/add" actionLabel="开始 →" />
+            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="available" href="/customer/meals/add" actionLabel="开始 →" isNext={nextTask === "meal"} />
           )}
 
-          {/* 3. 饮水打卡 — the one in-progress card: bar + % while under way. */}
-          {!journeyActive ? (
-            <JourneyTaskCard icon="💧" label="饮水打卡" status="locked" value={lockedHint} />
-          ) : (
-            <JourneyTaskCard
-              icon="💧"
-              label="饮水打卡"
-              status={waterDone ? "completed" : "in_progress"}
-              value={`${water} / ${waterTarget}ml`}
-              percent={Math.round((water / waterTarget) * 100)}
-            >
-              <div className="mt-3 flex flex-wrap gap-2">
-                {waterPresets.map((amount) => (
-                  <button
-                    key={amount}
-                    type="button"
-                    onClick={() => addWater(amount)}
-                    className="rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-xs font-medium text-sky-700 transition hover:border-sky-300 active:scale-95"
-                  >
-                    +{amount}ml
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setWaterSheetOpen((v) => !v)}
-                  className="rounded-full border border-slate-200 px-3.5 py-1.5 text-xs font-medium text-slate-500 transition hover:border-slate-300"
-                >
-                  {waterSheetOpen ? "收起" : "自定义"}
-                </button>
-              </div>
-              {waterSheetOpen && (
-                <div className="mt-2 flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={1}
-                    inputMode="numeric"
-                    value={customWater}
-                    onChange={(e) => setCustomWater(e.target.value)}
-                    placeholder="自定义 ml"
-                    className="w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-                  />
+          {/* 3. 饮水打卡 — full width: the one card with inline controls. */}
+          <div className="col-span-2">
+            {!journeyActive ? (
+              <JourneyTaskCard icon="💧" label="饮水打卡" status="locked" value={lockedHint} variant="row" />
+            ) : (
+              <JourneyTaskCard
+                icon="💧"
+                label="饮水打卡"
+                status={waterDone ? "completed" : "in_progress"}
+                value={`${water} / ${waterTarget}ml`}
+                percent={Math.round((water / waterTarget) * 100)}
+                variant="row"
+                isNext={nextTask === "water"}
+              >
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {waterPresets.map((amount) => (
+                    <button
+                      key={amount}
+                      type="button"
+                      onClick={() => addWater(amount)}
+                      className="flex min-h-[44px] items-center justify-center rounded-xl border border-sky-200 bg-sky-50 text-sm font-semibold text-sky-700 transition hover:border-sky-300 active:scale-95"
+                    >
+                      +{amount}
+                    </button>
+                  ))}
                   <button
                     type="button"
-                    onClick={() => {
-                      const amount = Number(customWater);
-                      if (amount > 0) {
-                        addWater(amount);
-                        setCustomWater("");
-                        setWaterSheetOpen(false);
-                      }
-                    }}
-                    className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600"
+                    onClick={() => setWaterSheetOpen((v) => !v)}
+                    className="flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 text-sm font-medium text-slate-500 transition hover:border-slate-300"
                   >
-                    添加
+                    {waterSheetOpen ? "收起" : "其他"}
                   </button>
                 </div>
-              )}
-            </JourneyTaskCard>
-          )}
+                {waterSheetOpen && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      inputMode="numeric"
+                      value={customWater}
+                      onChange={(e) => setCustomWater(e.target.value)}
+                      placeholder="自定义 ml"
+                      className="w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const amount = Number(customWater);
+                        if (amount > 0) {
+                          addWater(amount);
+                          setCustomWater("");
+                          setWaterSheetOpen(false);
+                        }
+                      }}
+                      className="min-h-[44px] shrink-0 rounded-xl bg-sky-500 px-5 text-sm font-semibold text-white transition hover:bg-sky-600"
+                    >
+                      添加
+                    </button>
+                  </div>
+                )}
+              </JourneyTaskCard>
+            )}
+          </div>
 
           {/* 4. 今日学习 — completed state stays visible + reopenable. */}
-          {journeyActive ? <TodayContentCard /> : <JourneyTaskCard icon="📚" label="今日学习" status="locked" value={lockedHint} />}
+          {journeyActive ? (
+            <TodayContentCard isNext={nextTask === "learning"} />
+          ) : (
+            <JourneyTaskCard icon="📚" label="今日学习" status="locked" value={lockedHint} />
+          )}
 
           {/* 5. 今日回顾 — belongs to tonight: locked until the evening hour. */}
           {!journeyActive ? (
@@ -346,7 +369,7 @@ export default function CustomerDashboardPage() {
           ) : !reflectionUnlocked ? (
             <JourneyTaskCard icon="🌙" label="今日回顾" status="locked" value={LOCKED_HINT_REFLECTION} />
           ) : (
-            <JourneyTaskCard icon="🌙" label="今日回顾" status="available" href="/customer/checkout" actionLabel="开始 →" />
+            <JourneyTaskCard icon="🌙" label="今日回顾" status="available" href="/customer/checkout" actionLabel="开始 →" isNext={nextTask === "reflection"} />
           )}
         </div>
       </div>
@@ -370,44 +393,40 @@ export default function CustomerDashboardPage() {
           </Link>
         ) : null)}
 
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">今日营养</p>
-          <Link href="/customer/meals" className="text-xs font-medium text-sky-600">
-            查看详情 →
-          </Link>
-        </div>
-        {nutritionTargets ? (
-          <Link href="/customer/meals" className="grid grid-cols-2 gap-3">
-            <NutritionCard label="热量" value={addedCalories} target={nutritionTargets.dailyCalories} unit="kcal" icon="🔥" color="bg-amber-400" />
-            <NutritionCard label="蛋白质" value={addedProtein} target={nutritionTargets.dailyProtein} unit="g" icon="🥩" color="bg-sky-400" />
-            <NutritionCard label="蔬菜" value={vegServingsDone} target={VEGETABLE_SERVINGS_TARGET} unit="份" icon="🥬" color="bg-emerald-400" />
-            <NutritionCard label="饮水" value={water} target={waterTarget} unit="ml" icon="💧" color="bg-sky-400" />
-          </Link>
-        ) : !nutritionTargetsLoading ? (
-          <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
-            完善身高/体重/年龄/性别/活动量资料后，将自动生成你的每日营养目标。
+      {/* Supporting information — a summary strip, not a competing section.
+          The full breakdown lives on the Meals page. */}
+      {nutritionTargets ? (
+        <Link href="/customer/meals" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-emerald-200">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-slate-400">今日营养</p>
+            <span className="shrink-0 text-xs font-medium text-emerald-600">查看 →</span>
           </div>
-        ) : null}
-      </div>
-
-      {nutritionTargets && (
-        <div className="flex items-start gap-3 rounded-2xl border border-sky-100 bg-sky-50/50 p-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">🤖</span>
-          <div className="min-w-0 flex-1">
-            <p className="mb-1 text-xs font-semibold text-sky-700">AI 今日建议</p>
-            <p className="text-sm text-slate-700">
-              {buildDailyNutritionAdvice({
-                caloriesPercent: Math.round((addedCalories / nutritionTargets.dailyCalories) * 100),
-                proteinPercent: Math.round((addedProtein / nutritionTargets.dailyProtein) * 100),
-                vegServingsDone,
-                vegServingsTarget: VEGETABLE_SERVINGS_TARGET,
-                waterPercent: Math.round((water / waterTarget) * 100),
-              })}
+          <div className="mt-1 flex items-baseline gap-3">
+            <p className="text-2xl font-bold leading-tight text-slate-900">
+              {addedCalories}
+              <span className="ml-0.5 text-sm font-medium text-slate-400">kcal</span>
+            </p>
+            <p className="truncate text-xs text-slate-500">
+              蛋白质 {addedProtein >= nutritionTargets.dailyProtein ? "✔" : `${addedProtein}g`} · 蔬菜{" "}
+              {vegServingsDone >= VEGETABLE_SERVINGS_TARGET ? "✔" : `${vegServingsDone}/${VEGETABLE_SERVINGS_TARGET}`}
             </p>
           </div>
+          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500">
+            🤖{" "}
+            {buildDailyNutritionAdvice({
+              caloriesPercent: Math.round((addedCalories / nutritionTargets.dailyCalories) * 100),
+              proteinPercent: Math.round((addedProtein / nutritionTargets.dailyProtein) * 100),
+              vegServingsDone,
+              vegServingsTarget: VEGETABLE_SERVINGS_TARGET,
+              waterPercent: Math.round((water / waterTarget) * 100),
+            })}
+          </p>
+        </Link>
+      ) : !nutritionTargetsLoading ? (
+        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
+          完善身高/体重/年龄/性别/活动量资料后，将自动生成你的每日营养目标。
         </div>
-      )}
+      ) : null}
 
       <Link
         href="/customer/summary"

@@ -15,7 +15,7 @@ import { LearningContentModal } from "./LearningContentModal";
  * content, ~30秒~1分钟. After completion it does NOT disappear: it flips to a
  * completed state that stays tappable, so today's content can be reopened for
  * review (completed ≠ hidden). Empty when the day has nothing scheduled. */
-export function TodayContentCard() {
+export function TodayContentCard({ isNext }: { isNext?: boolean } = {}) {
   const router = useRouter();
   const { user } = useAuthUser();
   const { data: journey } = useJourneySummary(user?.id ?? "");
@@ -79,6 +79,7 @@ export function TodayContentCard() {
           label="今日学习"
           status="available"
           value={multi ? `${current.title} · ${completedCount}/${items[0].totalToday}` : current.title}
+          isNext={isNext}
           actionSlot={
             <button
               type="button"
