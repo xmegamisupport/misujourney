@@ -73,7 +73,7 @@ export default function CustomerDashboardPage() {
   const { data: todayCheckout } = useCheckoutForDate(customerId, today);
   const { data: yesterdayCheckout, loading: yesterdayCheckoutLoading } = useCheckoutForDate(customerId, yesterday);
 
-  const { data: todayJourney, loading: todayJourneyLoading, refresh: refreshJourney } = useTodayJourneyDay(customerId, today);
+  const { data: todayJourney, refresh: refreshJourney } = useTodayJourneyDay(customerId, today);
   const { cta: bodyProgressCta, loading: bodyProgressLoading } = useBodyProgressHomeState(customerId);
   const bodyProgressActionable = bodyProgressCta.kind !== "view_growth_journey";
   // Journey 起点 and 身形记录 are the same workflow — exactly one may show.
@@ -183,28 +183,6 @@ export default function CustomerDashboardPage() {
       </header>
 
       <CoachContactSheet open={coachSheetOpen} onClose={() => setCoachSheetOpen(false)} />
-
-      {!todayJourneyLoading && !journeyActive && tooEarlyForMorning && (
-        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
-          明早 4:00 后开放新的 Journey 任务。
-        </div>
-      )}
-
-      {needsCatchup && (
-        <div className="flex items-center gap-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-4 shadow-sm">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl">🌙</span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-slate-800">昨天的睡前回顾还没完成</p>
-            <p className="mt-0.5 text-xs text-slate-500">花一点时间补上昨天的记录。</p>
-          </div>
-          <Link
-            href={`/customer/checkout?date=${yesterday}`}
-            className="shrink-0 rounded-full bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
-          >
-            完成昨天回顾
-          </Link>
-        </div>
-      )}
 
       {/* Goal — a light two-fact summary. The full analytics live on 成长旅程. */}
       {/* Only once there's a real weigh-in — otherwise this renders "— kg / 0%"
@@ -412,6 +390,23 @@ export default function CustomerDashboardPage() {
         </div>
       </div>
 
+      {/* Yesterday's reflection — deliberately BELOW today. It's a second answer
+          to "what should I do next", and it points at the past, so it must not
+          compete with today in the first ten seconds. Neutral, not amber: a
+          missed optional task is not a warning. */}
+      {needsCatchup && (
+        <Link
+          href={`/customer/checkout?date=${yesterday}`}
+          className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 transition hover:border-emerald-200"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-lg">🌙</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-slate-800">补上昨天的回顾</p>
+            <p className="mt-0.5 text-xs text-slate-400">昨天的记录还可以补</p>
+          </div>
+          <span className="shrink-0 text-xs font-medium text-slate-500">前往 →</span>
+        </Link>
+      )}
     </div>
   );
 }
