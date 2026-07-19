@@ -18,9 +18,7 @@ import { calculateStageProgress } from "@/lib/goals/stage-progress";
 import { useCheckoutForDate } from "@/lib/checkout/hooks";
 import { useTodayJourneyDay } from "@/lib/journey-day/hooks";
 import { skipMorningCheckin } from "@/lib/journey-day/engine";
-import { useCurrentNutritionTargets } from "@/lib/nutrition/hooks";
-import { buildDailyNutritionAdvice } from "@/lib/nutrition/daily-advice";
-import { countVegetableServings, VEGETABLE_SERVINGS_TARGET } from "@/lib/meal-check/plate-analysis";
+
 import { useBodyProgressHomeState } from "@/lib/bodyProgress/hooks";
 import { BODY_PROGRESS_CTA_LABEL, bodyProgressCtaHref } from "@/lib/bodyProgress/engine";
 import { useJourneyBaselineStatus } from "@/lib/baseline/hooks";
@@ -57,11 +55,7 @@ export default function CustomerDashboardPage() {
   const customerId = user?.id ?? "";
   const { data: journey } = useJourneySummary(customerId);
   const { data: currentGoal } = useCurrentCustomerGoal(customerId);
-  const { data: nutritionTargets, loading: nutritionTargetsLoading } = useCurrentNutritionTargets(customerId);
   const { data: addedMeals } = useTodayMeals(customerId);
-  const addedCalories = addedMeals.reduce((sum, m) => sum + m.calories, 0);
-  const addedProtein = addedMeals.reduce((sum, m) => sum + m.protein, 0);
-  const vegServingsDone = countVegetableServings(addedMeals);
 
   const waterTarget = currentGoal?.waterTargetMl ?? (journey?.startWeight ? calculateWaterTargetMl(journey.startWeight) : FALLBACK_WATER_TARGET_ML);
   const { water, addWater } = useWaterIntake(customerId);
@@ -213,7 +207,10 @@ export default function CustomerDashboardPage() {
       )}
 
       {/* Goal — a light two-fact summary. The full analytics live on 成长旅程. */}
-      {currentGoal && (
+      {/* Only once there's a real weigh-in — otherwise this renders "— kg / 0%"
+          to every new customer, and stays dead permanently for anyone who never
+          weighs in. Nothing is better than a hollow number. */}
+      {currentGoal && latestWeight !== null && (
         <Link href="/customer/progress" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-emerald-200">
           {!hasWeightGoal ? (
             <div className="flex items-center justify-between gap-3">
@@ -415,53 +412,6 @@ export default function CustomerDashboardPage() {
         </div>
       </div>
 
-      {/* Supporting information — a summary strip, not a competing section.
-          The full breakdown lives on the Meals page. */}
-      {nutritionTargets ? (
-        <Link href="/customer/meals" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-emerald-200">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-slate-400">今日营养</p>
-            <span className="shrink-0 text-xs font-medium text-slate-500">查看 →</span>
-          </div>
-          <div className="mt-1 flex items-baseline gap-3">
-            <p className="text-2xl font-bold leading-tight text-slate-900">
-              {addedCalories}
-              <span className="ml-0.5 text-sm font-medium text-slate-400">kcal</span>
-            </p>
-            <p className="truncate text-xs text-slate-500">
-              蛋白质 {addedProtein >= nutritionTargets.dailyProtein ? "✔" : `${addedProtein}g`} · 蔬菜{" "}
-              {vegServingsDone >= VEGETABLE_SERVINGS_TARGET ? "✔" : `${vegServingsDone}/${VEGETABLE_SERVINGS_TARGET}`}
-            </p>
-          </div>
-        </Link>
-      ) : !nutritionTargetsLoading ? (
-        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
-          完善身高/体重/年龄/性别/活动量资料后，将自动生成你的每日营养目标。
-        </div>
-      ) : null}
-
-      {/* Supporting guidance — the quietest layer on the page. */}
-      {nutritionTargets && (
-        <div className="flex items-start gap-2.5 rounded-2xl bg-slate-50 px-4 py-3">
-          <span className="shrink-0 text-sm leading-relaxed">🤖</span>
-          <p className="text-xs leading-relaxed text-slate-500">
-            {buildDailyNutritionAdvice({
-              caloriesPercent: Math.round((addedCalories / nutritionTargets.dailyCalories) * 100),
-              proteinPercent: Math.round((addedProtein / nutritionTargets.dailyProtein) * 100),
-              vegServingsDone,
-              vegServingsTarget: VEGETABLE_SERVINGS_TARGET,
-              waterPercent: Math.round((water / waterTarget) * 100),
-            })}
-          </p>
-        </div>
-      )}
-
-      <Link
-        href="/customer/summary"
-        className="rounded-2xl bg-slate-900 py-4 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-      >
-        完成今日总结
-      </Link>
     </div>
   );
 }
