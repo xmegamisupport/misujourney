@@ -8,6 +8,7 @@ import { useMyTodayContent } from "@/lib/cms/hooks";
 import { completeTodayContent } from "@/lib/cms/engine";
 import { TEMPLATE_LIST } from "@/lib/cms/templates";
 import type { TodayContentItem } from "@/lib/cms/types";
+import { JourneyTaskCard } from "@/components/ui/JourneyTaskCard";
 import { LearningContentModal } from "./LearningContentModal";
 
 /** "今日小知识" — a daily Journey task on the Dashboard. One card, one piece of
@@ -25,13 +26,10 @@ export function TodayContentCard() {
 
   if (loading) return null;
 
+  // Nothing scheduled → nothing outstanding, so it reads as settled (and the
+  // Dashboard's X / 5 progress counts it the same way).
   if (items.length === 0) {
-    return (
-      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-        <p className="mb-1 text-sm font-semibold text-slate-700">📚 今日学习</p>
-        <p className="text-sm text-slate-400">今天没有新的小知识，继续完成你的 Journey 任务就好。</p>
-      </div>
-    );
+    return <JourneyTaskCard icon="📚" label="今日学习" status="completed" value="今天没有新内容" />;
   }
 
   const current = items.find((i) => !i.completed);
@@ -52,51 +50,45 @@ export function TodayContentCard() {
     refresh();
   }
 
-  return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-sm font-semibold text-slate-700">📚 今日学习</p>
-        {items[0].totalToday > 1 && (
-          <span className="text-xs text-slate-400">今日内容 {completedCount}/{items[0].totalToday}</span>
-        )}
-      </div>
+  const multi = items[0].totalToday > 1;
 
+  return (
+    <>
       {!current ? (
         // All done — stays visible AND reopenable for review (never removed).
-        <button
-          type="button"
-          onClick={() => open(items[0], "review")}
-          className="flex w-full items-center gap-3 rounded-xl bg-emerald-50 p-3 text-left transition hover:bg-emerald-100/70"
-        >
-          <span className="text-xl">✅</span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-emerald-700">今日已完成</p>
-            <p className="text-xs text-emerald-600/70">点这里可以再看一次今天的内容</p>
-          </div>
-          <span className="shrink-0 text-xs font-medium text-emerald-600">查看 →</span>
-        </button>
+        <JourneyTaskCard
+          icon="📚"
+          label="今日学习"
+          status="completed"
+          value="查看 →"
+          valueTone="accent"
+          actionSlot={
+            <button
+              type="button"
+              onClick={() => open(items[0], "review")}
+              aria-label="再看一次今天的内容"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-xs text-white"
+            >
+              ✓
+            </button>
+          }
+        />
       ) : (
-        <div className="flex items-center gap-3">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 text-2xl">
-            {current.coverImageUrl || current.posterMedia[0]?.fileUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={current.coverImageUrl ?? current.posterMedia[0].fileUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              template?.icon ?? "🖼️"
-            )}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-800">{current.title}</p>
-            <p className="text-xs text-slate-400">约 {current.estimatedSeconds} 秒</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => open(current, "complete")}
-            className="shrink-0 rounded-full bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
-          >
-            开始看看
-          </button>
-        </div>
+        <JourneyTaskCard
+          icon={template?.icon ?? "📚"}
+          label="今日学习"
+          status="available"
+          value={multi ? `${current.title} · ${completedCount}/${items[0].totalToday}` : current.title}
+          actionSlot={
+            <button
+              type="button"
+              onClick={() => open(current, "complete")}
+              className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
+            >
+              开始 →
+            </button>
+          }
+        />
       )}
 
       {viewItem && (
@@ -127,6 +119,6 @@ export function TodayContentCard() {
           }}
         />
       )}
-    </div>
+    </>
   );
 }

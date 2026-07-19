@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ProgressCard } from "@/components/ui/ProgressCard";
 import { NutritionCard } from "@/components/ui/NutritionCard";
-import { LockedTaskCard } from "@/components/ui/LockedTaskCard";
+import { JourneyTaskCard } from "@/components/ui/JourneyTaskCard";
 import { CoachContactSheet } from "@/components/CoachContactSheet";
 import { NotificationBell } from "@/components/customer/NotificationBell";
 import { JourneyBaselineReminder } from "@/components/customer/JourneyBaselineReminder";
@@ -68,6 +68,9 @@ export default function CustomerDashboardPage() {
   const waterTarget = currentGoal?.waterTargetMl ?? (journey?.startWeight ? calculateWaterTargetMl(journey.startWeight) : FALLBACK_WATER_TARGET_ML);
   const { water, addWater } = useWaterIntake(customerId);
   const [customWater, setCustomWater] = useState("");
+  // The custom-amount input stays folded away so the Dashboard reads as an
+  // overview; the three one-tap presets cover the common case.
+  const [waterSheetOpen, setWaterSheetOpen] = useState(false);
   const [coachSheetOpen, setCoachSheetOpen] = useState(false);
 
   const { data: todayCheckIn } = useTodayCheckIn(customerId);
@@ -235,96 +238,54 @@ export default function CustomerDashboardPage() {
       <div>
         <p className="mb-2 text-sm font-semibold text-slate-700">🌱 Today&apos;s Journey</p>
         <div className="flex flex-col gap-2">
+          {/* 1. 今日晨重 */}
           {weighInDone ? (
-            <Link
-              href="/customer/checkin"
-              className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3.5 transition hover:border-emerald-200"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">⚖️</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-500 line-through">今日晨重</p>
-                <p className="text-xs text-slate-400">已记录 {todayCheckIn?.weight}kg</p>
-              </div>
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400 bg-emerald-400 text-xs text-white">✓</span>
-            </Link>
+            <JourneyTaskCard icon="⚖️" label="今日晨重" status="completed" value={`${todayCheckIn?.weight}kg`} href="/customer/checkin" />
           ) : todayJourney?.morningWeightStatus === "skipped" ? (
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">⚖️</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-500">今日晨重</p>
-                <p className="text-xs text-slate-400">今天选择不记录晨重</p>
-              </div>
-            </div>
+            <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" value="已跳过" />
           ) : tooEarlyForMorning ? (
-            <LockedTaskCard icon="⚖️" label="今日晨重" hint={LOCKED_HINT_TOO_EARLY} />
+            <JourneyTaskCard icon="⚖️" label="今日晨重" status="locked" value={LOCKED_HINT_TOO_EARLY} />
           ) : inMorningWindow ? (
-            <Link
-              href="/customer/checkin"
-              className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/40 p-3.5 transition hover:border-emerald-300"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">⚖️</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-800">今日晨重</p>
-                <p className="text-xs text-slate-400">完成晨重，正式开始今天的 Journey</p>
-              </div>
-              <span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">开始今日晨重</span>
-            </Link>
+            <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" href="/customer/checkin" actionLabel="开始 →" />
           ) : (
-            <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/40 p-3.5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">⚖️</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-800">今日晨重</p>
-                <p className="text-xs text-slate-400">{skipError ?? "今天错过晨重也没关系，可以直接开始今天的 Journey"}</p>
-              </div>
-              <button
-                type="button"
-                disabled={skipping}
-                onClick={handleSkipMorning}
-                className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
-              >
-                {skipping ? "处理中..." : "跳过晨重"}
-              </button>
-            </div>
+            <JourneyTaskCard
+              icon="⚖️"
+              label="今日晨重"
+              status="attention"
+              value={skipError ?? "已错过晨重时间"}
+              actionSlot={
+                <button
+                  type="button"
+                  disabled={skipping}
+                  onClick={handleSkipMorning}
+                  className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
+                >
+                  {skipping ? "处理中..." : "跳过"}
+                </button>
+              }
+            />
           )}
 
-          {journeyActive ? (
-            <Link
-              href="/customer/meals/add"
-              className={`flex items-center gap-3 rounded-2xl border p-3.5 transition ${mealDone ? "border-emerald-100 bg-emerald-50/60" : "border-slate-100 bg-white hover:border-emerald-200"}`}
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">🥗</span>
-              <div className="min-w-0 flex-1">
-                <p className={`text-sm font-medium ${mealDone ? "text-slate-500 line-through" : "text-slate-800"}`}>饮食打卡</p>
-                <p className="text-xs text-slate-400">{mealDone ? `已记录 ${addedMeals.length} 餐` : "拍照记录你的 211 餐盘"}</p>
-              </div>
-              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${mealDone ? "border-emerald-400 bg-emerald-400 text-white" : "border-slate-300 text-transparent"}`}>✓</span>
-            </Link>
+          {/* 2. 饮食打卡 */}
+          {!journeyActive ? (
+            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="locked" value={lockedHint} />
+          ) : mealDone ? (
+            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="completed" value={`${addedMeals.length} 餐`} href="/customer/meals/add" />
           ) : (
-            <LockedTaskCard icon="🥗" label="饮食打卡" hint={lockedHint} />
+            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="available" href="/customer/meals/add" actionLabel="开始 →" />
           )}
 
-          {/* 3. 饮水打卡 */}
-          {journeyActive ? (
-            <div className={`rounded-2xl border p-4 shadow-sm ${waterDone ? "border-emerald-100 bg-emerald-50/60" : "border-sky-100 bg-white"}`}>
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">💧</span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-800">饮水打卡</p>
-                  <p className="text-2xl font-bold leading-tight text-sky-600">
-                    {water}
-                    <span className="ml-1 text-sm font-normal text-slate-400">/ {waterTarget}ml</span>
-                  </p>
-                </div>
-                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${waterDone ? "border-emerald-400 bg-emerald-400 text-white" : "border-slate-300 text-transparent"}`}>✓</span>
-              </div>
-
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-sky-50">
-                <div
-                  className="h-full rounded-full bg-sky-400 transition-all"
-                  style={{ width: `${Math.min(100, Math.round((water / waterTarget) * 100))}%` }}
-                />
-              </div>
-
+          {/* 3. 饮水打卡 — the one in-progress card: bar + % while under way. */}
+          {!journeyActive ? (
+            <JourneyTaskCard icon="💧" label="饮水打卡" status="locked" value={lockedHint} />
+          ) : (
+            <JourneyTaskCard
+              icon="💧"
+              label="饮水打卡"
+              status={waterDone ? "completed" : "in_progress"}
+              value={`${water} / ${waterTarget}ml`}
+              percent={Math.round((water / waterTarget) * 100)}
+            >
               <div className="mt-3 flex flex-wrap gap-2">
                 {waterPresets.map((amount) => (
                   <button
@@ -336,66 +297,56 @@ export default function CustomerDashboardPage() {
                     +{amount}ml
                   </button>
                 ))}
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <input
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  value={customWater}
-                  onChange={(e) => setCustomWater(e.target.value)}
-                  placeholder="自定义 ml"
-                  className="w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-                />
                 <button
                   type="button"
-                  onClick={() => {
-                    const amount = Number(customWater);
-                    if (amount > 0) {
-                      addWater(amount);
-                      setCustomWater("");
-                    }
-                  }}
-                  className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600"
+                  onClick={() => setWaterSheetOpen((v) => !v)}
+                  className="rounded-full border border-slate-200 px-3.5 py-1.5 text-xs font-medium text-slate-500 transition hover:border-slate-300"
                 >
-                  添加
+                  {waterSheetOpen ? "收起" : "自定义"}
                 </button>
               </div>
-            </div>
-          ) : (
-            <LockedTaskCard icon="💧" label="饮水打卡" hint={lockedHint} />
+              {waterSheetOpen && (
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    inputMode="numeric"
+                    value={customWater}
+                    onChange={(e) => setCustomWater(e.target.value)}
+                    placeholder="自定义 ml"
+                    className="w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const amount = Number(customWater);
+                      if (amount > 0) {
+                        addWater(amount);
+                        setCustomWater("");
+                        setWaterSheetOpen(false);
+                      }
+                    }}
+                    className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600"
+                  >
+                    添加
+                  </button>
+                </div>
+              )}
+            </JourneyTaskCard>
           )}
 
           {/* 4. 今日学习 — completed state stays visible + reopenable. */}
-          {journeyActive ? <TodayContentCard /> : <LockedTaskCard icon="📚" label="今日学习" hint={lockedHint} />}
+          {journeyActive ? <TodayContentCard /> : <JourneyTaskCard icon="📚" label="今日学习" status="locked" value={lockedHint} />}
 
-          {/* 5. 今日回顾 — this one belongs to tonight: locked until the evening
-              hour, then active, then completed. */}
+          {/* 5. 今日回顾 — belongs to tonight: locked until the evening hour. */}
           {!journeyActive ? (
-            <LockedTaskCard icon="🌙" label="今日回顾" hint={lockedHint} />
+            <JourneyTaskCard icon="🌙" label="今日回顾" status="locked" value={lockedHint} />
           ) : todayCheckout ? (
-            <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3.5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">🌙</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-500 line-through">今日回顾</p>
-                <p className="text-xs text-slate-400">✅ 今日已完成</p>
-              </div>
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-400 bg-emerald-400 text-xs text-white">✓</span>
-            </div>
+            <JourneyTaskCard icon="🌙" label="今日回顾" status="completed" />
           ) : !reflectionUnlocked ? (
-            <LockedTaskCard icon="🌙" label="今日回顾" hint={LOCKED_HINT_REFLECTION} />
+            <JourneyTaskCard icon="🌙" label="今日回顾" status="locked" value={LOCKED_HINT_REFLECTION} />
           ) : (
-            <Link
-              href="/customer/checkout"
-              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 transition hover:border-emerald-200"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-lg">🌙</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-800">今日回顾</p>
-                <p className="text-xs text-slate-400">记录今天的身体变化与生活情况</p>
-              </div>
-              <span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">开始 →</span>
-            </Link>
+            <JourneyTaskCard icon="🌙" label="今日回顾" status="available" href="/customer/checkout" actionLabel="开始 →" />
           )}
         </div>
       </div>
