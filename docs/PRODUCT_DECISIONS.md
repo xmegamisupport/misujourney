@@ -16,6 +16,84 @@ October; entries past their review date are **BELIEVE** until re-confirmed.
 
 ---
 
+## 2026-07-19 · MISU moves into the weight card, and gains a tone
+
+**Observation** — ❤️ MISU 想告诉你 sat at the bottom of the Dashboard, read only by
+customers who scrolled. Its purpose is to interpret today's weight.
+
+**Evidence** — **KNOW** it was below four other blocks on mobile. **BELIEVE** the reading
+order *see the number → understand the number → act* is more natural. **ASSUME** customers
+read the interpretation at all.
+
+**Decision — `BUILD`** (shipped) Message renders inside the weight card, replacing the static
+"每一天的累积…" line. Prominence by tier (0 = plain line, 1–2 = highlighted block) and now
+also by **tone**: rose = support, emerald = celebration.
+
+**Reason** — Prominence alone could not carry the founder's decision that positive moments
+deserve emphasis too: the only highlight available was the rose box used to calm someone
+after a bad weigh-in, and praise delivered in that box reads as consolation. Colour is read
+before words.
+
+**Owner** Claude · **Priority** — · **Review** 2026-09-01
+
+---
+
+## 2026-07-19 · Only gains above 0.5kg are treated as events
+
+**Observation** — Any increase, including 0.2kg, triggered a full reassurance message.
+
+**Evidence** — **KNOW** day-to-day water swing is routinely 0.3–0.5kg. **BELIEVE**
+dramatising noise teaches fear of the scale — the opposite of the product's purpose.
+
+**Decision — `BUILD`** (shipped) Gains ≤0.5kg drop to a quiet tier-0 line; above 0.5kg keeps
+the highlight. Same threshold applied to `effort_but_weight_up`.
+
+**Reason** — A companion that treats every wobble as a crisis manufactures the anxiety it
+exists to relieve.
+
+**Owner** Founder · **Priority** — · **Review** 2026-09-01
+
+---
+
+## 2026-07-19 · Milestones detected by crossing, not by memory
+
+**Observation** — 第一次低于起点 and 第一阶段达成 must be said exactly once, but there is no
+message log (deferred to V1.1).
+
+**Evidence** — **KNOW** the last two weigh-ins are already on the Dashboard.
+
+**Decision — `BUILD`** (shipped) Both fire on the *crossing* between the two most recent
+weigh-ins. The condition stops being true by itself, so "once" needs no memory. They
+outrank anxiety triggers — a recurring message must not silently consume a once-only one.
+
+**Reason** — Buys the two highest-value milestones now for near-zero cost. Known limit: cannot
+fire on a customer's very first weigh-in, and the trick generalises only to weight triggers.
+The message log is still required for the reflective family.
+
+**Owner** Claude · **Priority** — · **Review** 2026-09-01
+
+---
+
+## 2026-07-19 · No streak mechanic
+
+**Observation** — A 7-day streak trigger was proposed for MISU.
+
+**Evidence** — **BELIEVE** streaks work through loss aversion. **ASSUME** the effect on
+these customers specifically — never tested here.
+
+**Decision — `DEFER`** Not in V1. Revisit once real usage data exists.
+
+**Reason** — A streak says "you broke something" on the day she misses; MISU's entire voice
+says "生活本来就会有这样的日子". It is also the same error as "Day 26/30" — packaging
+non-absence as achievement, then punishing absence. Preferred replacement is cumulative
+**days active**, which never resets, and which depends on the days-active FIX already logged.
+Claude argued against it; founder chose to keep the option open pending data rather than
+reject outright.
+
+**Owner** Founder · **Priority** Medium · **Review** at first unsupervised cohort
+
+---
+
 ## 2026-07-19 · Sample validity of first "customer data"
 
 **Observation** — All recorded activity from the three non-test accounts (Yee, Tina, Starry)

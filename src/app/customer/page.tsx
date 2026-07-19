@@ -143,6 +143,12 @@ export default function CustomerDashboardPage() {
   const stageProgress = hasWeightGoal
     ? calculateStageProgress(currentGoal!.baseWeightKg, latestWeight ?? currentGoal!.baseWeightKg, currentGoal!.stageGoalWeightMax)
     : null;
+  // The same progress as it stood at the PREVIOUS weigh-in. Comparing the two is
+  // how MISU spots the day a milestone was crossed without needing a message log.
+  const previousStageProgress =
+    hasWeightGoal && checkIns[1]?.weight != null
+      ? calculateStageProgress(currentGoal!.baseWeightKg, checkIns[1].weight, currentGoal!.stageGoalWeightMax)
+      : null;
 
   // ❤️ MISU 想告诉你 — the Dashboard's answer to "how should I understand today?"
   // Built entirely from data this page already loads: no extra queries.
@@ -156,6 +162,9 @@ export default function CustomerDashboardPage() {
     daysSinceLastWeighIn,
     latestWeight,
     previousWeight: checkIns[1]?.weight ?? null,
+    startWeightKg: journey?.startWeight ?? null,
+    stagePercent: stageProgress?.percent ?? null,
+    previousStagePercent: previousStageProgress?.percent ?? null,
     yesterdayConditions: yesterdayCheckout?.specialConditions ?? [],
     yesterdayBowel: yesterdayCheckout?.bowelMovement ?? null,
     todayBowel: todayCheckout?.bowelMovement ?? null,

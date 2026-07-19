@@ -56,10 +56,18 @@ const weightDelta = (c: MisuVoiceContext): number | null =>
 
 export type MisuFamily = "reactive" | "proactive" | "recognition" | "normal";
 
-/** Lower runs first. Address the wound before the applause: a streak
- * celebration on a day she gained weight reads as tone-deaf. */
+/** Lower runs first. Address the wound before the applause: a celebration on a
+ * day she gained weight reads as tone-deaf.
+ *
+ * `milestone` is the one exception that outranks anxiety. Those triggers fire at
+ * most once in a whole Journey and are detected from a crossing between the last
+ * two weigh-ins — once the day passes, the crossing is no longer visible and the
+ * moment is gone for good. A recurring message must never silently eat a
+ * once-only one. (And on the day her weight first drops below where she started,
+ * that IS the honest answer to "what does today's weight mean" — 生理期 or not.) */
 export const MISU_PRIORITY = {
   safety: 10,
+  milestone: 15,
   anxiety: 20,
   proactive: 25,
   explanation: 30,
@@ -75,6 +83,12 @@ export interface MisuVoiceContext {
   daysSinceLastWeighIn: number | null;
   latestWeight: number | null;
   previousWeight: number | null;
+  /** The weight this Journey started from — the line "低于起点" is measured against. */
+  startWeightKg: number | null;
+  /** Stage-one completion now, and as it stood at the previous weigh-in. The pair
+   * is what makes a crossing detectable without a message log. */
+  stagePercent: number | null;
+  previousStagePercent: number | null;
   yesterdayConditions: SpecialCondition[];
   yesterdayBowel: BowelMovementLevel | null;
   todayBowel: BowelMovementLevel | null;
@@ -97,6 +111,42 @@ export interface MisuTrigger {
 const has = (c: MisuVoiceContext, ...k: SpecialCondition[]) => k.some((x) => c.yesterdayConditions.includes(x));
 
 export const MISU_TRIGGERS: MisuTrigger[] = [
+  // ── Milestone ──────────────────────────────────────────────────────────
+  // Once per Journey, detected as a CROSSING between the last two weigh-ins:
+  // she was on one side of the line before, she is on the other side now. The
+  // condition stops being true by itself, so "say it only once" needs no memory.
+  //
+  // The cost of this trick: it cannot fire on a customer's very first weigh-in
+  // (no previous side to cross from). That is the correct trade — announcing
+  // "第一次低于起点" to someone who has weighed in exactly once would be a guess.
+  {
+    id: "stage_goal_reached",
+    family: "recognition",
+    tier: 2,
+    tone: "celebrate",
+    priority: MISU_PRIORITY.milestone,
+    matches: (c) => c.stagePercent !== null && c.previousStagePercent !== null && c.stagePercent >= 100 && c.previousStagePercent < 100,
+    variants: [
+      "你完成第一阶段的目标了。这不是某一天做得特别好换来的 —— 是很多个普通的日子累积出来的。今天先好好感受一下，下一段之后再说。❤️",
+    ],
+  },
+  {
+    id: "first_below_start",
+    family: "recognition",
+    tier: 2,
+    tone: "celebrate",
+    priority: MISU_PRIORITY.milestone + 1,
+    matches: (c) =>
+      c.startWeightKg !== null &&
+      c.latestWeight !== null &&
+      c.previousWeight !== null &&
+      c.latestWeight < c.startWeightKg &&
+      c.previousWeight >= c.startWeightKg,
+    variants: [
+      "今天，你第一次低于自己的起点。前面那些数字的上上下下都还在浮动的范围里，这一次不是 —— 这是你真的走出来的距离。❤️",
+    ],
+  },
+
   // ── Anxiety ────────────────────────────────────────────────────────────
   {
     // The cruellest day in fat loss: did everything, scale went up anyway.
