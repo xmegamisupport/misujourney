@@ -119,6 +119,27 @@ export default function CustomerDashboardPage() {
             ? "reflection"
             : null;
 
+  // ── Task type ──────────────────────────────────────────────────────────
+  // Type A (one-time: 晨重 / 学习 / 回顾) compress into chips once settled.
+  // Type B (continuous: 饮食 / 饮水) stay expanded all day — customers keep
+  // coming back to them, so collapsing them would cost taps, not clutter.
+  const weighSettled = weighInDone || morningSkipped;
+  const learningSettled = journeyActive && learningDone;
+  const reflectionSettled = reflectionDone;
+
+  const settledChips = [
+    weighSettled &&
+      (weighInDone ? (
+        <JourneyTaskCard key="weigh" icon="⚖️" label="今日晨重" status="completed" variant="chip" value={`${todayCheckIn?.weight}kg`} href="/customer/checkin" />
+      ) : (
+        <JourneyTaskCard key="weigh" icon="⚖️" label="今日晨重" status="available" variant="chip" value="已跳过" />
+      )),
+    // The learning chip is rendered by TodayContentCard itself, since it owns
+    // today's content and the review modal it reopens.
+    learningSettled && <TodayContentCard key="learning" />,
+    reflectionSettled && <JourneyTaskCard key="reflection" icon="🌙" label="今日回顾" status="completed" variant="chip" />,
+  ].filter(Boolean);
+
   async function handleSkipMorning() {
     setSkipping(true);
     setSkipError(null);
@@ -257,47 +278,72 @@ export default function CustomerDashboardPage() {
           </p>
         </div>
 
-        {/* Grid: 晨重 | 饮食 · 饮水 (full) · 学习 | 回顾 */}
-        <div className="grid grid-cols-2 gap-2">
-          {/* 1. 今日晨重 */}
-          {weighInDone ? (
-            <JourneyTaskCard icon="⚖️" label="今日晨重" status="completed" value={`${todayCheckIn?.weight}kg`} href="/customer/checkin" />
-          ) : morningSkipped ? (
-            <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" value="已跳过" />
-          ) : tooEarlyForMorning ? (
-            <JourneyTaskCard icon="⚖️" label="今日晨重" status="locked" value={LOCKED_HINT_TOO_EARLY} />
-          ) : inMorningWindow ? (
-            <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" href="/customer/checkin" actionLabel="开始 →" isNext={nextTask === "weigh"} />
+        {/* Settled one-time tasks, compressed. The Dashboard gets lighter as the
+            day progresses instead of holding five equal cards to bedtime. */}
+        {settledChips.length > 0 && <div className="mb-2 flex flex-wrap gap-2">{settledChips}</div>}
+
+        <div className="flex flex-col gap-2">
+          {/* 1. 今日晨重 — only while outstanding; it gates everything below. */}
+          {!weighSettled &&
+            (tooEarlyForMorning ? (
+              <JourneyTaskCard icon="⚖️" label="今日晨重" status="locked" value={LOCKED_HINT_TOO_EARLY} variant="row" />
+            ) : inMorningWindow ? (
+              <JourneyTaskCard
+                icon="⚖️"
+                label="今日晨重"
+                status="available"
+                variant="row"
+                href="/customer/checkin"
+                actionSlot={<span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">开始 →</span>}
+                isNext={nextTask === "weigh"}
+              />
+            ) : (
+              <JourneyTaskCard
+                icon="⚖️"
+                label="今日晨重"
+                status="attention"
+                variant="row"
+                value={skipError ?? "已错过晨重时间"}
+                actionSlot={
+                  <button
+                    type="button"
+                    disabled={skipping}
+                    onClick={handleSkipMorning}
+                    className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
+                  >
+                    {skipping ? "处理中..." : "跳过"}
+                  </button>
+                }
+              />
+            ))}
+
+          {/* 2. 饮食打卡 — CONTINUOUS: the primary action card, always expanded. */}
+          {!journeyActive ? (
+            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="locked" value={lockedHint} variant="row" />
+          ) : mealDone ? (
+            <JourneyTaskCard
+              icon="🍽️"
+              label="饮食打卡"
+              status="completed"
+              variant="row"
+              value={`已记录 ${addedMeals.length} 餐`}
+              href="/customer/meals/add"
+              actionSlot={<span className="shrink-0 rounded-full border border-emerald-300 px-3 py-1.5 text-xs font-semibold text-emerald-600">再记一餐 →</span>}
+            />
           ) : (
             <JourneyTaskCard
-              icon="⚖️"
-              label="今日晨重"
-              status="attention"
-              value={skipError ?? "已错过"}
-              actionSlot={
-                <button
-                  type="button"
-                  disabled={skipping}
-                  onClick={handleSkipMorning}
-                  className="shrink-0 rounded-full bg-emerald-500 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
-                >
-                  {skipping ? "..." : "跳过"}
-                </button>
-              }
+              icon="🍽️"
+              label="饮食打卡"
+              status="available"
+              variant="row"
+              href="/customer/meals/add"
+              actionSlot={<span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">开始 →</span>}
+              isNext={nextTask === "meal"}
             />
           )}
 
-          {/* 2. 饮食打卡 */}
-          {!journeyActive ? (
-            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="locked" value={lockedHint} />
-          ) : mealDone ? (
-            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="completed" value={`${addedMeals.length} 餐`} href="/customer/meals/add" />
-          ) : (
-            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="available" href="/customer/meals/add" actionLabel="开始 →" isNext={nextTask === "meal"} />
-          )}
-
-          {/* 3. 饮水打卡 — full width: the one card with inline controls. */}
-          <div className="col-span-2">
+          {/* 3. 饮水打卡 — CONTINUOUS: the largest interactive card, always open. */}
+          <div>
             {!journeyActive ? (
               <JourneyTaskCard icon="💧" label="饮水打卡" status="locked" value={lockedHint} variant="row" />
             ) : (
@@ -360,22 +406,26 @@ export default function CustomerDashboardPage() {
             )}
           </div>
 
-          {/* 4. 今日学习 — completed state stays visible + reopenable. */}
-          {journeyActive ? (
-            <TodayContentCard isNext={nextTask === "learning"} />
-          ) : (
-            <JourneyTaskCard icon="📚" label="今日学习" status="locked" value={lockedHint} />
-          )}
+          {/* 4 & 5 — ONE-TIME tasks still outstanding stay as tiles; once
+              settled they move into the chip row above. */}
+          {(!learningSettled || !reflectionSettled) && (
+            <div className="grid grid-cols-2 gap-2">
+              {!learningSettled &&
+                (journeyActive ? (
+                  <TodayContentCard isNext={nextTask === "learning"} />
+                ) : (
+                  <JourneyTaskCard icon="📚" label="今日学习" status="locked" value={lockedHint} />
+                ))}
 
-          {/* 5. 今日回顾 — belongs to tonight: locked until the evening hour. */}
-          {!journeyActive ? (
-            <JourneyTaskCard icon="🌙" label="今日回顾" status="locked" value={lockedHint} />
-          ) : todayCheckout ? (
-            <JourneyTaskCard icon="🌙" label="今日回顾" status="completed" />
-          ) : !reflectionUnlocked ? (
-            <JourneyTaskCard icon="🌙" label="今日回顾" status="locked" value={LOCKED_HINT_REFLECTION} />
-          ) : (
-            <JourneyTaskCard icon="🌙" label="今日回顾" status="available" href="/customer/checkout" actionLabel="开始 →" isNext={nextTask === "reflection"} />
+              {!reflectionSettled &&
+                (!journeyActive ? (
+                  <JourneyTaskCard icon="🌙" label="今日回顾" status="locked" value={lockedHint} />
+                ) : !reflectionUnlocked ? (
+                  <JourneyTaskCard icon="🌙" label="今日回顾" status="locked" value={LOCKED_HINT_REFLECTION} />
+                ) : (
+                  <JourneyTaskCard icon="🌙" label="今日回顾" status="available" href="/customer/checkout" actionLabel="开始 →" isNext={nextTask === "reflection"} />
+                ))}
+            </div>
           )}
         </div>
       </div>

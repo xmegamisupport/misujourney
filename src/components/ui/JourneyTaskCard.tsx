@@ -15,9 +15,12 @@ import { cn } from "@/lib/utils";
  *   🟡 locked       amber      opens later — lock icon + short helper
  *   🔴 attention    red        needs the customer
  *
- * Two shapes, same language:
- *   • "tile" — half-width grid cell (icon+status on top, name, one fact below)
- *   • "row"  — full width, for a task that carries inline controls (water)
+ * Three shapes, same language — chosen by how often a task is touched:
+ *   • "row"  — full width, for CONTINUOUS tasks revisited all day (meals, water)
+ *   • "tile" — half-width, for a ONE-TIME task still outstanding
+ *   • "chip" — the compressed form of a ONE-TIME task once it's settled
+ * so the Dashboard gets lighter as the day progresses instead of showing the
+ * same five cards from morning to night.
  *
  * `isNext` gives the single next recommended task a quiet lift (ring + NEXT
  * badge) so the eye lands on it without the page shouting.
@@ -55,7 +58,10 @@ interface JourneyTaskCardProps {
   actionSlot?: ReactNode;
   /** The next recommended task — a quiet ring + NEXT badge. */
   isNext?: boolean;
-  variant?: "tile" | "row";
+  /** "chip" is the compressed form for a finished ONE-TIME task. */
+  variant?: "tile" | "row" | "chip";
+  /** Used when there's no href (e.g. a chip that reopens a modal). */
+  onClick?: () => void;
   /** Inline controls under the row (e.g. water quick-adds). `row` only. */
   children?: ReactNode;
 }
@@ -88,9 +94,50 @@ export function JourneyTaskCard({
   actionSlot,
   isNext,
   variant = "tile",
+  onClick,
   children,
 }: JourneyTaskCardProps) {
   const s = STATUS_STYLES[status];
+
+  // ── Compressed chip: a one-time task that's already settled. It stays
+  // tappable (the detail is one tap away) but stops taking a full card's worth
+  // of attention, so the Dashboard gets lighter as the day progresses.
+  if (variant === "chip") {
+    const done = status === "completed";
+    const chipClass = cn(
+      "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-medium transition",
+      done ? "border-emerald-200 bg-emerald-50/70 text-emerald-700 active:bg-emerald-100" : "border-slate-200 bg-white text-slate-500 active:bg-slate-50",
+    );
+    const inner = (
+      <>
+        <span
+          className={cn(
+            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px]",
+            done ? "bg-emerald-400 text-white" : "bg-slate-200 text-slate-500",
+          )}
+        >
+          {done ? "✓" : "–"}
+        </span>
+        <span className="truncate">{label}</span>
+        {value && <span className={cn("truncate", done ? "text-emerald-600/70" : "text-slate-400")}>{value}</span>}
+      </>
+    );
+    if (href) {
+      return (
+        <Link href={href} className={chipClass}>
+          {inner}
+        </Link>
+      );
+    }
+    if (onClick) {
+      return (
+        <button type="button" onClick={onClick} className={chipClass}>
+          {inner}
+        </button>
+      );
+    }
+    return <span className={chipClass}>{inner}</span>;
+  }
   // An actionable card with no fact of its own shows its call to action instead.
   const isAction = !value && status === "available" && Boolean(href || actionLabel);
   const displayValue = value ?? (isAction ? (actionLabel ?? "开始 →") : undefined);

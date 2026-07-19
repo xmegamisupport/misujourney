@@ -29,7 +29,7 @@ export function TodayContentCard({ isNext }: { isNext?: boolean } = {}) {
   // Nothing scheduled → nothing outstanding, so it reads as settled (and the
   // Dashboard's X / 5 progress counts it the same way).
   if (items.length === 0) {
-    return <JourneyTaskCard icon="📚" label="今日学习" status="completed" value="今天没有新内容" />;
+    return <JourneyTaskCard icon="📚" label="今日学习" status="completed" variant="chip" />;
   }
 
   const current = items.find((i) => !i.completed);
@@ -55,24 +55,9 @@ export function TodayContentCard({ isNext }: { isNext?: boolean } = {}) {
   return (
     <>
       {!current ? (
-        // All done — stays visible AND reopenable for review (never removed).
-        <JourneyTaskCard
-          icon="📚"
-          label="今日学习"
-          status="completed"
-          value="查看 →"
-          valueTone="nav"
-          actionSlot={
-            <button
-              type="button"
-              onClick={() => open(items[0], "review")}
-              aria-label="再看一次今天的内容"
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-xs text-white"
-            >
-              ✓
-            </button>
-          }
-        />
+        // A settled one-time task: compressed to a chip, still tappable so
+        // today's content stays reopenable for review.
+        <JourneyTaskCard icon="📚" label="今日学习" status="completed" variant="chip" onClick={() => open(items[0], "review")} />
       ) : (
         <JourneyTaskCard
           icon={template?.icon ?? "📚"}
