@@ -25,6 +25,8 @@ import { useJourneyBaselineStatus } from "@/lib/baseline/hooks";
 import { useMyTodayContent } from "@/lib/cms/hooks";
 import { REFLECTION_UNLOCK_HOUR } from "@/lib/checkout/constants";
 import { useLocalHour } from "@/lib/useLocalHour";
+import { selectMisuMessage } from "@/lib/misu-voice/engine";
+import { MisuVoiceCard } from "@/components/customer/MisuVoiceCard";
 
 const waterPresets = [100, 200, 300];
 /** Only used for the brief window before the real per-customer target
@@ -142,6 +144,25 @@ export default function CustomerDashboardPage() {
     ? calculateStageProgress(currentGoal!.baseWeightKg, latestWeight ?? currentGoal!.baseWeightKg, currentGoal!.stageGoalWeightMax)
     : null;
 
+  // ❤️ MISU 想告诉你 — the Dashboard's answer to "how should I understand today?"
+  // Built entirely from data this page already loads: no extra queries.
+  const daysSinceLastWeighIn = checkIns[0]?.date
+    ? Math.max(0, Math.round((new Date(today).getTime() - new Date(checkIns[0].date).getTime()) / 86_400_000))
+    : null;
+  const misuMessage = selectMisuMessage({
+    journeyDay: currentDay,
+    tasksDone: todayTasksDone,
+    tasksTotal: TODAY_JOURNEY_TASK_COUNT,
+    daysSinceLastWeighIn,
+    latestWeight,
+    previousWeight: checkIns[1]?.weight ?? null,
+    yesterdayConditions: yesterdayCheckout?.specialConditions ?? [],
+    yesterdayBowel: yesterdayCheckout?.bowelMovement ?? null,
+    todayBowel: todayCheckout?.bowelMovement ?? null,
+    waterPercent: Math.round((water / waterTarget) * 100),
+    localHour: currentHour,
+  });
+
   // Only nudge for a missed checkout if "yesterday" was actually a Journey
   // day for this customer (not before they registered) — otherwise a brand
   // new customer would get a bogus "make up yesterday" prompt on day 1. This
@@ -252,6 +273,10 @@ export default function CustomerDashboardPage() {
             }
           />
         ) : null)}
+
+      {/* On an emotionally significant day MISU speaks BEFORE the task list —
+          she needs to understand the day before she's asked to act on it. */}
+      {misuMessage?.tier === 2 && <MisuVoiceCard message={misuMessage} />}
 
       <div>
         <div className="mb-3 flex items-baseline justify-between gap-3">
@@ -389,6 +414,9 @@ export default function CustomerDashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Ordinary days: MISU murmurs below the tasks rather than announcing. */}
+      {misuMessage && misuMessage.tier < 2 && <MisuVoiceCard message={misuMessage} />}
 
       {/* Yesterday's reflection — deliberately BELOW today. It's a second answer
           to "what should I do next", and it points at the past, so it must not
