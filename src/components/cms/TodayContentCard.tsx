@@ -61,7 +61,7 @@ export function TodayContentCard({ isNext }: { isNext?: boolean } = {}) {
           label="今日学习"
           status="completed"
           value="查看 →"
-          valueTone="accent"
+          valueTone="nav"
           actionSlot={
             <button
               type="button"

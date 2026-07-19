@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { JourneyTaskCard } from "@/components/ui/JourneyTaskCard";
 import { CoachContactSheet } from "@/components/CoachContactSheet";
 import { NotificationBell } from "@/components/customer/NotificationBell";
@@ -153,29 +152,36 @@ export default function CustomerDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6 px-4 pb-6 md:px-8">
-      <PageHeader
-        title={`${greeting}，${journey?.name ?? ""} ${journey?.avatar ?? ""}`}
-        subtitle={`Day ${currentDay} / ${planLength} · Every Day Is A New Journey`}
-        action={
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <button
-              type="button"
-              onClick={() => setCoachSheetOpen(true)}
-              aria-label="联系 Journey Coach"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-lg"
-            >
-              🌿
-            </button>
-            <Link
-              href="/customer/profile"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-xl"
-            >
-              {journey?.avatar ?? "🙂"}
-            </Link>
-          </div>
-        }
-      />
+      {/* Header — three deliberate levels: who you are, where you are, and the
+          philosophy that frames the whole app. The slogan is product, not
+          decoration: it stays visible every day, just quieter than the greeting.
+          Rendered inline (not PageHeader) so all three levels can breathe and
+          align with the cards below. */}
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-semibold text-slate-900">
+            {greeting}，{journey?.name ?? ""}
+          </h1>
+          <p className="mt-0.5 text-xs font-medium text-slate-400">
+            Day {currentDay} / {planLength}
+          </p>
+          <p className="mt-1.5 text-xs font-medium text-emerald-600/90">Every Day Is A New Journey</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <NotificationBell />
+          <button
+            type="button"
+            onClick={() => setCoachSheetOpen(true)}
+            aria-label="联系 Journey Coach"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-lg"
+          >
+            🌿
+          </button>
+          <Link href="/customer/profile" className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-xl">
+            {journey?.avatar ?? "🙂"}
+          </Link>
+        </div>
+      </header>
 
       <CoachContactSheet open={coachSheetOpen} onClose={() => setCoachSheetOpen(false)} />
 
@@ -210,7 +216,7 @@ export default function CustomerDashboardPage() {
                 <p className="text-xs text-slate-400">🎯 第一阶段目标</p>
                 <p className="mt-0.5 truncate text-sm font-medium text-slate-700">专注习惯养成</p>
               </div>
-              <span className="shrink-0 text-xs font-medium text-emerald-600">查看 →</span>
+              <span className="shrink-0 text-xs font-medium text-slate-500">查看 →</span>
             </div>
           ) : (
             <div className="flex items-center gap-4">
@@ -237,7 +243,7 @@ export default function CustomerDashboardPage() {
                   )}
                 </p>
               </div>
-              <span className="shrink-0 self-center text-xs font-medium text-emerald-600">查看 →</span>
+              <span className="shrink-0 self-center text-xs font-medium text-slate-500">查看 →</span>
             </div>
           )}
         </Link>
@@ -380,17 +386,18 @@ export default function CustomerDashboardPage() {
         (!baselineStatus.complete ? (
           customerId && <JourneyBaselineReminder customerId={customerId} />
         ) : !bodyProgressLoading && bodyProgressActionable ? (
-          <Link
+          <JourneyTaskCard
+            icon="📷"
+            label="身形记录"
+            status="available"
+            variant="row"
             href={bodyProgressCtaHref(bodyProgressCta)}
-            className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm transition hover:border-emerald-200"
-          >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">📷</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-800">身形记录</p>
-              <p className="text-xs text-slate-400">记录你的身形变化，为自己留下一个参考</p>
-            </div>
-            <span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">{BODY_PROGRESS_CTA_LABEL[bodyProgressCta.kind]}</span>
-          </Link>
+            actionSlot={
+              <span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">
+                {BODY_PROGRESS_CTA_LABEL[bodyProgressCta.kind]}
+              </span>
+            }
+          />
         ) : null)}
 
       {/* Supporting information — a summary strip, not a competing section.
@@ -399,7 +406,7 @@ export default function CustomerDashboardPage() {
         <Link href="/customer/meals" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-emerald-200">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs text-slate-400">今日营养</p>
-            <span className="shrink-0 text-xs font-medium text-emerald-600">查看 →</span>
+            <span className="shrink-0 text-xs font-medium text-slate-500">查看 →</span>
           </div>
           <div className="mt-1 flex items-baseline gap-3">
             <p className="text-2xl font-bold leading-tight text-slate-900">
@@ -411,8 +418,18 @@ export default function CustomerDashboardPage() {
               {vegServingsDone >= VEGETABLE_SERVINGS_TARGET ? "✔" : `${vegServingsDone}/${VEGETABLE_SERVINGS_TARGET}`}
             </p>
           </div>
-          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500">
-            🤖{" "}
+        </Link>
+      ) : !nutritionTargetsLoading ? (
+        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
+          完善身高/体重/年龄/性别/活动量资料后，将自动生成你的每日营养目标。
+        </div>
+      ) : null}
+
+      {/* Supporting guidance — the quietest layer on the page. */}
+      {nutritionTargets && (
+        <div className="flex items-start gap-2.5 rounded-2xl bg-slate-50 px-4 py-3">
+          <span className="shrink-0 text-sm leading-relaxed">🤖</span>
+          <p className="text-xs leading-relaxed text-slate-500">
             {buildDailyNutritionAdvice({
               caloriesPercent: Math.round((addedCalories / nutritionTargets.dailyCalories) * 100),
               proteinPercent: Math.round((addedProtein / nutritionTargets.dailyProtein) * 100),
@@ -421,12 +438,8 @@ export default function CustomerDashboardPage() {
               waterPercent: Math.round((water / waterTarget) * 100),
             })}
           </p>
-        </Link>
-      ) : !nutritionTargetsLoading ? (
-        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
-          完善身高/体重/年龄/性别/活动量资料后，将自动生成你的每日营养目标。
         </div>
-      ) : null}
+      )}
 
       <Link
         href="/customer/summary"

@@ -40,8 +40,12 @@ interface JourneyTaskCardProps {
   status: JourneyTaskStatus;
   /** The single most important fact — "68kg", "1200 / 2000ml", "今晚开放". */
   value?: string;
-  /** "accent" tints the value in the status colour (e.g. a 查看 → affordance). */
-  valueTone?: "muted" | "accent";
+  /** How the value line reads:
+   *   "muted"  — a plain fact ("68kg", "2 餐")
+   *   "action" — something to DO today, emerald ("开始 →")
+   *   "nav"    — somewhere to LOOK, neutral grey ("查看 →")
+   * Green means "do this"; grey means "you may view this". */
+  valueTone?: "muted" | "action" | "nav";
   /** 0-100. Renders the bar + percentage for `in_progress`. */
   percent?: number;
   href?: string;
@@ -90,7 +94,7 @@ export function JourneyTaskCard({
   // An actionable card with no fact of its own shows its call to action instead.
   const isAction = !value && status === "available" && Boolean(href || actionLabel);
   const displayValue = value ?? (isAction ? (actionLabel ?? "开始 →") : undefined);
-  const tone = isAction ? "accent" : valueTone;
+  const tone: "muted" | "action" | "nav" = isAction ? "action" : valueTone;
 
   const shell = cn(
     "block rounded-2xl border transition",
@@ -103,7 +107,7 @@ export function JourneyTaskCard({
     <p
       className={cn(
         "mt-0.5 truncate text-xs",
-        tone === "accent" ? (status === "completed" ? "font-semibold text-emerald-600" : "font-semibold text-emerald-600") : "text-slate-400",
+        tone === "action" ? "font-semibold text-emerald-600" : tone === "nav" ? "font-medium text-slate-500" : "text-slate-400",
       )}
     >
       {displayValue}
