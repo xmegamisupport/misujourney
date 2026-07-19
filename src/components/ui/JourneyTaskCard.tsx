@@ -16,11 +16,11 @@ import { cn } from "@/lib/utils";
  *   🔴 attention    red        needs the customer
  *
  * Three shapes, same language — chosen by how often a task is touched:
- *   • "row"  — full width, for CONTINUOUS tasks revisited all day (meals, water)
- *   • "tile" — half-width, for a ONE-TIME task still outstanding
- *   • "chip" — the compressed form of a ONE-TIME task once it's settled
- * so the Dashboard gets lighter as the day progresses instead of showing the
- * same five cards from morning to night.
+ *   • "row"     — full width, for a CONTINUOUS task with inline controls (water)
+ *   • "tile"    — half-width, the standard task card
+ *   • "compact" — a settled ONE-TIME task: same card, roughly half the height
+ * Each task keeps a fixed grid slot; only its HEIGHT changes as it's completed,
+ * so the Dashboard gets lighter through the day without anything moving around.
  *
  * `isNext` gives the single next recommended task a quiet lift (ring + NEXT
  * badge) so the eye lands on it without the page shouting.
@@ -58,9 +58,9 @@ interface JourneyTaskCardProps {
   actionSlot?: ReactNode;
   /** The next recommended task — a quiet ring + NEXT badge. */
   isNext?: boolean;
-  /** "chip" is the compressed form for a finished ONE-TIME task. */
-  variant?: "tile" | "row" | "chip";
-  /** Used when there's no href (e.g. a chip that reopens a modal). */
+  /** "compact" is the shortened card for a settled ONE-TIME task. */
+  variant?: "tile" | "row" | "compact";
+  /** Used when there's no href (e.g. a card that reopens a modal). */
   onClick?: () => void;
   /** Inline controls under the row (e.g. water quick-adds). `row` only. */
   children?: ReactNode;
@@ -99,44 +99,45 @@ export function JourneyTaskCard({
 }: JourneyTaskCardProps) {
   const s = STATUS_STYLES[status];
 
-  // ── Compressed chip: a one-time task that's already settled. It stays
-  // tappable (the detail is one tap away) but stops taking a full card's worth
-  // of attention, so the Dashboard gets lighter as the day progresses.
-  if (variant === "chip") {
+  // ── Compact card: a settled ONE-TIME task. Still a card — border, fill, same
+  // grid column — just about half the height, and `self-start` so it doesn't
+  // stretch to match a taller neighbour. Deliberately NOT a pill/label: a
+  // finished milestone should still read as a milestone.
+  if (variant === "compact") {
     const done = status === "completed";
-    const chipClass = cn(
-      "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-medium transition",
-      done ? "border-emerald-200 bg-emerald-50/70 text-emerald-700 active:bg-emerald-100" : "border-slate-200 bg-white text-slate-500 active:bg-slate-50",
+    const compactClass = cn(
+      "flex items-center gap-2 self-start rounded-2xl border px-3 py-2.5 text-left transition",
+      done ? "border-emerald-200 bg-emerald-50/60 active:bg-emerald-100/70" : "border-slate-200 bg-white active:bg-slate-50",
     );
     const inner = (
       <>
         <span
           className={cn(
-            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px]",
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px]",
             done ? "bg-emerald-400 text-white" : "bg-slate-200 text-slate-500",
           )}
         >
           {done ? "✓" : "–"}
         </span>
-        <span className="truncate">{label}</span>
-        {value && <span className={cn("truncate", done ? "text-emerald-600/70" : "text-slate-400")}>{value}</span>}
+        <p className={cn("min-w-0 flex-1 truncate text-xs font-medium", done ? "text-emerald-800" : "text-slate-500")}>{label}</p>
+        {value && <span className={cn("shrink-0 text-[11px] font-medium", done ? "text-emerald-600/80" : "text-slate-400")}>{value}</span>}
       </>
     );
     if (href) {
       return (
-        <Link href={href} className={chipClass}>
+        <Link href={href} className={compactClass}>
           {inner}
         </Link>
       );
     }
     if (onClick) {
       return (
-        <button type="button" onClick={onClick} className={chipClass}>
+        <button type="button" onClick={onClick} className={compactClass}>
           {inner}
         </button>
       );
     }
-    return <span className={chipClass}>{inner}</span>;
+    return <div className={compactClass}>{inner}</div>;
   }
   // An actionable card with no fact of its own shows its call to action instead.
   const isAction = !value && status === "available" && Boolean(href || actionLabel);

@@ -29,7 +29,7 @@ export function TodayContentCard({ isNext }: { isNext?: boolean } = {}) {
   // Nothing scheduled → nothing outstanding, so it reads as settled (and the
   // Dashboard's X / 5 progress counts it the same way).
   if (items.length === 0) {
-    return <JourneyTaskCard icon="📚" label="今日学习" status="completed" variant="chip" />;
+    return <JourneyTaskCard icon="📚" label="今日学习" status="completed" variant="compact" />;
   }
 
   const current = items.find((i) => !i.completed);
@@ -57,7 +57,7 @@ export function TodayContentCard({ isNext }: { isNext?: boolean } = {}) {
       {!current ? (
         // A settled one-time task: compressed to a chip, still tappable so
         // today's content stays reopenable for review.
-        <JourneyTaskCard icon="📚" label="今日学习" status="completed" variant="chip" onClick={() => open(items[0], "review")} />
+        <JourneyTaskCard icon="📚" label="今日学习" status="completed" variant="compact" onClick={() => open(items[0], "review")} />
       ) : (
         <JourneyTaskCard
           icon={template?.icon ?? "📚"}

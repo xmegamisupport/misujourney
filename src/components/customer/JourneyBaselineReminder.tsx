@@ -17,15 +17,17 @@ export function JourneyBaselineReminder({ customerId }: { customerId: string }) 
 
   return (
     <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5">
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">🌱</span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-slate-800">Journey 起点</p>
-          <p className="mt-0.5 truncate text-xs text-slate-500">留下你的起点，之后才看得见改变</p>
+          <p className="text-sm font-medium text-slate-800">Journey 起点</p>
+          {/* Why now, not "someday" — a starting point captured late is no
+              longer a true starting point. Encouraging, never pressuring. */}
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">留下你的起点，之后才能看见真正的改变。</p>
         </div>
         <Link
           href="/customer/journey-start"
-          className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
+          className="mt-0.5 shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
         >
           继续 →
         </Link>
