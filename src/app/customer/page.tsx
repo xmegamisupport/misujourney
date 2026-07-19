@@ -292,7 +292,9 @@ export default function CustomerDashboardPage() {
         <div className="grid grid-cols-2 gap-2">
           {/* 1. 今日晨重 — ONE-TIME */}
           {weighInDone ? (
-            <JourneyTaskCard icon="⚖️" label="今日晨重" status="completed" variant="compact" value={`${todayCheckIn?.weight}kg`} href="/customer/checkin" />
+            // No weight value here — the goal card above already shows 目前体重,
+            // and the half-width compact card is tight once the icon returns.
+            <JourneyTaskCard icon="⚖️" label="今日晨重" status="completed" variant="compact" href="/customer/checkin" />
           ) : morningSkipped ? (
             <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" variant="compact" value="已跳过" />
           ) : tooEarlyForMorning ? (

@@ -109,18 +109,16 @@ export function JourneyTaskCard({
       "flex items-center gap-2 self-start rounded-2xl border px-3 py-2.5 text-left transition",
       done ? "border-emerald-200 bg-emerald-50/60 active:bg-emerald-100/70" : "border-slate-200 bg-white active:bg-slate-50",
     );
+    // Keeps the icon: it's the visual anchor that lets a finished task be
+    // recognised without reading it. Same identity as the full card, less height.
     const inner = (
       <>
-        <span
-          className={cn(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px]",
-            done ? "bg-emerald-400 text-white" : "bg-slate-200 text-slate-500",
-          )}
-        >
-          {done ? "✓" : "–"}
+        <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm shadow-sm", done ? "bg-white" : "bg-slate-50")}>
+          {icon}
         </span>
         <p className={cn("min-w-0 flex-1 truncate text-xs font-medium", done ? "text-emerald-800" : "text-slate-500")}>{label}</p>
         {value && <span className={cn("shrink-0 text-[11px] font-medium", done ? "text-emerald-600/80" : "text-slate-400")}>{value}</span>}
+        {done && <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-[10px] text-white">✓</span>}
       </>
     );
     if (href) {

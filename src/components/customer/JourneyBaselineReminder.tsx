@@ -4,9 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { useJourneyBaselineStatus } from "@/lib/baseline/hooks";
 
-/** Persistent Dashboard reminder shown until BOTH Journey Baseline items are
- * done, then it retires for good. Never blocks the Dashboard — "以后再完成"
- * softly dismisses it for this visit; it returns next time until completed. */
+/** Journey 起点 — shown until BOTH baseline items are done, then it retires for
+ * good and the slot becomes 📷 身形记录.
+ *
+ * Deliberately the ONE card on the Dashboard in soft pink rather than the
+ * green of Today's Journey: green = today's progress, pink = where your
+ * transformation begins. Two different ideas, recognisable before reading a
+ * word. Pink (not red) keeps it warm and encouraging — it's time-sensitive,
+ * not an error.
+ *
+ * Never blocks the Dashboard — "以后再完成" softly dismisses it for this visit;
+ * it returns next time until completed. */
 export function JourneyBaselineReminder({ customerId }: { customerId: string }) {
   const { status } = useJourneyBaselineStatus(customerId);
   const [dismissed, setDismissed] = useState(false);
@@ -15,8 +23,11 @@ export function JourneyBaselineReminder({ customerId }: { customerId: string }) 
   // status loads), and never once complete.
   if (!status.loaded || status.complete || dismissed) return null;
 
+  // The CTA follows real progress: nothing done yet → 开始, part-way → 继续.
+  const started = status.photosDone || status.dataDone;
+
   return (
-    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5">
+    <div className="rounded-2xl border border-pink-200 bg-pink-50 p-3.5">
       <div className="flex items-start gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">🌱</span>
         <div className="min-w-0 flex-1">
@@ -27,9 +38,9 @@ export function JourneyBaselineReminder({ customerId }: { customerId: string }) 
         </div>
         <Link
           href="/customer/journey-start"
-          className="mt-0.5 shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
+          className="mt-0.5 shrink-0 rounded-full bg-pink-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-pink-600"
         >
-          继续 →
+          {started ? "继续 →" : "开始 →"}
         </Link>
       </div>
       <button
