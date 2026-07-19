@@ -19,15 +19,40 @@ import type { BowelMovementLevel, SpecialCondition } from "@/lib/checkout/types"
  *   • Never reference data she didn't give us
  *   • One suggestion per message. Two is a lecture.
  *   • ❤️ on tier 1–2 only. Used every day it becomes wallpaper.
+ *   • Match the words to the tone. A `celebrate` message must not explain or
+ *     reassure — praise that arrives wrapped in caveats stops being praise.
  *   • Tier 0 ≈ 25 chars · tier 1 ≈ 60 · tier 2 ≈ 120. Longer belongs elsewhere.
  *
  * The gate on every line: **does she feel more understood than corrected?**
  * If no, rewrite. (One exception: safety, where correction IS the caring act.)
  */
 
-/** 0 = a quiet line · 1 = a card · 2 = prominent, above Today's Journey.
- * Tier 2 should be roughly 1 day in 5. Always prominent = never prominent. */
+/** 0 = a quiet line, no chrome · 1–2 = a highlighted block inside the weight
+ * card, 2 being the strongest. Reserve the highlight for days that genuinely
+ * need guidance — always prominent = never prominent. */
 export type MisuTier = 0 | 1 | 2;
+
+/** WHICH highlight — a message is not just loud or quiet, it has a temperature.
+ *
+ *   support   — rose. Something needs explaining or softening: weight up,
+ *               生理期, 聚餐, a plateau ahead, several days away.
+ *   celebrate — emerald. Something went right: weight down, all five done,
+ *               a milestone reached.
+ *
+ * Praising her inside the same pink box used to calm her down after a bad
+ * weigh-in makes the praise read as consolation. Same prominence, opposite
+ * feeling — and the customer reads the colour before she reads the words. */
+export type MisuTone = "support" | "celebrate";
+
+/** Above this, a gain is worth explaining. Below it, it is noise — and
+ * dramatising noise is how we teach her to fear the scale. Day-to-day water
+ * swing is routinely 0.3–0.5kg and means nothing. */
+const SIGNIFICANT_GAIN_KG = 0.5;
+
+/** Weights are entered to 0.1kg; rounding keeps 68.7 − 68.2 from landing at
+ * 0.5000000000000071 and counting as significant. */
+const weightDelta = (c: MisuVoiceContext): number | null =>
+  c.latestWeight === null || c.previousWeight === null ? null : Math.round((c.latestWeight - c.previousWeight) * 100) / 100;
 
 export type MisuFamily = "reactive" | "proactive" | "recognition" | "normal";
 
@@ -62,6 +87,8 @@ export interface MisuTrigger {
   id: string;
   family: MisuFamily;
   tier: MisuTier;
+  /** Only read when tier > 0 — a quiet line has no colour to get wrong. */
+  tone: MisuTone;
   priority: number;
   matches: (c: MisuVoiceContext) => boolean;
   variants: string[];
@@ -76,9 +103,11 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
     id: "effort_but_weight_up",
     family: "reactive",
     tier: 2,
+    tone: "support",
     priority: MISU_PRIORITY.anxiety,
-    matches: (c) =>
-      c.tasksDone >= c.tasksTotal - 1 && c.latestWeight !== null && c.previousWeight !== null && c.latestWeight > c.previousWeight,
+    // Same size threshold as weight_up: on a 0.2kg wobble there is nothing to
+    // reassure her about, and treating it as a crisis creates the fear.
+    matches: (c) => c.tasksDone >= c.tasksTotal - 1 && (weightDelta(c) ?? 0) > SIGNIFICANT_GAIN_KG,
     variants: [
       "昨天你几乎每一件都完成了，今天体重却往上了一点。这两件事没有矛盾 —— 身体储水的变化，常常会盖过真正在发生的改变。你做的没有白费。❤️",
       "你昨天很稳定，今天数字却不太配合。脂肪不会在一天之内长出来 —— 今天的数字，多半只是水。❤️",
@@ -89,8 +118,9 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
     id: "weight_up",
     family: "reactive",
     tier: 2,
+    tone: "support",
     priority: MISU_PRIORITY.anxiety + 1,
-    matches: (c) => c.latestWeight !== null && c.previousWeight !== null && c.latestWeight > c.previousWeight,
+    matches: (c) => (weightDelta(c) ?? 0) > SIGNIFICANT_GAIN_KG,
     variants: [
       "今天数字往上了一点。体重每天都会浮动 —— 水分、盐分、睡眠都会影响它，一天的数字不代表趋势。❤️",
       "今天比上次高了一些。脂肪不会一天之内长出来，那多半是水分。过两天再看会更准。❤️",
@@ -98,9 +128,27 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
     ],
   },
   {
+    // A small gain is noise. She still gets an answer — just not an alarm.
+    id: "weight_up_slight",
+    family: "reactive",
+    tier: 0,
+    tone: "support",
+    priority: MISU_PRIORITY.anxiety + 3,
+    matches: (c) => {
+      const d = weightDelta(c);
+      return d !== null && d > 0 && d <= SIGNIFICANT_GAIN_KG;
+    },
+    variants: [
+      "今天有一点点浮动，这个幅度多半是水分。",
+      "数字微微上去了一点，属于正常范围。",
+      "今天差一点点，不影响趋势。",
+    ],
+  },
+  {
     id: "period",
     family: "reactive",
     tier: 2,
+    tone: "support",
     priority: MISU_PRIORITY.anxiety + 2,
     matches: (c) => has(c, "period"),
     variants: [
@@ -114,6 +162,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "day1_welcome",
     family: "proactive",
+    tone: "support",
     tier: 2,
     priority: MISU_PRIORITY.proactive,
     matches: (c) => c.journeyDay === 1,
@@ -124,6 +173,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "day3_rhythm",
     family: "proactive",
+    tone: "support",
     tier: 1,
     priority: MISU_PRIORITY.proactive,
     matches: (c) => c.journeyDay === 3,
@@ -132,6 +182,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "day8_plateau_warning",
     family: "proactive",
+    tone: "support",
     tier: 2,
     priority: MISU_PRIORITY.proactive,
     matches: (c) => c.journeyDay === 8,
@@ -142,6 +193,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "day14_two_weeks",
     family: "proactive",
+    tone: "celebrate",
     tier: 2,
     priority: MISU_PRIORITY.proactive,
     matches: (c) => c.journeyDay === 14,
@@ -150,6 +202,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "day21_three_weeks",
     family: "proactive",
+    tone: "celebrate",
     tier: 1,
     priority: MISU_PRIORITY.proactive,
     matches: (c) => c.journeyDay === 21,
@@ -158,6 +211,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "day30_one_month",
     family: "proactive",
+    tone: "celebrate",
     tier: 2,
     priority: MISU_PRIORITY.proactive,
     matches: (c) => c.journeyDay === 30,
@@ -168,6 +222,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "gathering",
     family: "reactive",
+    tone: "support",
     tier: 1,
     priority: MISU_PRIORITY.explanation,
     matches: (c) => has(c, "gathering", "eating_out"),
@@ -181,6 +236,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "late_night",
     family: "reactive",
+    tone: "support",
     tier: 1,
     priority: MISU_PRIORITY.explanation + 1,
     matches: (c) => has(c, "late_night"),
@@ -193,6 +249,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "sick_or_stress",
     family: "reactive",
+    tone: "support",
     tier: 1,
     priority: MISU_PRIORITY.explanation + 2,
     matches: (c) => has(c, "sick", "stress"),
@@ -204,6 +261,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "travel",
     family: "reactive",
+    tone: "support",
     tier: 1,
     priority: MISU_PRIORITY.explanation + 3,
     matches: (c) => has(c, "travel"),
@@ -215,6 +273,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "constipation",
     family: "reactive",
+    tone: "support",
     tier: 1,
     priority: MISU_PRIORITY.explanation + 4,
     matches: (c) => c.yesterdayBowel === "none" && c.todayBowel === "none",
@@ -226,6 +285,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "no_weighin",
     family: "reactive",
+    tone: "support",
     tier: 1,
     priority: MISU_PRIORITY.explanation + 5,
     // Also covers "never weighed in" — deliberately not framed as a failure.
@@ -239,6 +299,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "low_water",
     family: "reactive",
+    tone: "support",
     tier: 1,
     priority: MISU_PRIORITY.explanation + 6,
     matches: (c) => c.localHour >= 18 && c.waterPercent < 50,
@@ -252,6 +313,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "all_tasks_done",
     family: "recognition",
+    tone: "celebrate",
     tier: 1,
     priority: MISU_PRIORITY.recognition,
     matches: (c) => c.tasksDone >= c.tasksTotal,
@@ -265,6 +327,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "weight_down",
     family: "recognition",
+    tone: "celebrate",
     tier: 1,
     priority: MISU_PRIORITY.recognition + 1,
     matches: (c) => c.latestWeight !== null && c.previousWeight !== null && c.latestWeight < c.previousWeight,
@@ -278,6 +341,7 @@ export const MISU_TRIGGERS: MisuTrigger[] = [
   {
     id: "normal_day",
     family: "normal",
+    tone: "support",
     tier: 0,
     priority: MISU_PRIORITY.normal,
     matches: () => true,

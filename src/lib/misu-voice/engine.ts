@@ -1,10 +1,11 @@
-import { MISU_TRIGGERS, type MisuTier, type MisuVoiceContext } from "./library";
+import { MISU_TRIGGERS, type MisuTier, type MisuTone, type MisuVoiceContext } from "./library";
 
-export type { MisuTier, MisuVoiceContext } from "./library";
+export type { MisuTier, MisuTone, MisuVoiceContext } from "./library";
 
 export interface MisuMessage {
   id: string;
   tier: MisuTier;
+  tone: MisuTone;
   text: string;
 }
 
@@ -37,5 +38,5 @@ export function selectMisuMessage(ctx: MisuVoiceContext): MisuMessage | null {
   if (winner.variants.length === 0) return null;
 
   const index = Math.abs(ctx.journeyDay + winner.id.length) % winner.variants.length;
-  return { id: winner.id, tier: winner.tier, text: winner.variants[index] };
+  return { id: winner.id, tier: winner.tier, tone: winner.tone, text: winner.variants[index] };
 }
