@@ -14,6 +14,7 @@ import { useTodayMeals, useTodayCheckIn, useCustomerCheckIns } from "@/lib/inven
 import { todayDateStr, yesterdayDateStr } from "@/lib/inventory/engine";
 import { useCurrentCustomerGoal } from "@/lib/goals/hooks";
 import { calculateWaterTargetMl } from "@/lib/goals/goal-calculator";
+import { calculateStageProgress } from "@/lib/goals/stage-progress";
 import { useCheckoutForDate } from "@/lib/checkout/hooks";
 import { useTodayJourneyDay } from "@/lib/journey-day/hooks";
 import { skipMorningCheckin } from "@/lib/journey-day/engine";
@@ -140,13 +141,12 @@ export default function CustomerDashboardPage() {
   const currentDay = journey?.currentDay ?? 1;
   const planLength = journey?.planLength ?? 30;
   const hasWeightGoal = Boolean(currentGoal) && currentGoal!.stageGoalWeightMin < currentGoal!.baseWeightKg;
-  const remaining = hasWeightGoal && latestWeight !== null
-    ? {
-        min: Math.max(0, Math.round((latestWeight - currentGoal!.stageGoalWeightMax) * 10) / 10),
-        max: Math.max(0, Math.round((latestWeight - currentGoal!.stageGoalWeightMin) * 10) / 10),
-      }
+  // Progress made, not distance left. Measured against the NEAREST edge of the
+  // goal range — reaching it means the customer has entered their goal band.
+  // Before the first weigh-in we measure from the base weight, i.e. 0%.
+  const stageProgress = hasWeightGoal
+    ? calculateStageProgress(currentGoal!.baseWeightKg, latestWeight ?? currentGoal!.baseWeightKg, currentGoal!.stageGoalWeightMax)
     : null;
-  const goalReached = remaining !== null && remaining.max <= 0;
 
   // Only nudge for a missed checkout if "yesterday" was actually a Journey
   // day for this customer (not before they registered) — otherwise a brand
@@ -224,32 +224,34 @@ export default function CustomerDashboardPage() {
               <span className="shrink-0 text-xs font-medium text-slate-500">查看 →</span>
             </div>
           ) : (
-            <div className="flex items-center gap-4">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-slate-400">目前体重</p>
-                <p className="mt-0.5 text-2xl font-bold leading-tight text-slate-900">
-                  {latestWeight !== null ? `${latestWeight}` : "—"}
-                  {latestWeight !== null && <span className="ml-0.5 text-sm font-medium text-slate-400">kg</span>}
-                </p>
+            <>
+              <div className="flex items-center gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-slate-400">目前体重</p>
+                  <p className="mt-0.5 text-2xl font-bold leading-tight text-slate-900">
+                    {latestWeight !== null ? `${latestWeight}` : "—"}
+                    {latestWeight !== null && <span className="ml-0.5 text-sm font-medium text-slate-400">kg</span>}
+                  </p>
+                </div>
+                <div className="h-9 w-px shrink-0 bg-slate-100" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-slate-400">第一阶段</p>
+                  <p className="mt-0.5 truncate text-2xl font-bold leading-tight text-emerald-600">
+                    {stageProgress?.percent ?? 0}%<span className="ml-1 text-sm font-medium text-slate-400">完成</span>
+                  </p>
+                </div>
+                <span className="shrink-0 self-center text-xs font-medium text-slate-500">查看 →</span>
               </div>
-              <div className="h-9 w-px shrink-0 bg-slate-100" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-slate-400">距离目标</p>
-                <p className="mt-0.5 truncate text-2xl font-bold leading-tight text-emerald-600">
-                  {goalReached ? (
-                    "🎉 已达成"
-                  ) : remaining ? (
-                    <>
-                      {remaining.min === remaining.max ? remaining.min : `${remaining.min}~${remaining.max}`}
-                      <span className="ml-0.5 text-sm font-medium text-slate-400">kg</span>
-                    </>
-                  ) : (
-                    "—"
-                  )}
-                </p>
+
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-emerald-400 transition-all"
+                  style={{ width: `${stageProgress?.percent ?? 0}%` }}
+                />
               </div>
-              <span className="shrink-0 self-center text-xs font-medium text-slate-500">查看 →</span>
-            </div>
+
+              {stageProgress && <p className="mt-2 text-xs leading-relaxed text-slate-500">{stageProgress.message}</p>}
+            </>
           )}
         </Link>
       )}
