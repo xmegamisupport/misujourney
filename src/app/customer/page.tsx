@@ -205,20 +205,28 @@ export default function CustomerDashboardPage() {
 
       <CoachContactSheet open={coachSheetOpen} onClose={() => setCoachSheetOpen(false)} />
 
-      {/* Goal — a light two-fact summary. The full analytics live on 成长旅程. */}
-      {/* Only once there's a real weigh-in — otherwise this renders "— kg / 0%"
+      {/* Weight — no longer "what is my weight today?" but "what does today's
+          weight mean?". The number, the progress it has produced, and MISU's
+          reading of it are ONE block: the explanation belongs beside the number
+          it explains, not at the bottom of a page few customers scroll to. */}
+      {/* The card itself needs a real weigh-in — otherwise it renders "— kg / 0%"
           to every new customer, and stays dead permanently for anyone who never
-          weighs in. Nothing is better than a hollow number. */}
-      {currentGoal && latestWeight !== null && (
+          weighs in. Nothing is better than a hollow number. But MISU still
+          speaks in that case (see the fallback below): today every real customer
+          has zero weigh-ins, and silence is the one thing she must never do. */}
+      {currentGoal && latestWeight !== null ? (
         <Link href="/customer/progress" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-emerald-200">
           {!hasWeightGoal ? (
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs text-slate-400">🎯 第一阶段目标</p>
-                <p className="mt-0.5 truncate text-sm font-medium text-slate-700">专注习惯养成</p>
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs text-slate-400">🎯 第一阶段目标</p>
+                  <p className="mt-0.5 truncate text-sm font-medium text-slate-700">专注习惯养成</p>
+                </div>
+                <span className="shrink-0 text-xs font-medium text-slate-500">查看 →</span>
               </div>
-              <span className="shrink-0 text-xs font-medium text-slate-500">查看 →</span>
-            </div>
+              {misuMessage && <MisuVoiceCard message={misuMessage} />}
+            </>
           ) : (
             <>
               <div className="flex items-center gap-4">
@@ -246,10 +254,15 @@ export default function CustomerDashboardPage() {
                 />
               </div>
 
-              {stageProgress && <p className="mt-2 text-xs leading-relaxed text-slate-500">{stageProgress.message}</p>}
+              {/* Replaces the old static encouragement line. Same slot, same
+                  quiet weight on an ordinary day — but it now responds to what
+                  actually happened, instead of saying the same thing forever. */}
+              {misuMessage && <MisuVoiceCard message={misuMessage} />}
             </>
           )}
         </Link>
+      ) : (
+        misuMessage && <MisuVoiceCard message={misuMessage} standalone />
       )}
 
       {/* Journey 起点 sits ABOVE Today's Journey because it is time-sensitive:
@@ -273,10 +286,6 @@ export default function CustomerDashboardPage() {
             }
           />
         ) : null)}
-
-      {/* On an emotionally significant day MISU speaks BEFORE the task list —
-          she needs to understand the day before she's asked to act on it. */}
-      {misuMessage?.tier === 2 && <MisuVoiceCard message={misuMessage} />}
 
       <div>
         <div className="mb-3 flex items-baseline justify-between gap-3">
@@ -414,9 +423,6 @@ export default function CustomerDashboardPage() {
           )}
         </div>
       </div>
-
-      {/* Ordinary days: MISU murmurs below the tasks rather than announcing. */}
-      {misuMessage && misuMessage.tier < 2 && <MisuVoiceCard message={misuMessage} />}
 
       {/* Yesterday's reflection — deliberately BELOW today. It's a second answer
           to "what should I do next", and it points at the past, so it must not
