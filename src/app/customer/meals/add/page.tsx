@@ -9,6 +9,7 @@ import { mealTypeOptions, mealTypeIcon, mealTypeLabel } from "@/lib/meal-types";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useTodayJourneyDay } from "@/lib/journey-day/hooks";
 import { todayDateStr } from "@/lib/inventory/engine";
+import { compressPhoto } from "@/lib/image-compress";
 import type { MealDetectionDraft } from "@/lib/meal-check/types";
 import type { FoodCategory } from "@/lib/food-portions/types";
 
@@ -49,7 +50,8 @@ function AddMealForm() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photo, setPhoto] = useState<string | null>(null);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
+  const [compressing, setCompressing] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,23 +73,29 @@ function AddMealForm() {
     );
   }
 
-  function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+  // Compress once, here — the SAME image is then sent to the vision model and
+  // kept for the coach. If the coach reviewed a sharper picture than the AI was
+  // given, a misread would look like an AI failure when it was really a
+  // resolution difference. What she reviews is exactly what it saw.
+  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) {
-      setPhoto(URL.createObjectURL(file));
-      setPhotoFile(file);
-      setError(null);
-    }
+    if (!file) return;
+    setError(null);
+    setCompressing(true);
+    const { blob, url } = await compressPhoto(file);
+    setPhoto(url);
+    setPhotoBlob(blob);
+    setCompressing(false);
   }
 
   async function handleAnalyze() {
-    if (!photoFile) return;
+    if (!photoBlob) return;
     setAnalyzing(true);
     setError(null);
 
     try {
       const formData = new FormData();
-      formData.append("photo", photoFile);
+      formData.append("photo", photoBlob, "meal.jpg");
       formData.append("mealType", mealType);
 
       const res = await fetch("/api/analyze-meal", { method: "POST", body: formData });
@@ -155,7 +163,12 @@ function AddMealForm() {
           onClick={() => fileInputRef.current?.click()}
           className="flex aspect-square w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-3xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 text-emerald-600 transition hover:border-emerald-300"
         >
-          {photo ? (
+          {compressing ? (
+            <>
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-100 border-t-emerald-500" />
+              <span className="text-sm font-medium">处理照片中…</span>
+            </>
+          ) : photo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photo} alt="食物照片预览" className="h-full w-full object-cover" />
           ) : (
@@ -184,7 +197,7 @@ function AddMealForm() {
 
       <button
         type="button"
-        disabled={!photo}
+        disabled={!photo || compressing}
         onClick={handleAnalyze}
         className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
       >
