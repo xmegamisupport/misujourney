@@ -329,12 +329,16 @@ export default function CustomerDashboardPage() {
               Row 3  饮食打卡 | 今日回顾   (continuous | one-time) */}
         <div className="grid grid-cols-2 gap-2">
           {/* 1. 今日晨重 — ONE-TIME */}
+          {/* A settled task is not a closed door. Both of these lead to 晨重历史
+              rather than to today's form: today is already answered, so the
+              useful thing behind the card is the run of days before it — and
+              that is true whether she weighed in or skipped. */}
           {weighInDone ? (
             // No weight value here — the goal card above already shows 目前体重,
             // and the half-width compact card is tight once the icon returns.
-            <JourneyTaskCard icon="⚖️" label="今日晨重" status="completed" variant="compact" href="/customer/checkin" />
+            <JourneyTaskCard icon="⚖️" label="今日晨重" status="completed" variant="compact" href="/customer/checkin/history" />
           ) : morningSkipped ? (
-            <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" variant="compact" value="已跳过" />
+            <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" variant="compact" value="已跳过" href="/customer/checkin/history" />
           ) : tooEarlyForMorning ? (
             <JourneyTaskCard icon="⚖️" label="今日晨重" status="locked" value={LOCKED_HINT_TOO_EARLY} />
           ) : inMorningWindow ? (

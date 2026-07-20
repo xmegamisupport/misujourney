@@ -11,34 +11,39 @@ import type { TodayContentItem } from "@/lib/cms/types";
 import { JourneyTaskCard } from "@/components/ui/JourneyTaskCard";
 import { LearningContentModal } from "./LearningContentModal";
 
-/** "今日小知识" — a daily Journey task on the Dashboard. One card, one piece of
- * content, ~30秒~1分钟. After completion it does NOT disappear: it flips to a
- * completed state that stays tappable, so today's content can be reopened for
- * review (completed ≠ hidden). Empty when the day has nothing scheduled. */
+/** "今日学习" — a daily Journey task on the Dashboard. One card, one piece of
+ * content, ~30秒~1分钟.
+ *
+ * Completed ≠ hidden, and completed ≠ dead: once today is done the card shrinks
+ * but stays a door, leading to 学习 — which holds today's lesson, every past
+ * one, the guides and the FAQ. A finished task that cannot be tapped teaches
+ * the customer that the Dashboard is a checklist rather than a way in. */
 export function TodayContentCard({ isNext }: { isNext?: boolean } = {}) {
   const router = useRouter();
   const { user } = useAuthUser();
   const { data: journey } = useJourneySummary(user?.id ?? "");
   const { data: items, loading, refresh } = useMyTodayContent();
   const [viewItem, setViewItem] = useState<TodayContentItem | null>(null);
-  const [viewMode, setViewMode] = useState<"complete" | "review">("complete");
   const [completing, setCompleting] = useState(false);
 
   if (loading) return null;
 
   // Nothing scheduled → nothing outstanding, so it reads as settled (and the
-  // Dashboard's X / 5 progress counts it the same way).
+  // Dashboard's X / 5 progress counts it the same way). Still a door: 学习 holds
+  // the guides, the FAQ and every past lesson, none of which depend on today
+  // having content.
   if (items.length === 0) {
-    return <JourneyTaskCard icon="📚" label="今日学习" status="completed" variant="compact" />;
+    return <JourneyTaskCard icon="📚" label="今日学习" status="completed" variant="compact" href="/customer/learn" />;
   }
 
   const current = items.find((i) => !i.completed);
   const template = current ? TEMPLATE_LIST.find((t) => t.type === current.templateType) : undefined;
   const completedCount = items.filter((i) => i.completed).length;
 
-  function open(item: TodayContentItem, mode: "complete" | "review") {
+  // The modal now has exactly one job: read today's lesson and mark it done.
+  // Re-reading a finished lesson belongs on 学习, not in a Dashboard modal.
+  function open(item: TodayContentItem) {
     setViewItem(item);
-    setViewMode(mode);
   }
 
   async function handleComplete() {
@@ -55,9 +60,10 @@ export function TodayContentCard({ isNext }: { isNext?: boolean } = {}) {
   return (
     <>
       {!current ? (
-        // A settled one-time task: compressed to a chip, still tappable so
-        // today's content stays reopenable for review.
-        <JourneyTaskCard icon="📚" label="今日学习" status="completed" variant="compact" onClick={() => open(items[0], "review")} />
+        // Done for today — go to 学习 rather than reopening the lesson in a
+        // modal. That page holds today's content AND 学习历史, so it is strictly
+        // more than the modal offered, and the Dashboard stays a dashboard.
+        <JourneyTaskCard icon="📚" label="今日学习" status="completed" variant="compact" href="/customer/learn" />
       ) : (
         <JourneyTaskCard
           icon={template?.icon ?? "📚"}
@@ -68,7 +74,7 @@ export function TodayContentCard({ isNext }: { isNext?: boolean } = {}) {
           actionSlot={
             <button
               type="button"
-              onClick={() => open(current, "complete")}
+              onClick={() => open(current)}
               className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
             >
               开始 →
@@ -95,7 +101,7 @@ export function TodayContentCard({ isNext }: { isNext?: boolean } = {}) {
           posterDescription={viewItem.posterDescription}
           posterAltText={viewItem.posterAltText}
           onClose={() => setViewItem(null)}
-          onComplete={viewMode === "complete" ? handleComplete : undefined}
+          onComplete={handleComplete}
           completing={completing}
           onOpenHistory={() => {
             // Navigation only — never records or resets a completion. The 学习
