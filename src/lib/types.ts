@@ -52,6 +52,9 @@ export interface MealEntry {
   name: string;
   time: string;
   photoEmoji: string;
+  /** Storage path in the private meal-photos bucket; null when the upload was
+   * lost (a mid-flow reload) or the meal predates photo storage. */
+  photoPath: string | null;
   portion: string;
   calories: number;
   protein: number;

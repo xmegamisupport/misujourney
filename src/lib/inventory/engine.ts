@@ -144,6 +144,7 @@ function mapMealRow(row: MealRow): MealEntry {
     name: row.name,
     time: row.meal_time,
     photoEmoji: row.photo_emoji ?? "",
+    photoPath: row.photo_path ?? null,
     portion: row.portion ?? "",
     calories: Number(row.calories),
     protein: Number(row.protein),
@@ -459,6 +460,9 @@ export interface RecordMealInput {
   goodPoints: string[];
   improvePoints: string[];
   aiAdvice?: string;
+  /** Extension of the photo already uploaded to Storage; the server rebuilds
+   * and verifies the path from it. Omitted when there is no photo to keep. */
+  photoExt?: string | null;
 }
 
 /** Deducts MISU stock (with a row-level lock + sufficiency check) and saves
@@ -485,6 +489,7 @@ export async function recordMeal(input: RecordMealInput): Promise<EngineResult> 
     p_good_points: input.goodPoints,
     p_improve_points: input.improvePoints,
     p_ai_advice: input.aiAdvice ?? "",
+    p_photo_ext: input.photoExt ?? undefined,
   });
   if (error) return { ok: false, error: rpcErrorMessage(error) };
   notifyInventoryChange();

@@ -1311,6 +1311,7 @@ export type Database = {
           misu_score: number
           name: string
           photo_emoji: string | null
+          photo_path: string | null
           portion: string | null
           protein: number
         }
@@ -1332,6 +1333,7 @@ export type Database = {
           misu_score?: number
           name: string
           photo_emoji?: string | null
+          photo_path?: string | null
           portion?: string | null
           protein?: number
         }
@@ -1353,6 +1355,7 @@ export type Database = {
           misu_score?: number
           name?: string
           photo_emoji?: string | null
+          photo_path?: string | null
           portion?: string | null
           protein?: number
         }
@@ -1978,6 +1981,7 @@ export type Database = {
           p_misu_score: number
           p_name: string
           p_photo_emoji: string
+          p_photo_ext?: string
           p_portion: string
           p_protein: number
         }

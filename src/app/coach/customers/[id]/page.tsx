@@ -33,6 +33,7 @@ import { SEVERITY_STYLES } from "@/lib/insights/constants";
 import { buildCustomerTrendSummary } from "@/lib/insights/summary";
 import { createClient } from "@/lib/supabase/client";
 import { starString } from "@/lib/meal-check/plate-analysis";
+import { MealPhoto } from "@/components/meals/MealPhoto";
 import { FOOD_CATEGORY_META } from "@/lib/food-portions/constants";
 import type { CustomerTrendSummary, AnalysisType } from "@/lib/insights/types";
 import type { ProductCode } from "@/lib/inventory/types";
@@ -562,7 +563,9 @@ export default function CustomerDetailPage() {
                   className="flex w-full flex-col gap-2.5 rounded-2xl border border-slate-100 bg-white p-3.5 text-left shadow-sm transition hover:border-emerald-200"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-xl">{meal.photoEmoji ?? "🍽️"}</span>
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-50 text-xl">
+                      {meal.photoPath ? <MealPhoto photoPath={meal.photoPath} alt={meal.name} /> : (meal.photoEmoji ?? "🍽️")}
+                    </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-slate-800">{meal.name}</p>
                       <p className="text-xs text-slate-400">{meal.time}</p>
@@ -572,6 +575,14 @@ export default function CustomerDetailPage() {
 
                   {expanded && (
                     <div className="flex flex-col gap-2 border-t border-slate-100 pt-2.5">
+                      {/* The actual photo. Automated checks can tell food from
+                          furniture; only someone who knows this customer can
+                          tell whether the plate is plausibly hers. */}
+                      {meal.photoPath && (
+                        <div className="overflow-hidden rounded-xl bg-slate-100">
+                          <MealPhoto photoPath={meal.photoPath} alt={meal.name} className="max-h-72 w-full object-cover" />
+                        </div>
+                      )}
                       {meal.foodItems && meal.foodItems.length > 0 && (
                         <p className="text-xs text-slate-500">
                           {meal.foodItems

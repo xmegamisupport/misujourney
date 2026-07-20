@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { recordMeal } from "@/lib/inventory/engine";
+import { uploadMealPhoto } from "@/lib/meal-photos";
 import { PRODUCT_LABELS, PRODUCT_ICONS } from "@/lib/inventory/constants";
 import { starString, buildPlateGroupChecks, plateBalanceTier } from "@/lib/meal-check/plate-analysis";
 import { FOOD_CATEGORY_META } from "@/lib/food-portions/constants";
@@ -87,8 +88,14 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
         isCustom: f.portion!.isCustom,
       }));
 
+    // Upload before recording, so the RPC can verify the file really exists.
+    // A failed upload returns null and the meal is still recorded — the photo
+    // is evidence for the coach, not a precondition for her own record.
+    const photoExt = scored.photo ? await uploadMealPhoto(user.id, scored.mealId, scored.photo) : null;
+
     const result = await recordMeal({
       mealId: scored.mealId,
+      photoExt,
       customerId: user.id,
       mealType: scored.mealType as never,
       misuItems: scored.misuTags,

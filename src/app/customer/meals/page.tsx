@@ -13,6 +13,7 @@ import { PRODUCT_LABELS, PRODUCT_ICONS } from "@/lib/inventory/constants";
 import { starString } from "@/lib/meal-check/plate-analysis";
 import { useCurrentNutritionTargets } from "@/lib/nutrition/hooks";
 import type { MealEntry } from "@/lib/types";
+import { MealPhoto } from "@/components/meals/MealPhoto";
 
 export default function TodayMealsPage() {
   const { user } = useAuthUser();
@@ -118,8 +119,8 @@ function RecordedMeal({ meal }: { meal: MealEntry }) {
         aria-expanded={open}
         className="flex w-full items-center gap-3 p-3.5 text-left transition hover:bg-slate-50/60"
       >
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-2xl">
-          {meal.photoEmoji}
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-50 text-2xl">
+          {meal.photoPath ? <MealPhoto photoPath={meal.photoPath} alt={meal.name} /> : meal.photoEmoji}
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-slate-800">{meal.name}</p>
@@ -138,6 +139,12 @@ function RecordedMeal({ meal }: { meal: MealEntry }) {
 
       {open && (
         <div className="border-t border-slate-100 px-3.5 py-3">
+          {meal.photoPath && (
+            <div className="mb-3 overflow-hidden rounded-xl bg-slate-100">
+              <MealPhoto photoPath={meal.photoPath} alt={meal.name} className="max-h-64 w-full object-cover" />
+            </div>
+          )}
+
           <div className="grid grid-cols-4 gap-2 text-center">
             {[
               { label: "蛋白质", value: meal.protein },
