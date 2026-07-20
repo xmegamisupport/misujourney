@@ -17,7 +17,11 @@ export default function CheckInHistoryPage() {
 
   return (
     <div className="flex flex-col gap-3 px-4 pb-8 md:px-8">
-      <PageHeader title="晨重历史" subtitle={`共 ${checkIns.length} 笔记录`} backHref="/customer/checkin" />
+      {/* Back to the Dashboard, not to today's form. The Dashboard is where
+          this page is reached from, and sending someone who came to LOOK at
+          past records into a form to RECORD one is how a customer ends up
+          filling in a weight she did not mean to. */}
+      <PageHeader title="晨重历史" subtitle={`共 ${checkIns.length} 笔记录`} backHref="/customer" />
 
       {!loading && checkIns.length === 0 ? (
         <EmptyState icon="⚖️" title="还没有晨重记录" />

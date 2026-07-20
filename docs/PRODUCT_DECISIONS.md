@@ -257,20 +257,28 @@ afternoon's work on its own.
 
 ---
 
-## 2026-07-19 · Weigh-in window 04:00–12:00
+## 2026-07-20 · Weigh-in open all day; the morning is rewarded, not required
 
-**Observation** — Weight can only be recorded before noon. Outside it, the only action is 跳过.
+**Observation** — Weight could supposedly only be recorded before noon. Founder reached the
+form at 17:30 via the back button on 晨重历史 and recorded a weight normally.
 
-**Evidence** — **KNOW** the constraint exists. **ASSUME** its impact; never observed on real
-customers.
+**Evidence (KNOW)** — The window was **never enforced anywhere**. `/customer/checkin` has no
+clock logic and `record_morning_checkin` only checks the date. The Dashboard hid the entry
+point; every other route walked past it. The rule's real effect was zero.
 
-**Decision — `VALIDATE`** Ask the first unsupervised cohort directly; decide before scaling.
+**Decision — `BUILD`** (shipped) Open the whole Journey Day. Points tier by hour instead:
+before 10:00 → 20, 10:00–12:00 → 10, after → 0 **but the task still completes** and still
+counts toward the 完成今天的 Journey bonus. 跳过 available all day. Shown as an invitation
+("10 点前完成 +20"), never as a countdown.
 
-**Reason** — Morning-only has a genuine rationale (measurement consistency), but it makes
-weight impossible for anyone who wakes late or opens the app at night. A decision to make
-deliberately, not a bug to fix reflexively.
+**Reason** — Supersedes the VALIDATE from 2026-07-19: the founder decided rather than waiting
+for a cohort, and the discovery that the rule was fictional made waiting pointless. Morning
+weighing has a real rationale (most consistent right after waking), so reward it — the old
+rule punished a late riser with nothing at all. Risk accepted and named: a decaying reward on
+stepping on a scale pulls against everything else this week did to lower scale anxiety.
+Mitigated by wording only; revisit if customers report morning pressure.
 
-**Owner** Founder + Coach · **Priority** High · **Review** 2026-08-02
+**Owner** Founder · **Priority** — · **Review** 2026-09-01
 
 ---
 

@@ -34,12 +34,21 @@ const waterPresets = [100, 200, 300];
 /** Only used for the brief window before the real per-customer target
  * (Journey Start Weight x 40ml, from customer_goals) has loaded. */
 const FALLBACK_WATER_TARGET_ML = 2000;
-/** Morning weigh-in window (24h, local time): before the start hour it's
- * still "night" (locked, no action offered yet); from start to cutoff is the
- * real window (weigh-in offered); past the cutoff with no check-in, offer
- * skipping instead. Matches the 4am Journey Day rollover used server-side. */
+/** Weighing in is open for the whole Journey Day. The only lock left is the
+ * 4am rollover, which is not a policy — before it, "today" has not started.
+ *
+ * The hours below are about POINTS, not permission: earlier earns more, and
+ * after noon it earns none while still completing the task. Weight is most
+ * consistent right after waking, so this rewards the habit that makes the data
+ * worth having — rather than the old rule, which simply refused a late riser.
+ *
+ * These mirror the tiers in refresh_journey_rewards(); if one moves, move both.
+ * They are shown to the customer as an invitation ("10 点前完成 +20"), never as
+ * a countdown — the same mechanic reads as encouragement or as pressure
+ * depending entirely on the wording. */
 const MORNING_WINDOW_START_HOUR = 4;
-const WEIGH_IN_CUTOFF_HOUR = 12;
+const WEIGH_IN_FULL_POINTS_HOUR = 10;
+const WEIGH_IN_POINTS_CUTOFF_HOUR = 12;
 const LOCKED_HINT_TOO_EARLY = "明早 4:00 开放";
 const LOCKED_HINT_PENDING_MORNING = "完成晨重后开放";
 const LOCKED_HINT_REFLECTION = "今晚开放";
@@ -102,8 +111,16 @@ export default function CustomerDashboardPage() {
   const todayTasksDone = [weighInDone, mealDone, waterDone, learningDone, reflectionDone].filter(Boolean).length;
   const currentHour = useLocalHour() ?? 8;
   const tooEarlyForMorning = currentHour < MORNING_WINDOW_START_HOUR;
-  const pastWeighInWindow = currentHour >= WEIGH_IN_CUTOFF_HOUR;
-  const inMorningWindow = !tooEarlyForMorning && !pastWeighInWindow;
+  // What weighing in right now is worth. Past the cutoff this is null and the
+  // card says nothing about points at all — telling her what she has already
+  // missed would be the pressure we are deliberately not applying.
+  const weighInPointsHint = tooEarlyForMorning
+    ? null
+    : currentHour < WEIGH_IN_FULL_POINTS_HOUR
+      ? `${WEIGH_IN_FULL_POINTS_HOUR} 点前完成 +20`
+      : currentHour < WEIGH_IN_POINTS_CUTOFF_HOUR
+        ? `${WEIGH_IN_POINTS_CUTOFF_HOUR} 点前完成 +10`
+        : null;
   const greeting = getGreeting(currentHour);
   const lockedHint = tooEarlyForMorning ? LOCKED_HINT_TOO_EARLY : LOCKED_HINT_PENDING_MORNING;
   const reflectionUnlocked = currentHour >= REFLECTION_UNLOCK_HOUR;
@@ -111,7 +128,7 @@ export default function CustomerDashboardPage() {
   // The single next recommended task — the first one the customer can actually
   // act on right now, in daily order. Drives one quiet NEXT badge, nothing more.
   const morningSkipped = todayJourney?.morningWeightStatus === "skipped";
-  const nextTask = !weighInDone && !morningSkipped && inMorningWindow
+  const nextTask = !weighInDone && !morningSkipped && !tooEarlyForMorning
     ? "weigh"
     : journeyActive && !mealDone
       ? "meal"
@@ -341,25 +358,33 @@ export default function CustomerDashboardPage() {
             <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" variant="compact" value="已跳过" href="/customer/checkin/history" />
           ) : tooEarlyForMorning ? (
             <JourneyTaskCard icon="⚖️" label="今日晨重" status="locked" value={LOCKED_HINT_TOO_EARLY} />
-          ) : inMorningWindow ? (
-            <JourneyTaskCard icon="⚖️" label="今日晨重" status="available" href="/customer/checkin" actionLabel="开始 →" isNext={nextTask === "weigh"} />
           ) : (
-            <JourneyTaskCard
-              icon="⚖️"
-              label="今日晨重"
-              status="attention"
-              value={skipError ?? "已错过"}
-              actionSlot={
-                <button
-                  type="button"
-                  disabled={skipping}
-                  onClick={handleSkipMorning}
-                  className="shrink-0 rounded-full bg-emerald-500 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
-                >
-                  {skipping ? "..." : "跳过"}
-                </button>
-              }
-            />
+            // One state for the whole day. The points hint sits where the
+            // "开始 →" action normally goes, so it reads as the invitation
+            // rather than as an extra demand; past noon it disappears and the
+            // card is simply a task again. 跳过 stays available all day and
+            // stays quiet — starting the Journey must never require a number
+            // she does not want to look at today.
+            <div className="flex flex-col gap-1.5">
+              <JourneyTaskCard
+                icon="⚖️"
+                label="今日晨重"
+                status="available"
+                href="/customer/checkin"
+                value={weighInPointsHint ?? undefined}
+                valueTone="action"
+                actionLabel="开始 →"
+                isNext={nextTask === "weigh"}
+              />
+              <button
+                type="button"
+                disabled={skipping}
+                onClick={handleSkipMorning}
+                className="self-center text-[11px] font-medium text-slate-400 transition hover:text-slate-600 disabled:opacity-60"
+              >
+                {skipping ? "跳过中…" : (skipError ?? "今天先跳过")}
+              </button>
+            </div>
           )}
 
           {/* 2. 今日学习 — ONE-TIME (the card compresses itself once settled) */}
