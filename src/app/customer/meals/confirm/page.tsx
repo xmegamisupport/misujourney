@@ -308,7 +308,7 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
                     onClick={() => setLabelItemId(item.id)}
                     className="rounded-xl border border-dashed border-emerald-200 py-2 text-center text-xs font-medium text-emerald-600 transition hover:bg-emerald-50/60"
                   >
-                    📋 有包装？拍营养标签更准
+                    📷 有包装？拍营养标签更准
                   </button>
                 </>
               )}

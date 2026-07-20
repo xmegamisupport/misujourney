@@ -116,7 +116,11 @@ export function NutritionLabelSheet({
                 </>
               ) : (
                 <>
-                  <span className="text-4xl">📋</span>
+                  {/* Camera, not a document: the icon on an action should show
+                      what pressing it does, not what it is about. 📋 stays on
+                      the heading and on the applied result, which describe the
+                      label rather than ask her to take a photo of it. */}
+                  <span className="text-4xl">📷</span>
                   <span className="text-sm font-medium">拍营养成分表</span>
                 </>
               )}
@@ -215,7 +219,7 @@ export function NutritionLabelSheet({
                 }}
                 className="rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-500"
               >
-                重新拍标签
+                📷 重新拍标签
               </button>
             </div>
           </>
