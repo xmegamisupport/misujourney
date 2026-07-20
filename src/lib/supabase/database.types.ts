@@ -1416,6 +1416,68 @@ export type Database = {
           },
         ]
       }
+      packaged_foods: {
+        Row: {
+          brand: string
+          calories_per_100g: number
+          carbohydrate_per_100g: number
+          contributed_by: string | null
+          created_at: string
+          fat_per_100g: number
+          fiber_per_100g: number
+          id: string
+          match_key: string
+          product_name: string
+          protein_per_100g: number
+          serving_size_g: number
+          servings_per_package: number
+          times_seen: number
+          updated_at: string
+        }
+        Insert: {
+          brand?: string
+          calories_per_100g: number
+          carbohydrate_per_100g?: number
+          contributed_by?: string | null
+          created_at?: string
+          fat_per_100g?: number
+          fiber_per_100g?: number
+          id?: string
+          match_key: string
+          product_name: string
+          protein_per_100g?: number
+          serving_size_g: number
+          servings_per_package: number
+          times_seen?: number
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          calories_per_100g?: number
+          carbohydrate_per_100g?: number
+          contributed_by?: string | null
+          created_at?: string
+          fat_per_100g?: number
+          fiber_per_100g?: number
+          id?: string
+          match_key?: string
+          product_name?: string
+          protein_per_100g?: number
+          serving_size_g?: number
+          servings_per_package?: number
+          times_seen?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packaged_foods_contributed_by_fkey"
+            columns: ["contributed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_guides: {
         Row: {
           category: string
@@ -2022,6 +2084,20 @@ export type Database = {
           p_approve: boolean
           p_content_id: string
           p_review_note?: string
+        }
+        Returns: undefined
+      }
+      save_packaged_food: {
+        Args: {
+          p_brand: string
+          p_calories_per_100g: number
+          p_carbohydrate_per_100g: number
+          p_fat_per_100g: number
+          p_fiber_per_100g: number
+          p_product_name: string
+          p_protein_per_100g: number
+          p_serving_size_g: number
+          p_servings_per_package: number
         }
         Returns: undefined
       }

@@ -9,6 +9,7 @@ import { PRODUCT_LABELS, PRODUCT_ICONS } from "@/lib/inventory/constants";
 import { MISU_FIXED_NUTRITION } from "@/lib/meal-check/constants";
 import { calculatePlateAnalysis } from "@/lib/meal-check/plate-analysis";
 import { FOOD_CATEGORY_META, FOOD_CATEGORY_OPTIONS } from "@/lib/food-portions/constants";
+import { NutritionLabelSheet } from "@/components/meals/NutritionLabelSheet";
 import type { MealDetectionDraft, MealScoredDraft, MisuTagDraft, FoodItemDraft, NutritionTotals } from "@/lib/meal-check/types";
 import type { ProductCode } from "@/lib/inventory/types";
 import type { FoodCategory } from "@/lib/food-portions/types";
@@ -58,6 +59,8 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
   const [addFoodCategory, setAddFoodCategory] = useState<FoodCategory>("vegetable");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Which item is currently having its packet label read, if any.
+  const [labelItemId, setLabelItemId] = useState<string | null>(null);
 
   function updateMisuQuantity(productCode: ProductCode, next: number) {
     setMisuTags((prev) => {
@@ -277,11 +280,63 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
                   删除
                 </button>
               </div>
-              <PortionSelector category={item.category} selected={item.portion} onChange={(portion) => setFoodPortion(item.id, portion)} />
+              {/* A portion read off the packet is already exact, so the
+                  life-style picker would only be able to make it worse. Show
+                  one or the other, never both. */}
+              {item.portion?.isCustom ? (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-2.5">
+                  <span className="text-sm">📋</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-emerald-700">
+                      {item.portion.portionLabel} · {item.portion.calories} kcal
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">来自包装上的营养标签</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFoodPortion(item.id, undefined)}
+                    className="shrink-0 text-[11px] font-medium text-slate-400"
+                  >
+                    改回估算
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <PortionSelector category={item.category} selected={item.portion} onChange={(portion) => setFoodPortion(item.id, portion)} />
+                  <button
+                    type="button"
+                    onClick={() => setLabelItemId(item.id)}
+                    className="rounded-xl border border-dashed border-emerald-200 py-2 text-center text-xs font-medium text-emerald-600 transition hover:bg-emerald-50/60"
+                  >
+                    📋 有包装？拍营养标签更准
+                  </button>
+                </>
+              )}
             </div>
           ))}
         </div>
       )}
+
+      {labelItemId &&
+        (() => {
+          const item = foodItems.find((f) => f.id === labelItemId);
+          if (!item) return null;
+          return (
+            <NutritionLabelSheet
+              foodName={item.name}
+              category={item.category}
+              onClose={() => setLabelItemId(null)}
+              onApply={(portion, productName) => {
+                setFoodPortion(item.id, portion);
+                // The name printed on the packet beats the model's guess from
+                // across the table — "Monster Snek Mi" rather than "脆脆面零食".
+                // She can still edit it; the field stays editable.
+                if (productName) renameFoodItem(item.id, productName);
+                setLabelItemId(null);
+              }}
+            />
+          );
+        })()}
 
       {!addFoodOpen ? (
         <button
