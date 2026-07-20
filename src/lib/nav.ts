@@ -10,7 +10,10 @@ export interface NavItem {
 
 export const customerNav: NavItem[] = [
   { href: "/customer", label: "首页", icon: "🏠", key: "home" },
-  { href: "/customer/meals", label: "饮食", icon: "🍽️", key: "meals" },
+  // Daily meal logging lives on the Dashboard, not here. This slot is for
+  // choosing better food out in the world, which is a different question from
+  // recording what you ate.
+  { href: "/customer/healthy-picks", label: "好物", icon: "🥗", key: "healthyPicks" },
   { href: "/customer/learn", label: "学习", icon: "📚", key: "learn" },
   { href: "/customer/progress", label: "成长", icon: "📈", key: "progress" },
   { href: "/customer/profile", label: "我的", icon: "👤", key: "profile" },

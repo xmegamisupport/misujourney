@@ -1,12 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { mealTypeOptions } from "@/lib/meal-types";
-import { cn } from "@/lib/utils";
+import { mealTypeOptions, mealTypeIcon, mealTypeLabel } from "@/lib/meal-types";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useTodayJourneyDay } from "@/lib/journey-day/hooks";
 import { todayDateStr } from "@/lib/inventory/engine";
@@ -18,8 +17,30 @@ interface DetectionResponse {
   foodItems: { name: string; category: FoodCategory }[];
 }
 
+const DEFAULT_MEAL_TYPE = "lunch";
+
+/** Which meal this is comes from the link that opened the page — the customer
+ * already answered that question by tapping a meal card on 今日饮食, and asking
+ * again was the whole reason the old intermediate step existed. An unknown or
+ * missing value falls back rather than blocking: a bad link should still let
+ * her record something. */
+function resolveMealType(raw: string | null): string {
+  return mealTypeOptions.some((t) => t.key === raw) ? (raw as string) : DEFAULT_MEAL_TYPE;
+}
+
 export default function AddMealPage() {
+  return (
+    <Suspense fallback={<div className="px-4 py-10 md:px-8" />}>
+      <AddMealForm />
+    </Suspense>
+  );
+}
+
+function AddMealForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const mealType = resolveMealType(searchParams.get("type"));
+
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
   const today = todayDateStr();
@@ -27,7 +48,6 @@ export default function AddMealPage() {
   const journeyActive = (todayJourney?.status ?? "waiting_for_morning") === "active";
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [mealType, setMealType] = useState("lunch");
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -36,7 +56,7 @@ export default function AddMealPage() {
   if (!journeyLoading && !journeyActive) {
     return (
       <div className="px-4 py-10 md:px-8">
-        <PageHeader title="记录食物" backHref="/customer" />
+        <PageHeader title={`记录${mealTypeLabel(mealType)}`} backHref="/customer/meals" />
         <EmptyState
           icon="🌱"
           title="今天的 Journey 还没开始"
@@ -110,31 +130,13 @@ export default function AddMealPage() {
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
-      <PageHeader title="记录食物" subtitle="Smart Meal Check" backHref="/customer" />
+      <PageHeader
+        title={`${mealTypeIcon(mealType)} ${mealTypeLabel(mealType)}`}
+        subtitle="拍一张照片就好"
+        backHref="/customer/meals"
+      />
 
       <div>
-        <p className="mb-2 text-sm font-medium text-slate-600">餐别</p>
-        <div className="grid grid-cols-5 gap-2">
-          {mealTypeOptions.map((type) => (
-            <button
-              key={type.key}
-              type="button"
-              onClick={() => setMealType(type.key)}
-              className={cn(
-                "flex flex-col items-center gap-1 rounded-2xl border px-1 py-3 text-center text-xs font-medium transition",
-                mealType === type.key ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-100 text-slate-500",
-              )}
-            >
-              <span className="text-lg">{type.icon}</span>
-              {type.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <p className="mb-2 text-sm font-medium text-slate-600">上传整餐照片</p>
-        <p className="mb-2 text-xs text-slate-400">请把这一餐全部一起拍进去，例如 MISU、牛奶、鸡蛋、水果都入镜</p>
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
@@ -153,9 +155,19 @@ export default function AddMealPage() {
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
       </div>
 
-      {error && (
-        <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>
-      )}
+      {/* Kept as a worked example rather than a rule: the AI reads the whole
+          plate at once, and a customer who photographs items one at a time gets
+          five weaker analyses instead of one good one. */}
+      <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+        <p className="text-sm font-medium text-slate-600">请把这一餐全部一起拍进去</p>
+        <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+          例如：
+          <br />
+          MISU · 鸡蛋 · 牛奶 · 水果 · 白饭
+        </p>
+      </div>
+
+      {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
 
       <button
         type="button"

@@ -39,7 +39,7 @@ export default function ConfirmMealPage() {
   if (!initial) {
     return (
       <div className="px-4 py-10 md:px-8">
-        <PageHeader title="确认这一餐" backHref="/customer/meals/add" />
+        <PageHeader title="确认这一餐" backHref="/customer/meals" />
         <EmptyState icon="📷" title="还没有分析结果" description="请先拍照并完成 AI 分析" />
       </div>
     );
@@ -182,7 +182,7 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-28 md:px-8">
-      <PageHeader title="确认这一餐" subtitle="确认食物名称，再选择生活化份量" backHref="/customer/meals/add" />
+      <PageHeader title="确认这一餐" subtitle="确认食物名称，再选择生活化份量" backHref="/customer/meals" />
 
       {initial.photo && (
         // eslint-disable-next-line @next/next/no-img-element

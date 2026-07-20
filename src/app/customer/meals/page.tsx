@@ -31,17 +31,13 @@ export default function TodayMealsPage() {
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
+      {/* The meal hub, opened straight from the Dashboard. There is no longer a
+          "+" here: every meal slot below is its own entry point, so the customer
+          never has to say which meal she means twice. */}
       <PageHeader
         title="今日饮食"
         subtitle={`Day ${journey?.currentDay ?? 1} / ${journey?.planLength ?? 30}`}
-        action={
-          <Link
-            href="/customer/meals/add"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-lg text-white shadow-sm"
-          >
-            +
-          </Link>
-        }
+        backHref="/customer"
       />
 
       {nutritionTargets ? (
@@ -91,13 +87,15 @@ export default function TodayMealsPage() {
                   </span>
                 </div>
               ) : (
+                // The meal type travels in the link, so the upload page opens
+                // already knowing which meal this is.
                 <EmptyState
                   icon={type.icon}
                   title={`还没有记录${type.label}`}
                   description="拍照上传，让 AI 帮你分析这一餐"
                   action={
-                    <Link href="/customer/meals/add" className="text-sm font-medium text-emerald-600">
-                      去记录 →
+                    <Link href={`/customer/meals/add?type=${type.key}`} className="text-sm font-medium text-emerald-600">
+                      记录 →
                     </Link>
                   }
                 />

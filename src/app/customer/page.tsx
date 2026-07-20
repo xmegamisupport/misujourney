@@ -433,9 +433,9 @@ export default function CustomerDashboardPage() {
           {!journeyActive ? (
             <JourneyTaskCard icon="🍽️" label="饮食打卡" status="locked" value={lockedHint} />
           ) : mealDone ? (
-            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="completed" value={`${addedMeals.length} 餐 · 再记一餐 →`} href="/customer/meals/add" />
+            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="completed" value={`${addedMeals.length} 餐 · 再记一餐 →`} href="/customer/meals" />
           ) : (
-            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="available" href="/customer/meals/add" actionLabel="开始 →" isNext={nextTask === "meal"} />
+            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="available" href="/customer/meals" actionLabel="开始 →" isNext={nextTask === "meal"} />
           )}
 
           {/* 5. 今日回顾 — ONE-TIME: belongs to tonight, compresses once done. */}

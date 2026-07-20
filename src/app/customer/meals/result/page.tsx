@@ -42,7 +42,7 @@ export default function MealResultPage() {
   if (!scored) {
     return (
       <div className="px-4 py-10 md:px-8">
-        <PageHeader title="211 餐盘分析" backHref="/customer/meals/add" />
+        <PageHeader title="211 餐盘分析" backHref="/customer/meals" />
         <EmptyState icon="📷" title="还没有分析结果" description="请先拍照并完成确认" />
       </div>
     );
@@ -115,14 +115,15 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
     }
 
     sessionStorage.removeItem("misu-meal-scored");
-    // Dashboard is home: a completed task returns the customer to their home
-    // base (where 今日营养 now reflects this meal), not deeper into the module.
-    router.push("/customer");
+    // Back to 今日饮食, not the Dashboard: she came here to fill in a meal slot,
+    // and the natural next thought is the next meal — which is one tap away on
+    // that page and two from home.
+    router.push("/customer/meals");
   }
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
-      <PageHeader title="211 餐盘分析" subtitle="Smart Meal Check" backHref="/customer/meals/confirm" />
+      <PageHeader title="211 餐盘分析" subtitle="Smart Meal Check" backHref="/customer/meals" />
 
       {/* Card 1 — 照片 + 已辨识食物（不显示克数） */}
       <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
@@ -216,7 +217,10 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
         >
           {submitting ? "记录中..." : "完成记录"}
         </button>
-        <Link href="/customer/meals/add" className="rounded-xl border border-slate-200 py-3 text-center text-sm font-medium text-slate-600 transition hover:border-slate-300">
+        <Link
+          href={`/customer/meals/add?type=${scored.mealType}`}
+          className="rounded-xl border border-slate-200 py-3 text-center text-sm font-medium text-slate-600 transition hover:border-slate-300"
+        >
           重新拍照
         </Link>
       </div>
