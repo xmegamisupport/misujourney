@@ -54,6 +54,10 @@ function AddMealForm() {
   const [compressing, setCompressing] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A failed analysis and an unusable photo need different exits. A network
+  // error is worth retrying with the same picture; a photo with no food in it
+  // never becomes one, so re-analysing it just fails again in the same way.
+  const [needsRetake, setNeedsRetake] = useState(false);
 
   if (!journeyLoading && !journeyActive) {
     return (
@@ -78,9 +82,14 @@ function AddMealForm() {
   // given, a misread would look like an AI failure when it was really a
   // resolution difference. What she reviews is exactly what it saw.
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
+    // Clearing the value lets her pick the SAME file again — otherwise onChange
+    // never fires for a repeat selection and the button looks broken.
+    input.value = "";
     if (!file) return;
     setError(null);
+    setNeedsRetake(false);
     setCompressing(true);
     const { blob, url } = await compressPhoto(file);
     setPhoto(url);
@@ -114,6 +123,7 @@ function AddMealForm() {
       const foodCount = (data.foodItems ?? []).length;
       if (misuCount + foodCount === 0) {
         setAnalyzing(false);
+        setNeedsRetake(true);
         setError("没有辨识到食物。请确认这一餐的食物都在照片里，光线清楚一点会更准。");
         return;
       }
@@ -193,16 +203,30 @@ function AddMealForm() {
         </p>
       </div>
 
-      {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
+      {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-relaxed text-rose-600">{error}</div>}
 
-      <button
-        type="button"
-        disabled={!photo || compressing}
-        onClick={handleAnalyze}
-        className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
-      >
-        开始 AI 分析
-      </button>
+      {/* The only useful action after "no food in this photo" is a different
+          photo. Re-running the same picture through the same model produces the
+          same answer, so offering 开始 AI 分析 here is a dead end dressed up as
+          a way forward. */}
+      {needsRetake ? (
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600"
+        >
+          📷 重新拍照
+        </button>
+      ) : (
+        <button
+          type="button"
+          disabled={!photo || compressing}
+          onClick={handleAnalyze}
+          className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+        >
+          开始 AI 分析
+        </button>
+      )}
     </div>
   );
 }
