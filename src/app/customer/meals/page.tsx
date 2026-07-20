@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { NutritionCard } from "@/components/ui/NutritionCard";
@@ -11,6 +12,7 @@ import { mealTypeOptions } from "@/lib/meal-types";
 import { PRODUCT_LABELS, PRODUCT_ICONS } from "@/lib/inventory/constants";
 import { starString } from "@/lib/meal-check/plate-analysis";
 import { useCurrentNutritionTargets } from "@/lib/nutrition/hooks";
+import type { MealEntry } from "@/lib/types";
 
 export default function TodayMealsPage() {
   const { user } = useAuthUser();
@@ -56,35 +58,21 @@ export default function TodayMealsPage() {
 
       <div className="flex flex-col gap-4">
         {mealTypeOptions.map((type) => {
-          const meal = addedMeals.find((m) => m.type === type.key);
+          // ALL meals of this type, not just the first: recording a second
+          // snack used to be invisible here while still counting toward the
+          // totals above, which made the numbers look wrong for no reason.
+          const meals = addedMeals.filter((m) => m.type === type.key);
           return (
             <div key={type.key}>
               <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700">
                 <span>{type.icon}</span>
                 {type.label}
               </p>
-              {meal ? (
-                <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-2xl">
-                    {meal.photoEmoji}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-800">{meal.name}</p>
-                    <p className="text-xs text-slate-400">
-                      {meal.time} · {meal.portion} · {meal.calories}kcal
-                    </p>
-                    {((meal.misuItems && meal.misuItems.length > 0) || (meal.foodItems && meal.foodItems.length > 0)) && (
-                      <p className="mt-1 truncate text-xs font-medium text-emerald-600">
-                        {[
-                          ...(meal.misuItems ?? []).map((m) => `${PRODUCT_ICONS[m.productCode]} ${PRODUCT_LABELS[m.productCode]} × ${m.quantity}`),
-                          ...(meal.foodItems ?? []).map((f) => `${f.name} ${f.portionLabel}`),
-                        ].join(" · ")}
-                      </p>
-                    )}
-                  </div>
-                  <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-amber-500">
-                    {starString(meal.misuScore)}
-                  </span>
+              {meals.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {meals.map((meal) => (
+                    <RecordedMeal key={meal.id} meal={meal} />
+                  ))}
                 </div>
               ) : (
                 // The meal type travels in the link, so the upload page opens
@@ -104,6 +92,89 @@ export default function TodayMealsPage() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** A recorded meal, openable.
+ *
+ * Everything shown when expanded is already in memory — the analysis was stored
+ * with the meal, so opening it costs no query and works for any meal recorded
+ * today. Collapsed by default: the answer to "did I record lunch?" should be
+ * visible without opening anything. */
+function RecordedMeal({ meal }: { meal: MealEntry }) {
+  const [open, setOpen] = useState(false);
+
+  const items = [
+    ...(meal.misuItems ?? []).map((m) => `${PRODUCT_ICONS[m.productCode]} ${PRODUCT_LABELS[m.productCode]} × ${m.quantity}`),
+    ...(meal.foodItems ?? []).map((f) => `${f.name} ${f.portionLabel}`),
+  ];
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 p-3.5 text-left transition hover:bg-slate-50/60"
+      >
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-2xl">
+          {meal.photoEmoji}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-slate-800">{meal.name}</p>
+          <p className="text-xs text-slate-400">
+            {meal.time} · {meal.calories}kcal
+          </p>
+          {items.length > 0 && <p className="mt-1 truncate text-xs font-medium text-emerald-600">{items.join(" · ")}</p>}
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-amber-500">
+            {starString(meal.misuScore)}
+          </span>
+          <span className="text-[11px] text-slate-400">{open ? "收起 ▲" : "查看 ▼"}</span>
+        </div>
+      </button>
+
+      {open && (
+        <div className="border-t border-slate-100 px-3.5 py-3">
+          <div className="grid grid-cols-4 gap-2 text-center">
+            {[
+              { label: "蛋白质", value: meal.protein },
+              { label: "碳水", value: meal.carbs },
+              { label: "脂肪", value: meal.fat },
+              { label: "纤维", value: meal.fiber },
+            ].map((n) => (
+              <div key={n.label} className="rounded-xl bg-slate-50 py-2">
+                <p className="text-sm font-semibold text-slate-700">{Math.round(n.value)}g</p>
+                <p className="mt-0.5 text-[11px] text-slate-400">{n.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {items.length > 0 && (
+            <ul className="mt-3 flex flex-col gap-1">
+              {items.map((item) => (
+                <li key={item} className="text-xs text-slate-600">
+                  · {item}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {meal.goodPoints.length > 0 && (
+            <p className="mt-3 text-xs leading-relaxed text-emerald-600">🟢 {meal.goodPoints.join(" · ")}</p>
+          )}
+          {meal.improvePoints.length > 0 && (
+            <p className="mt-1 text-xs leading-relaxed text-amber-600">🟡 {meal.improvePoints.join(" · ")}</p>
+          )}
+          {meal.aiAdvice && (
+            <div className="mt-3 rounded-xl bg-sky-50/60 px-3 py-2.5">
+              <p className="text-xs leading-relaxed text-slate-600">🤖 {meal.aiAdvice}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

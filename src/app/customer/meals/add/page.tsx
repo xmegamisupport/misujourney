@@ -97,6 +97,19 @@ function AddMealForm() {
         throw new Error(data.error ?? "分析失败，请重试");
       }
 
+      // Nothing recognised at all — a photo of a desk, a wall, a pet. Stop here
+      // rather than continuing to the confirm step, where food can be added by
+      // hand: that field exists to correct a meal the AI misread, not to invent
+      // one from a photo with no food in it. The rule is deliberately narrow —
+      // manual items may SUPPLEMENT a recognised meal, never create one.
+      const misuCount = (data.misuDetected ?? []).filter((m) => m.quantityGuess > 0).length;
+      const foodCount = (data.foodItems ?? []).length;
+      if (misuCount + foodCount === 0) {
+        setAnalyzing(false);
+        setError("没有辨识到食物。请确认这一餐的食物都在照片里，光线清楚一点会更准。");
+        return;
+      }
+
       const draft: MealDetectionDraft = {
         mealType,
         photo: photo ?? undefined,
