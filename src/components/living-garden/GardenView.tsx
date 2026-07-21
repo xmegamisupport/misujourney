@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { GardenScene } from "@/components/living-garden/GardenScene";
+import { TopDownScene } from "@/components/living-garden/TopDownScene";
 import { GardenHud, type GardenSheetKey } from "@/components/living-garden/GardenHud";
 import { GardenSheet, GardenSheetPlaceholder } from "@/components/living-garden/GardenSheet";
 import { FounderPreviewBar } from "@/components/living-garden/FounderPreviewBar";
-import { useGardenPreview, useGardenState, usePreviewFlag } from "@/lib/living-garden/hooks";
+import { useGardenPreview, useGardenState, usePreviewFlag, useTopDownFlag } from "@/lib/living-garden/hooks";
 import type { GardenChapter } from "@/lib/living-garden/types";
 
 /** Stage 2: Immersion — the garden itself.
@@ -23,11 +24,15 @@ export function GardenView({ chapter, initialDay, onBack }: { chapter: GardenCha
   // else. The day scrubber is a founder tool, shown only with ?preview=1. When
   // hidden, nothing moves `preview.day`, so it stays at the real initial day.
   const showFounderPreview = usePreviewFlag();
+  // Foundation spike: `?topdown=1` swaps in the top-down prototype renderer. The
+  // side-view path (GardenScene + state) is untouched, so every customer without
+  // the flag sees the approved experience exactly as before.
+  const showTopDown = useTopDownFlag();
 
   return (
     <div className="relative min-h-0 flex-1 overflow-hidden">
       <div className="relative h-full w-full">
-        <GardenScene state={state} />
+        {showTopDown ? <TopDownScene day={preview.day} /> : <GardenScene state={state} />}
 
         {/* Back to the book — the only new chrome, kept as quiet as the HUD so
             the garden stays the main character. */}

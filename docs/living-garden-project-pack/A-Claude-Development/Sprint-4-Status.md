@@ -165,3 +165,72 @@ the first five), and the naming-mismatch debt below.
    calibrate `SPRITE_SIZE` and per-asset `baseScale` against the first five real
    PNGs, in the integration sprint — not before (nothing to calibrate against
    yet). *Effort:* ~30 min with real art. *Priority:* Medium.
+
+---
+
+# Top-Down Living Garden Foundation Spike
+
+**Status: Completed (prototype behind `?topdown=1`)**
+
+Goal: prove the smallest top-down vertical slice — one full-screen top-down
+background + one independently-positioned, day-unlocked top-down asset, mobile
+responsive — without disturbing the approved side-view experience. The finished
+garden image is a **reference only** (colour/layout/complete-state); no
+discoverable object is baked into the background.
+
+**Added (all additive; side-view path byte-identical):**
+
+- **`useTopDownFlag()`** (`hooks.ts`) — SSR-safe `?topdown=1`, same pattern as
+  `usePreviewFlag`. Absent for every customer, so the live product is unaffected.
+- **`topdown.ts`** — isolated top-down data model: a terrain-only background path
+  + one `TopDownAsset` (the test sprout in the central Ancient-Tree area,
+  `visibleFromDay: 1`). `visibleTopDownAssets(day)` reuses the existing
+  `discovery.isUnlocked` engine — same Journey-day unlock logic, new perspective.
+- **`TopDownScene.tsx`** — small separate renderer: full-screen `object-cover`
+  terrain (centre safe zone kept, overflow crops) + centre-anchored assets sized
+  as a percent of scene width (responsive across mobile ratios).
+- **`GardenView.tsx`** — one-line branch: `showTopDown ? <TopDownScene> :
+  <GardenScene>`. HUD/back/preview chrome unchanged; the founder scrubber
+  (`?preview=1`) still drives the day in top-down too.
+- **Placeholder assets** — `backgrounds/terrain-placeholder.svg` (terrain only,
+  no objects) and `plants/sprout-topdown-placeholder.svg` (top-down rosette with
+  a soft radial shadow). Swapped for real art later; no final artwork produced.
+
+**Verification:** `tsc` ✅, `eslint` ✅, `next build` ✅. Screenshots were **not**
+produced — this environment cannot render the running app.
+
+**Findings:**
+- **Percentage coordinates reused** — yes. `x`/`y` percent carry over; top-down
+  measures `y` from the **top** (a map point) instead of the bottom.
+- **Bottom-centre anchor for top-down** — no. Top-down objects sit *on* a spot,
+  so they use a **centre anchor** (`translate(-50%, -50%)`). Isolated to
+  `TopDownScene`; the side-view anchor is untouched.
+- **Unavoidable engine changes** — none. `engine.ts`, `types.ts`,
+  `discovery.ts`, and `GardenScene.tsx` are unchanged; the slice is a parallel
+  renderer + data file reusing the discovery engine.
+- **Recommended top-down PNG convention** — square canvas, subject centred, a
+  soft radial contact shadow painted directly beneath (no directional ground
+  line), transparent, exported so the visual centre = canvas centre; on-screen
+  size expressed as a percent of scene width.
+
+## Technical Debt
+
+| # | Item | Priority |
+|---|---|---|
+| 1 | Two parallel renderers (`GardenScene` + `TopDownScene`) during the pivot | Medium (resolve when a direction is chosen) |
+| 2 | Asset width tied to scene width, not the cover-scaled background | Low (revisit with real terrain art) |
+
+1. **Two renderers coexist behind the flag.** *Problem:* the side-view and
+   top-down renderers both live in the tree during the pivot. *Why it matters:* if
+   top-down is approved, keeping both is dead weight and invites drift; if it is
+   rejected, the spike should be deleted. *Solution:* once the founder picks a
+   direction, either promote top-down and retire the side-view path, or delete the
+   spike (flag, `topdown.ts`, `TopDownScene`, placeholders). *Effort:* ~30 min.
+   *Priority:* Medium — decision-gated, do not pre-empt.
+2. **Asset size is a percent of the container, not the cover-scaled background.**
+   *Problem:* with `object-cover`, the background scales by the larger edge, so an
+   asset sized by container width can drift slightly from a fixed map point across
+   extreme aspect ratios. *Why it matters:* minor at mobile-portrait; only visible
+   on unusual ratios. *Solution:* when the real terrain background lands, decide a
+   fixed design aspect and map asset size/position to it. *Effort:* ~1 hr with real
+   art. *Priority:* Low.

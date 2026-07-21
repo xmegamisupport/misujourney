@@ -19,6 +19,20 @@ export function usePreviewFlag(): boolean {
   );
 }
 
+/** Top-down foundation-spike flag, read from the URL: `?topdown=1`.
+ *
+ * Same SSR-safe pattern as the preview flag. When absent (the default for every
+ * customer), the garden renders the approved side-view experience unchanged; the
+ * top-down prototype only appears with the flag, so the live product is never
+ * affected while the new foundation is being validated. */
+export function useTopDownFlag(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => new URLSearchParams(window.location.search).get("topdown") === "1",
+    () => false,
+  );
+}
+
 /** The scene for a given day. Pure derivation over the chapter, memoised so a
  * scrub or autoplay tick only recomputes when the day actually changes. The
  * component that consumes this never learns which day it is — it just gets a
