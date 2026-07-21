@@ -33,9 +33,9 @@ export interface TopDownAsset {
   visibleFromDay: number;
 }
 
-/** Terrain-only placeholder background — no discoverable object is baked in.
- * Swapped for the approved terrain-only production background when it exists. */
-export const TOPDOWN_BACKGROUND = "/assets/living-garden/backgrounds/terrain-placeholder.svg";
+/** Approved terrain-only production background (941×1672, 9:16). Terrain + fixed
+ * world structure only; every day-gated asset renders as a separate layer above. */
+export const TOPDOWN_BACKGROUND = "/assets/living-garden/backgrounds/terrain.png";
 
 /** The whole vertical slice: exactly one independently-positioned top-down asset,
  * placed in the central Ancient Tree growth area, unlocked from Day 1. */
