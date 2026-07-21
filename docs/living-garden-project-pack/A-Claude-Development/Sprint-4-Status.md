@@ -41,7 +41,8 @@ For convenience only — verify against the repository before relying on it:
   components/hooks.
 
 > Note: the current placeholder registry uses shorter working IDs and `.svg`
-> placeholders. The formal art filenames in Folder B and Folder C (for example
-> `flower_daisy_white_01.png`) are the **target** naming for the future art
-> integration sprint, which will map approved files onto the registry. The two
-> naming layers are expected to differ until that integration happens.
+> placeholders. The formal art filenames follow the official naming convention
+> in `../C-Asset-Library/README.md` — the simplest subject name, e.g. `daisy.png`
+> (no numbers, no version, no category prefix). The future art integration sprint
+> maps those approved `<name>.png` files onto the registry. The two naming layers
+> are expected to differ until that integration happens.

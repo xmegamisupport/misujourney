@@ -9,30 +9,45 @@ Every asset must permanently keep:
 - preview images (in `preview/`)
 - final PNG (in `final/`)
 
-## Naming Convention (authoritative — effective immediately)
+## Naming Convention (permanent, official standard)
 
-The final asset is always a plain, lowercase name — the subject and nothing else:
+The final asset is always the **simplest subject name**:
 
 ```
 sprout.png   daisy.png   lavender.png   rabbit.png   stone.png
+tree.png     bench.png   pond.png       lantern.png  bird.png
+butterfly.png  mushroom.png  bush.png   fountain.png
 ```
 
-- **No version numbers or qualifiers in the filename.** Not `LG_Sprout_v1.png`,
-  not `sprout_01.png`, not `sprout_v7_final_final2.png`.
-- **Version control is Git's job, not the filename's.** A revised asset keeps
-  the same `final/<name>.png`; the history lives in Git and in that asset's
-  `prompt.md` → Revision History.
-- **Variants use a descriptive suffix**, not a version number — e.g.
-  `sprout_winter.png`, `sprout_gold.png`, `sprout_stage2.png`. Each variant is
-  its own final file, still with no version number.
-- **`preview/`** may hold dated candidates (e.g. `sprout-preview-v1.png`);
-  **`final/`** holds exactly one production file per asset/variant.
+Rules:
 
-> The planning docs (`../C-Product-Planning/Asset-Inventory.md`,
-> `Day-1-to-35-Unlock-Plan.md`, `../B-Art-Generation/Asset-Prompt-Library.md`)
-> still list earlier working names such as `sprout_01.png`. Those are legacy
-> working labels; each asset adopts its plain `<name>.png` final under this
-> convention as its folder is produced.
+- **lowercase**
+- **singular**
+- **descriptive but concise**
+- **no numbers**
+- **no version** — version history is Git's job, not the filename's
+- **no color** unless the colour is the object's defining identity
+- **no category / material prefix** (a wooden fence is `fence.png`, not
+  `wooden_fence.png`)
+
+**Variants** of the same object use a **descriptive suffix only** (never a
+version number):
+
+```
+tree_oak.png       tree_pine.png
+butterfly_blue.png butterfly_monarch.png
+flower_pink.png    flower_white.png
+```
+
+**Folders:** `preview/` may hold dated candidates (e.g. `sprout-preview-v1.png`);
+`final/` holds exactly one production `<name>.png` per asset (plus any named
+variants). A revised asset keeps the same `final/<name>.png` — the history lives
+in Git and in that asset's `prompt.md` → Revision History.
+
+> This is the permanent naming convention for the whole Living Garden. All
+> Project Pack documents (Asset Inventory, Day 1–35 Unlock Plan, Asset Prompt
+> Library) use these official names; the earlier `*_01.png` working names have
+> been fully retired.
 
 ## Rules
 
