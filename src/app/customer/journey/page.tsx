@@ -1,53 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { GardenScene } from "@/components/living-garden/GardenScene";
-import { GardenHud, type GardenSheetKey } from "@/components/living-garden/GardenHud";
-import { GardenSheet, GardenSheetPlaceholder } from "@/components/living-garden/GardenSheet";
-import { FounderPreviewBar } from "@/components/living-garden/FounderPreviewBar";
-import { useGardenPreview, useGardenState } from "@/lib/living-garden/hooks";
+import { useAuthUser } from "@/lib/supabase/useAuthUser";
+import { useJourneySummary } from "@/lib/journey";
+import { LIVING_GARDEN_CHAPTERS } from "@/lib/living-garden/chapters";
+import { LivingGardenBook } from "@/components/living-garden/LivingGardenBook";
+import { GardenView } from "@/components/living-garden/GardenView";
 
-/** Living Garden — Sprint 3 framework shell.
+/** Living Garden — Sprint 3.1 entrance.
  *
- * Entering the section shows the GARDEN, immediately and almost full-bleed: no
- * menu, no cards, no module grid. The first question a customer asks here must
- * be "what changed in my garden today?", never "what buttons are here?".
+ * Two emotional stages, and the book restores the first one:
+ *   Stage 1 — Wonder ("what worlds are waiting for me?") — the book
+ *   Stage 2 — Immersion ("this is my own garden") — the garden scene
  *
- * This is a framework sprint. The day shown is driven by the Founder Preview
- * scrubber, not by real Journey data — wiring the garden to the real Journey
- * day is a later sprint and touches nothing but which number feeds
- * useGardenState. The renderer, the layers, the HUD and the overlays are the
- * deliverable, all proven with placeholder art. */
+ * The page is only the switch between them. Which chapter opens, and the day it
+ * opens on, are decided here and handed to the unchanged GardenView; everything
+ * about how the garden renders lives in the Sprint 3 framework and is untouched. */
 export default function LivingGardenPage() {
-  const preview = useGardenPreview();
-  const state = useGardenState(preview.day);
-  const [sheet, setSheet] = useState<GardenSheetKey | null>(null);
+  const { user } = useAuthUser();
+  const { data: journey } = useJourneySummary(user?.id ?? "");
+  const currentDay = journey?.currentDay ?? null;
 
-  return (
-    // Break out of the layout's centered padded column so the scene reaches the
-    // edges. The scene is tall enough to read as "the whole screen" while the
-    // app's own nav stays as chrome around it.
-    <div className="-mt-6 h-[calc(100dvh-9rem)] min-h-[520px] overflow-hidden md:mx-0 md:rounded-3xl">
-      <div className="relative h-full w-full">
-        <GardenScene state={state} />
+  const [openChapterId, setOpenChapterId] = useState<string | null>(null);
+  const open = LIVING_GARDEN_CHAPTERS.find((c) => c.id === openChapterId && c.content);
 
-        <GardenHud onOpen={setSheet} />
+  if (open?.content) {
+    const day = Math.max(1, Math.min(open.totalDays, currentDay ?? 1));
+    return <GardenView chapter={open.content} initialDay={day} onBack={() => setOpenChapterId(null)} />;
+  }
 
-        <GardenSheet open={sheet === "points"} title="⭐ Journey Points" onClose={() => setSheet(null)}>
-          <GardenSheetPlaceholder emoji="⭐" line="你累积的 Journey Points 会在这里出现 —— 就在你的花园里，而不是另一个页面。" />
-        </GardenSheet>
-        <GardenSheet open={sheet === "badges"} title="🏅 徽章" onClose={() => setSheet(null)}>
-          <GardenSheetPlaceholder emoji="🏅" line="你在旅程里达成的时刻，之后会变成一枚枚徽章，收藏在这里。" />
-        </GardenSheet>
-        <GardenSheet open={sheet === "rewards"} title="🎁 奖励" onClose={() => setSheet(null)}>
-          <GardenSheetPlaceholder emoji="🎁" line="用 Journey Points 兑换的奖励，之后会放在这里。" />
-        </GardenSheet>
-        <GardenSheet open={sheet === "more"} title="☰ 更多" onClose={() => setSheet(null)}>
-          <GardenSheetPlaceholder emoji="🌱" line="花园的更多设定与说明，之后会放在这里。" />
-        </GardenSheet>
-
-        <FounderPreviewBar controller={preview} />
-      </div>
-    </div>
-  );
+  return <LivingGardenBook currentDay={currentDay} onOpen={setOpenChapterId} />;
 }

@@ -29,9 +29,12 @@ const AUTOPLAY_MS = 1000; // ~1 second per day, per the founder-preview spec
  * steps one day per second and stops at the end. This is a review tool for
  * pacing, not scene animation — it just advances a number; the scene rerenders
  * instantly from it, with no page refresh. */
-export function useGardenPreview(chapter: GardenChapter = PLACEHOLDER_CHAPTER): GardenPreviewController {
+export function useGardenPreview(chapter: GardenChapter = PLACEHOLDER_CHAPTER, initialDay = 1): GardenPreviewController {
   const lastDay = chapter.lastDay;
-  const [day, setDayRaw] = useState(1);
+  // Opens at the customer's real progress into the chapter; the founder scrubber
+  // can still move freely from there. Clamped so a stray value can't land the
+  // scene off the authored range.
+  const [day, setDayRaw] = useState(() => Math.max(1, Math.min(lastDay, Math.round(initialDay))));
   const [playing, setPlaying] = useState(false);
 
   const setDay = useCallback(
