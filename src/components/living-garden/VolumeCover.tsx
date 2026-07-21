@@ -60,6 +60,19 @@ export function VolumeCover({ theme, muted = false }: { theme: VolumeCoverTheme;
       {/* Near hills */}
       <path d="M0,338 Q104,302 210,336 T320,326 L320,400 L0,400 Z" fill={theme.hillFront} />
 
+      {/* A few blossoms on the near hill, so the plate reads as a garden. */}
+      {[
+        { x: 40, y: 356 },
+        { x: 132, y: 366 },
+        { x: 210, y: 360 },
+        { x: 276, y: 372 },
+      ].map((f, i) => (
+        <g key={i}>
+          <circle cx={f.x} cy={f.y} r="4" fill={theme.accent} opacity="0.9" />
+          <circle cx={f.x} cy={f.y} r="1.6" fill="#fff" opacity="0.85" />
+        </g>
+      ))}
+
       {/* Gentle vignette for depth */}
       <rect width="320" height="400" fill="black" opacity="0.04" />
     </svg>
