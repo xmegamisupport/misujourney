@@ -21,7 +21,7 @@ export function GardenView({ chapter, initialDay, onBack }: { chapter: GardenCha
   const [sheet, setSheet] = useState<GardenSheetKey | null>(null);
 
   return (
-    <div className="-mt-6 h-[calc(100dvh-9rem)] min-h-[520px] overflow-hidden md:mx-0 md:rounded-3xl">
+    <div className="relative min-h-0 flex-1 overflow-hidden">
       <div className="relative h-full w-full">
         <GardenScene state={state} />
 

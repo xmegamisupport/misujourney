@@ -25,7 +25,7 @@ export function LivingGardenBook({ currentDay, onOpen }: { currentDay: number | 
   const hero = LIVING_GARDEN_CHAPTERS.find((c) => c.id === heroId) ?? firstAvailable;
 
   return (
-    <div className="-mt-6 flex h-[calc(100dvh-8rem)] min-h-[580px] flex-col overflow-hidden bg-[radial-gradient(120%_80%_at_50%_0%,#f4e3df_0%,#efe6da_45%,#e7ddcf_100%)]">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[radial-gradient(120%_80%_at_50%_0%,#f4e3df_0%,#efe6da_45%,#e7ddcf_100%)]">
       <p className="shrink-0 pt-5 text-center text-[11px] font-medium uppercase tracking-[0.42em] text-[#8a6f66]">
         Living Garden
       </p>
