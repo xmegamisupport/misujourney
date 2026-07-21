@@ -1,4 +1,4 @@
-import { PLACEHOLDER_CHAPTER } from "./garden-data";
+import { ASSET_CHAPTER } from "./assetChapter";
 import type { GardenChapter } from "./types";
 
 /** ── The chapter book ───────────────────────────────────────────────────────
@@ -51,9 +51,11 @@ export const LIVING_GARDEN_CHAPTERS: LivingGardenChapterMeta[] = [
     subtitle: "The Forgotten Garden",
     story: "你的每一个健康选择，都让这座被遗忘的花园，重新苏醒。",
     status: "available",
-    totalDays: PLACEHOLDER_CHAPTER.lastDay,
+    totalDays: ASSET_CHAPTER.lastDay,
     cover: { sky1: "#ffe7bd", sky2: "#bfe0c0", orb: "#ffd98a", hillBack: "#9fca9f", hillFront: "#6ba678", trunk: "#7a5a42", accent: "#f6c766" },
-    content: PLACEHOLDER_CHAPTER,
+    // Chapter I now plays the asset-driven garden. Swapping back to the original
+    // hand-authored placeholder is a one-word change: PLACEHOLDER_CHAPTER.
+    content: ASSET_CHAPTER,
   },
   {
     id: "forest-awakens",

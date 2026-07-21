@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <rect width="120" height="120" rx="16" fill="#cdb48a" opacity="0.35"/>
+  <rect x="4" y="4" width="112" height="112" rx="14" fill="none" stroke="#cdb48a" stroke-dasharray="6 6"/>
+  <text x="60" y="66" font-size="46" text-anchor="middle" dominant-baseline="middle">·</text>
+  <text x="60" y="104" font-size="9" text-anchor="middle" fill="#5b544a" font-family="sans-serif">GROUND_EMPTY</text>
+</svg>
