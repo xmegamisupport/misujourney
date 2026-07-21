@@ -1,58 +1,197 @@
-# Living Garden — Asset Checklist (production-ready gate)
+# Living Garden — Asset QA Checklist
 
-One page. Every asset must pass **all** items before it is marked production-ready
-and integrated. Mark **Pass** or **Revise** per line. This is Phase 3 of the
-`Asset-Production-Workflow.md` pipeline.
+Version: 1.0  
+Status: Production Ready
 
-## Visual Consistency
-- [ ] Matches the Visual DNA (`Living-Garden-Design-System.md`)
-- [ ] Looks like the same illustrator / same storybook world
-- [ ] Not clip art, not a game-inventory icon
-- [ ] Not 3D or plastic
+This document is the final quality gate before any Living Garden asset enters production.
 
-## Color & Saturation
-- [ ] Medium-rich, dusty saturation — matches the pink-flower yardstick
-- [ ] Not pale/washed-out, not neon/candy
-- [ ] Uses the approved natural palette
-- [ ] Enough contrast against garden greenery
+Every asset must pass every check below.
+
+Assets that fail any item must return to **Phase 2 – Illustration** in `Asset-Production-Workflow.md`.
+
+No exceptions.
+
+---
+
+# 1. Visual Consistency
+
+## World
+
+- [ ] Matches the official Master Artwork
+- [ ] Matches the Living Garden Design System
+- [ ] Belongs naturally to the same illustrated world
+- [ ] Feels painted by the same illustrator
+
+---
+
+## Style
+
+- [ ] Storybook illustration style
+- [ ] Painterly digital rendering
+- [ ] Soft watercolor texture
+- [ ] Semi-realistic proportions
+- [ ] Rounded organic forms
+- [ ] Soft readable silhouette
+
+---
+
+## Color
+
+- [ ] Uses approved natural color palette
+- [ ] Medium-rich saturation
+- [ ] Not washed out
+- [ ] Not oversaturated
+- [ ] Not neon
+- [ ] Sufficient contrast against garden background
+
+---
 
 ## Lighting
-- [ ] Single source, **upper-left**, warm golden morning
-- [ ] Soft natural shadow; no harsh black shadow
-- [ ] No cold/blue or dramatic/night lighting
 
-## Watercolor & Shape
-- [ ] Paint-defined soft edges (no uniform vector outline, no black keyline)
-- [ ] Slightly irregular watercolor edges; visible-but-restrained texture
-- [ ] Clear, readable silhouette at mobile size (~40–120px)
-- [ ] Organic curves, natural asymmetry
+- [ ] Upper-left light source
+- [ ] Warm morning lighting
+- [ ] Soft natural shadow
+- [ ] Natural highlights
+- [ ] No cold lighting
+- [ ] No harsh black shadows
 
-## Transparency & Padding
-- [ ] True PNG alpha; no background; no white background/fringe/halo
-- [ ] No baked-in hard ground shadow (soft implied contact shadow only)
-- [ ] Trimmed to content, then uniform ~3% transparent margin
-- [ ] Full object visible (not cropped)
+---
 
-## Anchor Point  *(technical — prevents floating art)*
-- [ ] Ground-contact point sits at the **bottom-centre** of the canvas
-- [ ] Air creatures (butterfly/bird/bee): lowest visible point near bottom edge
-- [ ] Verified in Founder Preview (`?preview=1`) — the asset "stands" correctly
+# 2. Mobile Readability
 
-## Scale Relationship
-- [ ] Correct real-world size next to its neighbours (small-tree is the anchor;
-      ladybug ≪ flower < grass < sprout < bush < small-tree ≪ big-tree)
-- [ ] `baseScale` only nudges — the raw art is already close
+- [ ] Readable at approximately 80–150 px
+- [ ] Strong silhouette
+- [ ] Important shapes remain recognizable
+- [ ] Fine details are not required for recognition
 
-## Technical / Integration
-- [ ] No text, logo, or watermark
-- [ ] **Filename** exactly matches the registry `fileName` (lowercase, hyphenated,
-      `.png`)
-- [ ] **Category** correct — file dropped in
-      `public/assets/living-garden/<category>/`, matches registry `category`
-- [ ] Master (≥1024px) preserved; production copy ~512px optimized
-- [ ] After `art: true`: renders live with no engine/adapter/renderer change
+---
 
-## Final Decision
-Use one of: **APPROVED** · **REVISE** · **REJECTED**
+# 3. Technical Requirements
 
-Do not integrate any asset that is not **APPROVED**.
+## PNG
+
+- [ ] Transparent PNG
+- [ ] Single asset only
+- [ ] No background
+- [ ] No terrain
+- [ ] No roads
+- [ ] No scenery
+- [ ] No additional unrelated objects
+- [ ] No text
+- [ ] No logo
+- [ ] No watermark
+
+---
+
+## Transparency
+
+- [ ] Clean alpha channel
+- [ ] No white fringe
+- [ ] No halo
+- [ ] No hard baked ground shadow
+- [ ] Soft contact shadow only when appropriate
+
+---
+
+## Canvas
+
+- [ ] Full object visible
+- [ ] Correct transparent padding
+- [ ] Bottom-center anchor maintained
+
+---
+
+# 4. Perspective & Scale
+
+## Perspective
+
+- [ ] Matches Master Artwork perspective
+- [ ] No Top View
+- [ ] No Side View
+- [ ] No Isometric View
+
+---
+
+## Scale
+
+- [ ] Correct real-world proportions
+- [ ] Fits naturally beside neighboring assets
+- [ ] baseScale requires only minor adjustment
+
+---
+
+# 5. File Validation
+
+- [ ] Filename exactly matches registry
+- [ ] Correct category
+- [ ] Correct folder location
+- [ ] Master PNG preserved (≥1024 px)
+- [ ] Production PNG exported (~512 px)
+
+---
+
+# 6. Integration Validation
+
+- [ ] Registry entry verified
+- [ ] art: true enabled
+- [ ] Appears correctly in Founder Preview
+- [ ] Correct unlock day
+- [ ] Correct layer
+- [ ] No overlap issues
+- [ ] No unexpected scaling
+- [ ] No gameplay changes required
+
+---
+
+# 7. Common Failure Examples
+
+Reject assets that show any of the following:
+
+- [ ] Wrong perspective
+- [ ] Wrong lighting direction
+- [ ] Floating grounded asset
+- [ ] Excessive transparent padding
+- [ ] White outline
+- [ ] Incorrect proportions
+- [ ] Different painting style
+- [ ] Looks like another game
+- [ ] Too much detail for mobile
+- [ ] Multiple subjects
+- [ ] Entire garden scene
+- [ ] Background included
+
+---
+
+# 8. Final Decision
+
+Choose one:
+
+- ☐ APPROVED
+- ☐ REVISE
+- ☐ REJECTED
+
+---
+
+Reviewer:
+
+________________________
+
+Date:
+
+________________________
+
+Asset:
+
+________________________
+
+Version:
+
+________________________
+
+Comments:
+
+____________________________________________________
+
+____________________________________________________
+
+____________________________________________________

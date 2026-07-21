@@ -1,124 +1,257 @@
-# Living Garden Master Asset Prompt
+# Living Garden — Master Asset Prompt
 
-Use this complete prompt as the fixed visual base.
+Version: 1.0
 
-Only replace the `SUBJECT` section at the bottom.
+This document defines the universal prompt used to generate every production-ready Living Garden asset.
+
+It is the foundation prompt for all AI image generation.
+
+Do not modify this prompt.
+
+Asset-specific instructions should only replace the SUBJECT section.
+
+For artistic direction, refer to:
+
+- Living-Garden-Design-System.md
+- Artwork-Integration-Guideline.md
+
+---
+
+# MASTER PROMPT
 
 ```text
-Create a single isolated asset for the MISU Living Garden.
+Create ONE production-ready asset for the MISU Living Garden.
 
-VISUAL STYLE:
+The asset must belong to the official Living Garden world defined by the Master Artwork.
 
-A warm, richly colored hand-painted storybook illustration combining watercolor texture with polished digital painting.
+VISUAL STYLE
 
-The style should feel like a cozy magical countryside garden from an illustrated storybook.
+Create a premium illustrated storybook asset.
 
-Use medium-rich saturation.
+The illustration should combine:
 
-Colors must be visually attractive and lively, but never neon, overly bright or childish.
+• Storybook illustration
+• Painterly digital rendering
+• Soft watercolor texture
+• Semi-realistic natural proportions
+• Rounded organic forms
+• Gentle silhouettes
 
-The image must not look pale, washed out, grey, faded or low contrast.
+The artwork should feel:
 
-Use a warm natural color palette:
+• Warm
+• Peaceful
+• Cozy
+• Hopeful
+• Natural
+• Rich without being crowded
 
-olive green,
-moss green,
-forest green,
-honey yellow,
-warm cream,
-natural wood brown,
-dusty pink,
-lavender purple,
-soft orange accents.
+The asset must appear as though it was painted by the same illustrator who created the Master Artwork.
 
-Use warm golden morning lighting with soft natural highlights and gentle shadows.
+COLOR
 
-The asset should have:
+Use a natural premium palette dominated by:
 
-- a clear readable silhouette
-- soft painterly texture
-- organic curved shapes
-- rounded natural edges
-- charming handcrafted details
-- slightly semi-realistic proportions
-- enough contrast to remain visible on a detailed garden background
+• Olive Green
+• Moss Green
+• Forest Green
+• Warm Leaf Green
+• Honey Yellow
+• Warm Cream
+• Natural Wood Brown
 
-The object must feel naturally part of the same magical garden world.
+Accent colors may include:
 
-TECHNICAL REQUIREMENTS:
+• Dusty Pink
+• Lavender
+• Soft Orange
+• Muted Blue
+• Terracotta
 
-- one isolated main object only
-- transparent background
-- no full scenery
-- no text
-- no UI
-- no border
-- no decorative frame
-- no watermark
-- full object visible
-- centered with safe transparent padding
-- high-resolution PNG
-- consistent three-quarter front view when appropriate
-- lighting from the upper left
-- soft contact shadow only when necessary
+Avoid:
 
-SUBJECT:
+• Neon
+• Fluorescent
+• Oversaturated colors
+• Grey washed colors
+• Low contrast
+• Plastic appearance
 
-[REPLACE THIS SECTION WITH ONE SUBJECT FROM THE ASSET PROMPT LIBRARY]
+LIGHTING
 
-AVOID:
+Use:
 
-flat vector illustration,
-minimal icon style,
-clip art,
-sticker style,
-3D render,
-Pixar-like rendering,
-anime style,
-photorealism,
-hyperrealism,
-plastic texture,
-glossy artificial surfaces,
-neon colors,
-oversaturated colors,
-washed-out pastel colors,
-grey desaturated colors,
-harsh black outlines,
-perfect symmetry,
-rigid geometry,
-modern furniture,
-game inventory icon appearance,
-white background,
-colored background,
-multiple unrelated objects,
-text,
-logo,
-watermark.
+• Warm morning sunlight
+• Upper-left light direction
+• Soft natural shadow
+• Golden highlights
+
+Perspective
+
+Match the official Master Artwork.
+
+Never invent another camera angle.
+
+TECHNICAL REQUIREMENTS
+
+Generate:
+
+• ONE isolated subject only
+
+Requirements:
+
+• Transparent PNG
+
+• No background
+
+• No terrain
+
+• No road
+
+• No scenery
+
+• No additional objects
+
+• No text
+
+• No logo
+
+• No watermark
+
+• No decorative frame
+
+• Bottom-center anchor
+
+• Minimal transparent padding
+
+• Production ready
+
+• High resolution
+
+• Mobile readable
+
+SUBJECT
+
+[Replace this section with the asset's subject prompt from its C-Asset-Library/<Category>/<Asset>/prompt.md]
+
+NEGATIVE PROMPT
+
+Do NOT generate:
+
+• Entire garden scene
+
+• Multiple assets
+
+• Multiple growth stages
+
+• Concept sheet
+
+• Mood board
+
+• Character lineup
+
+• Top View
+
+• Side View
+
+• Isometric
+
+• Dashboard UI
+
+• Inventory icon
+
+• Sticker
+
+• Clip art
+
+• Flat vector
+
+• 3D render
+
+• Anime
+
+• Pixar style
+
+• Photorealism
+
+• Hyperrealism
+
+• Plastic texture
+
+• Hard black outline
+
+• Perfect symmetry
+
+• Modern furniture
+
+• White background
+
+• Colored background
+
+• Watermark
+
+OUTPUT
+
+Generate exactly ONE production-ready PNG asset suitable for direct integration into the Living Garden project.
 ```
 
-The visual reference image selected by the founder should also be attached whenever the chosen image-generation tool supports image references.
+---
 
-Master Prompt v2
-GLOBAL STYLE
-A cozy illustrated storybook asset.
-Soft painterly rendering.
-Rounded shapes.
-Warm morning lighting.
-Muted natural palette.
-Premium wellness aesthetic.
-Transparent PNG.
-SUBJECT
-Replace only this section:
-Sprout / Daisy / Lavender / Rabbit / Stone / Tree / Bird / Bench
-TECHNICAL
-Transparent background.
-Centered object.
-No text.
-High resolution.
-NEGATIVE
-No photorealism.
-No anime.
-No neon colors.
-No UI.
-No background.
-No watermark.
+# Reference Image
+
+Whenever the image-generation tool supports image references, always attach the approved Master Artwork.
+
+The Master Artwork is the highest-priority visual reference.
+
+The generated asset must visually match:
+
+- Perspective
+- Lighting
+- Painting style
+- Color language
+- Shape language
+- Overall artistic quality
+
+The Master Artwork always takes precedence over text instructions.
+
+---
+
+# Usage
+
+Every production prompt should be constructed as:
+
+Master Asset Prompt
+
++
+
+One asset description from:
+
+the asset's own C-Asset-Library/<Category>/<Asset>/prompt.md
+
+Example:
+
+Master Prompt
+
++
+
+Ancient Tree
+
+or
+
+Master Prompt
+
++
+
+Rabbit
+
+or
+
+Master Prompt
+
++
+
+Pink Flower
+
+Never modify the Master Prompt itself.
+
+Only replace the SUBJECT section.

@@ -348,17 +348,11 @@ We build every digital experience with one belief:
 
 
 
-\*\*Professional enough to build trust.  
+\*\*Professional enough to build trust.
 
 Warm enough to build companionship.\*\*
 
 
 
 Every interaction should educate, encourage and guide customers towards a healthier lifestyle.
-
-
-
-
-
-
 

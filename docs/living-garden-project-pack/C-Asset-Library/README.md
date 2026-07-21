@@ -1,5 +1,59 @@
 # C-Asset-Library
 
+Version: 1.0
+
+The Asset Library is the permanent storage location for every Living Garden production asset.
+
+It is the single source of truth for all approved artwork.
+
+Every production asset has its own folder containing:
+
+- spec.md
+- prompt.md
+- preview/
+- final/
+
+No production asset should exist outside this library.
+
+## Asset Lifecycle
+
+Every asset follows the same lifecycle.
+
+Planning
+
+↓
+
+Prompt Writing
+
+↓
+
+Illustration
+
+↓
+
+Preview
+
+↓
+
+QA Approval
+
+↓
+
+Final PNG
+
+↓
+
+Integration
+
+↓
+
+Maintenance
+
+Only APPROVED assets stored inside `final/` may be integrated into the application.
+
+
+# C-Asset-Library
+
 This folder is the official Living Garden Asset Library.
 
 Every asset must permanently keep:
@@ -49,6 +103,10 @@ in Git and in that asset's `prompt.md` → Revision History.
 > Library) use these official names; the earlier `*_01.png` working names have
 > been fully retired.
 
+The filename represents the production identity of the asset.
+
+It must remain stable throughout the lifetime of the project.
+
 ## Rules
 
 - **Never overwrite previous versions.** History lives in Git; do not encode it
@@ -58,18 +116,44 @@ in Git and in that asset's `prompt.md` → Revision History.
 - Only a file in a `final/` folder that has been marked APPROVED may be
   integrated into the application.
 
+Each asset folder represents exactly one production asset.
+
+All revisions, prompts and specifications belong inside that folder.
+
+
 ## Layout
 
 ```
 C-Asset-Library/
-├── README.md
-├── Calibration-Assets.md
-├── Plants/
-│   ├── Sprout/    (spec.md, prompt.md, preview/, final/)
-│   ├── Daisy/
-│   └── Lavender/
-├── Animals/
-│   └── Rabbit/
-└── Nature/
-    └── Stone/
-```
+
+README.md
+
+Calibration-Assets.md
+
+Plants/
+
+Animals/
+
+Nature/
+
+Buildings/
+
+Decorations/
+
+FX/```
+
+## Production Status
+
+Asset folders may be in one of the following states:
+
+Planning
+
+Illustration
+
+QA
+
+Approved
+
+Integrated
+
+Deprecated

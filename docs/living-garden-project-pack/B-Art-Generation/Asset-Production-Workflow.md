@@ -1,3 +1,14 @@
+# Living Garden — Asset Production Workflow
+
+Version: 1.0
+Status: Production Ready
+
+Every production asset must follow this workflow.
+
+Skipping phases is not allowed.
+
+Only assets that complete all phases may enter production.
+
 # Living Garden — Asset Production Pipeline
 
 The single, repeatable path every Living Garden asset follows from concept to
@@ -7,9 +18,9 @@ This document is the **spine** — it links the specialist docs rather than
 repeating them:
 
 - *How it should feel / look* → `Living-Garden-Design-System.md` (Visual DNA)
-- *Technical build rules that prevent rework* → `Artwork-Guideline.md`
+- *Technical build rules that prevent rework* → `Artwork-Integration-Guideline.md`
 - *Pass/fail gate* → `Asset-QA-Checklist.md`
-- *Base prompt + per-subject prompts* → `Master-Asset-Prompt.md`, `Asset-Prompt-Library.md`
+- *Base prompt* → `Master-Asset-Prompt.md`; *per-subject prompt* → each asset's `../C-Asset-Library/<Category>/<Asset>/prompt.md`
 - *Where the asset's files live* → `../C-Asset-Library/README.md`
 
 > **Calibration first.** The five approved calibration assets (see
@@ -31,10 +42,19 @@ Before a brush touches the canvas:
       its role (focal / support / filler), and its scale tier are decided.
 - [ ] Official **filename** and **category** are known (they already exist in the
       registry — see Phase 4).
+- [ ] Confirm the asset already exists inside the Master Artwork.
+
+No asset should be invented outside the official Living Garden world.
 
 Output of this phase: a subject prompt in the asset's `prompt.md`.
 
+
 ## Phase 2 — Illustration
+The illustration should always begin by matching the Stage 6 appearance found in the Master Artwork.
+
+Earlier growth stages are derived afterwards.
+
+Never design Stage 1 first.
 
 - **Working / master canvas:** 2048 × 2048 px, transparent, square. Paint the
   subject occupying ~70–85% of the frame, light from **upper-left**.
@@ -71,7 +91,14 @@ Run the full one-page gate in `Asset-QA-Checklist.md`. It verifies, at minimum:
 
 An asset must be marked **APPROVED** here before Phase 4. No exceptions.
 
+Assets failing QA return to Phase 2.
+
+They do not proceed to integration.
+
 ## Phase 4 — Integration
+Do not modify any gameplay logic during artwork integration.
+
+Artwork replacement should never require gameplay changes.
 
 1. **File location:** place the approved production PNG at
    `public/assets/living-garden/<category>/<fileName>` (e.g.
@@ -105,3 +132,21 @@ Then run `tsc` / lint / build, and confirm the founder-preview render. Done.
   pipeline; added canvas size, export resolution, anchor verification, and the
   registry `art`-flag integration mechanics; replaced the hardcoded calibration
   list with a pointer to `Calibration-Assets.md` so it cannot drift.
+
+## Production Principles
+
+Always remember:
+
+The world is fixed.
+
+The Master Artwork is permanent.
+
+Production improves assets,
+never the world.
+
+If an asset requires redesigning the world,
+the production process is incorrect.
+
+Every asset should naturally integrate into
+the existing Living Garden without changing
+camera, layout, perspective or composition.

@@ -5,7 +5,7 @@
 Sprout is the single most important asset in the Living Garden. Every future
 asset inherits its visual quality — it is the quality bar. Full art direction:
 Visual DNA (`../../B-Art-Generation/Living-Garden-Design-System.md`), build rules
-(`../../B-Art-Generation/Artwork-Guideline.md`).
+(`../../B-Art-Generation/Artwork-Integration-Guideline.md`).
 
 **Intent:** a single newborn seedling, just broken through soil, quietly reaching
 toward the morning light — the bravest small thing in the garden.

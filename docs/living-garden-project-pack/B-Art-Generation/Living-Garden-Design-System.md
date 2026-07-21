@@ -1,257 +1,1028 @@
-# Living Garden Visual DNA v1.0
+MISU Journey — Living Garden Design System
 
-## Overall Feeling
 
-Living Garden should feel like a warm, richly illustrated storybook garden.
-
-The visual experience should be:
-
-* warm
-* peaceful
-* inviting
-* visually rich
-* full of life
-* charming without feeling childish
-* detailed without feeling crowded
-
-It should not feel like:
-
-* a dashboard
-* a game inventory
-* a flat mobile-game map
-* a pale watercolor wash
-* a highly saturated cartoon
-* a realistic photograph
-* a collection of unrelated clip-art assets
-
-## Illustration Style
-
-Use a combination of:
-
-* hand-painted storybook illustration
-* watercolor texture
-* polished digital painting
-* semi-realistic natural proportions
-* rounded organic shapes
-* softly defined but readable silhouettes
-
-All assets must appear as though they were created by the same illustrator for the same storybook world.
-
-## Color Saturation
-
-Use medium-rich saturation.
-
-The colors must be stronger and more visually engaging than pale pastel watercolor.
-
-However, they must not become:
-
-* neon
-* fluorescent
-* excessively bright
-* toy-like
-* overly saturated
-
-Avoid washed-out, grey or faded results.
-
-## Core Palette
-
-Primary natural colors:
-
-* olive green
-* moss green
-* forest green
-* warm leaf green
-* natural wood brown
-* warm earth brown
-* honey yellow
-* warm cream
-
-Accent colors:
-
-* dusty pink
-* lavender purple
-* soft orange
-* muted blue
-* terracotta red
-
-## Approximate Color Distribution
-
-* Greenery and natural green tones: approximately 60%
-* Wood, soil and earthy brown tones: approximately 20%
-* Flower and animal accent colors: approximately 15%
-* Golden highlights and special accents: approximately 5%
-
-Greenery must remain the visual foundation.
-
-Flowers and colorful objects should attract attention without dominating the whole scene.
-
-## Lighting
-
-Use warm golden morning light.
-
-Lighting direction:
-
-* upper-left light source
-* soft golden highlights
-* gentle natural shadows
-* no harsh black shadows
-* no dramatic nighttime lighting
-* no cold blue lighting
-
-## Composition
-
-The completed garden should use:
-
-* foreground
-* midground
-* background
-
-The garden must have visual depth.
-
-Use organic visual flow such as:
-
-* curved paths
-* winding streams
-* softly placed plants
-* asymmetrical clusters
-
-Avoid rigid grids and perfect symmetry.
-
-## Detail Density
-
-The scene should alternate between:
-
-* high-detail areas
-* medium-detail areas
-* open breathing spaces
-
-Do not distribute equal detail across the entire screen.
-
-Even when the garden is complete, preserve enough visual breathing space for the scene to remain calm and readable.
-
-## Asset Shape Language
-
-Use:
-
-* curved forms
-* irregular natural edges
-* rounded stones
-* slightly uneven handmade wooden objects
-* clustered foliage
-* natural asymmetry
-
-Avoid:
-
-* rigid geometry
-* sharp artificial angles
-* perfect repeated patterns
-* symmetrical asset placement
-
-## Living World Principle
-
-Every asset should look as though it naturally belongs in the garden.
-
-Objects should not look placed merely for decoration.
-
-The final garden should feel like a believable place where:
-
-* animals could live
-* birds could visit
-* plants could grow
-* someone could sit and rest
-* the environment has existed beyond the screen
-
-## Fixed Camera Direction
-
-Use a consistent three-quarter front view for isolated assets whenever appropriate.
-
-The final assets must be compatible with a layered mobile garden scene.
-
-# 
-
-# Living Garden Design System v1.0
 
 Version: 1.0
 
-## 1\. World Philosophy
+Status: LOCKED
 
-Living Garden is a wellness companion, not a game.
-It responds to healthy habits instead of rewarding tasks.
+Priority: Highest (Single Source of Truth)
 
-Core Values:
 
-* Growth
-* Calm
-* Warmth
-* Nature
-* Simplicity
 
-## 2\. Emotional Journey
+1\. Project Philosophy
 
-Day 1: Hope
-Day 7: Progress
-Day 14: Attachment
-Day 21: Pride
-Day 35: Living Garden
 
-## 3\. Visual DNA
 
-* Cozy storybook illustration
-* Rounded shapes
-* Soft painterly texture
-* Warm morning lighting
-* Natural muted colors
-* Premium wellness feeling
+Living Garden is not a traditional mobile game.
 
-## 4\. Color System
+
+
+It is a wellness companion that visualizes healthy habits through a living world.
+
+
+
+Players should never feel they are completing tasks.
+
+
+
+Instead, they should feel they are gently caring for a garden that grows together with them.
+
+
+
+Everything inside the garden should reinforce five emotions:
+
+
+
+Growth
+
+Calm
+
+Warmth
+
+Nature
+
+Hope
+
+
+
+The objective is not entertainment.
+
+
+
+The objective is emotional attachment.
+
+
+
+2\. Emotional Journey
+
+
+
+The visual experience should evolve alongside the user's wellness journey.
+
+
+
+Stage	Emotion
+
+Day 1	Hope
+
+Day 7	Progress
+
+Day 14	Attachment
+
+Day 21	Pride
+
+Day 35	Living Garden
+
+
+
+Every visual improvement must strengthen this emotional progression.
+
+
+
+3\. MASTER ARTWORK (LOCKED)
+
+Status
+
+
+
+LOCKED
+
+
+
+The Master Artwork is the only official Living Garden world.
+
+
+
+It defines:
+
+
+
+Camera
+
+Layout
+
+Perspective
+
+Composition
+
+Scale
+
+Asset placement
+
+Visual balance
+
+
+
+Nothing may redesign this world.
+
+
+
+Nothing may replace this artwork.
+
+
+
+Everything else exists only to support it.
+
+
+
+Insert the approved Master Artwork image here.
+
+
+
+4\. World Rules
+
+
+
+The following are permanently locked.
+
+
+
+Camera
+
+Mobile portrait (9:16)
+
+Fixed camera
+
+Fixed viewing angle
+
+Fixed perspective
+
+
+
+Never rotate.
+
+
+
+Never zoom.
+
+
+
+Never change camera position.
+
+
+
+Layout
+
+
+
+Never change:
+
+
+
+Roads
+
+Pond location
+
+Fountain location
+
+Ancient Tree location
+
+Cottage location
+
+Rabbit Meadow
+
+Flower Garden
+
+Fence
+
+Overall composition
+
+
+
+No redesign is allowed.
+
+
+
+Background
+
+
+
+There is only one permanent background.
+
+
+
+background.png
+
+
+
+This background is permanent.
+
+
+
+Never regenerate it.
+
+
+
+Never repaint it.
+
+
+
+Never redesign it.
+
+
+
+5\. Asset Categories
+
+
+
+Living Garden contains two completely different asset types.
+
+
+
+Permanent Assets
+
+
+
+These never change.
+
+
+
+Sky
+
+Mountains
+
+Terrain
+
+Roads
+
+Fence
+
+Permanent Ground
+
+
+
+These belong to Layer 0.
+
+
+
+Growth Assets
+
+
+
+These evolve over time.
+
+
+
+Examples:
+
+
+
+Ancient Tree
+
+Cottage
+
+Fountain
+
+Bridge
+
+Bird House
+
+Mailbox
+
+Bench
+
+Flower Garden
+
+Rabbit
+
+Birds
+
+Decorative Plants
+
+FX
+
+
+
+Only these assets are allowed to change.
+
+
+
+The world itself never changes.
+
+
+
+6\. Visual DNA
+
+Overall Feeling
+
+
+
+Living Garden should feel like a warm illustrated storybook.
+
+
+
+The world should be:
+
+
+
+Warm
+
+Peaceful
+
+Inviting
+
+Rich
+
+Full of life
+
+Premium
+
+Cozy
+
+Natural
+
+
+
+Avoid:
+
+
+
+Dashboard feeling
+
+Inventory UI
+
+Flat mobile game maps
+
+Neon colors
+
+Hyper-cartoon
+
+Photorealism
+
+Random clip-art
+
+Illustration Style
+
+
+
+Use a combination of:
+
+
+
+Storybook illustration
+
+Painterly digital rendering
+
+Soft watercolor texture
+
+Semi-realistic proportions
+
+Rounded organic forms
+
+Soft silhouettes
+
+
+
+Every asset must feel painted by the same illustrator.
+
+
+
+Color System
+
+
 
 Primary:
 
-* Sage Green
-* Moss Green
-* Warm Brown
-* Cream
+
+
+Olive Green
+
+Moss Green
+
+Forest Green
+
+Warm Leaf Green
+
+Warm Earth Brown
+
+Honey Yellow
+
+Warm Cream
+
+
 
 Accent:
 
-* Daisy Yellow
-* Lavender Purple
-* Sky Blue
-* Soft Pink
 
-## 5\. Shape Language
 
-Trees: rounded canopy.
-Flowers: rounded petals.
-Stones: smooth edges.
-Animals: friendly proportions.
+Dusty Pink
 
-## 6\. Lighting
+Lavender
 
-Warm morning light.
-Soft shadow.
-No dramatic contrast.
+Soft Orange
 
-## 7\. Asset Rules
+Muted Blue
 
-* Transparent PNG
-* Center composition
-* High resolution
-* No background
-* Consistent perspective
+Terracotta
 
-## 8\. Growth Rules
 
-One meaningful improvement each unlock.
-Never overcrowd the scene.
 
-## 9\. Production Pipeline
+Avoid:
 
-Design System
-→ Master Prompt
-→ Calibration Assets
-→ Batch Production
-→ Integration
 
-This document is the single source of truth for all Living Garden assets.
+
+Neon
+
+Fluorescent
+
+Oversaturation
+
+Grey washed colors
+
+Lighting
+
+
+
+Always use:
+
+
+
+Warm morning sunlight
+
+Upper-left light direction
+
+Soft natural shadows
+
+Warm highlights
+
+
+
+Never use:
+
+
+
+Night lighting
+
+Cold blue lighting
+
+Harsh black shadows
+
+Shape Language
+
+
+
+Use:
+
+
+
+Rounded forms
+
+Organic curves
+
+Slight asymmetry
+
+Natural foliage
+
+Handmade feeling
+
+
+
+Avoid:
+
+
+
+Perfect symmetry
+
+Sharp geometry
+
+Artificial repetition
+
+Detail Density
+
+
+
+Alternate between:
+
+
+
+Rich detail
+
+Medium detail
+
+Calm breathing spaces
+
+
+
+Never overload the screen.
+
+
+
+7\. World Architecture
+
+
+
+The game is built with independent layers.
+
+
+
+Layer 0
+
+Terrain Background
+
+
+
+Layer 1
+
+Trees
+
+
+
+Layer 2
+
+Buildings
+
+
+
+Layer 3
+
+Decorations
+
+
+
+Layer 4
+
+FX
+
+
+
+Layer 5
+
+Creatures
+
+
+
+Never merge multiple layers together.
+
+
+
+8\. Asset Production Rules
+
+
+
+Every production asset must satisfy the following:
+
+
+
+Transparent PNG
+
+Single asset only
+
+No background
+
+No terrain
+
+No roads
+
+No grass
+
+No flowers
+
+No rocks
+
+No baked lighting
+
+No surrounding scenery
+
+
+
+Each PNG should contain only the asset itself.
+
+
+
+9\. Perspective Rules
+
+
+
+Every asset must match the Master Artwork.
+
+
+
+Never invent another camera angle.
+
+
+
+Never use:
+
+
+
+Top View
+
+Side View
+
+Isometric
+
+
+
+Only use the fixed Living Garden perspective.
+
+
+
+10\. Anchor Rules
+
+
+
+Every growth stage must share exactly the same anchor point.
+
+
+
+Example:
+
+
+
+Stage 1
+
+↓
+
+
+
+Stage 2
+
+↓
+
+
+
+Stage 3
+
+↓
+
+
+
+Stage 4
+
+↓
+
+
+
+Stage 5
+
+↓
+
+
+
+Stage 6
+
+
+
+The asset grows.
+
+
+
+It never jumps.
+
+
+
+It never shifts position.
+
+
+
+11\. Mobile First Principle
+
+
+
+Assets are viewed primarily on phones.
+
+
+
+Typical display size:
+
+
+
+80–150 px.
+
+
+
+Therefore priority is:
+
+
+
+Silhouette
+
+Readability
+
+Shape
+
+Growth recognition
+
+
+
+Fine details are secondary.
+
+
+
+If a detail disappears on mobile, it should not drive the design.
+
+
+
+12\. Growth Rules
+
+
+
+Growth must feel natural.
+
+
+
+Never simply scale an object larger.
+
+
+
+Example:
+
+
+
+Seed
+
+
+
+↓
+
+
+
+Sprout
+
+
+
+↓
+
+
+
+Seedling
+
+
+
+↓
+
+
+
+Young Tree
+
+
+
+↓
+
+
+
+Growing Tree
+
+
+
+↓
+
+
+
+Final Tree
+
+
+
+Every stage must clearly feel like the same living organism.
+
+
+
+13\. Asset Production Pipeline
+
+
+
+Every asset follows exactly the same workflow.
+
+
+
+Master Artwork
+
+
+
+↓
+
+
+
+Extract Final Asset
+
+
+
+↓
+
+
+
+Lock Position
+
+
+
+↓
+
+
+
+Lock Size
+
+
+
+↓
+
+
+
+Lock Perspective
+
+
+
+↓
+
+
+
+Create Stage 6
+
+
+
+↓
+
+
+
+Reverse Engineer
+
+
+
+↓
+
+
+
+Stage 5
+
+
+
+↓
+
+
+
+Stage 4
+
+
+
+↓
+
+
+
+Stage 3
+
+
+
+↓
+
+
+
+Stage 2
+
+
+
+↓
+
+
+
+Stage 1
+
+
+
+Never start from Stage 1.
+
+
+
+Always begin with the final completed asset.
+
+
+
+14\. AI Generation Rules
+
+
+
+Every generated asset must satisfy:
+
+
+
+✓ Transparent PNG
+
+
+
+✓ Single Asset
+
+
+
+✓ No Scene
+
+
+
+✓ No Garden
+
+
+
+✓ No Background
+
+
+
+✓ No Ground
+
+
+
+✓ No Roads
+
+
+
+✓ Same Perspective
+
+
+
+✓ Same Anchor
+
+
+
+✓ Same Lighting
+
+
+
+✓ Mobile Readability
+
+
+
+Any generated image containing an entire garden scene is considered incorrect.
+
+
+
+15\. Development Principle
+
+
+
+Never ask:
+
+
+
+Can we redesign the world?
+
+
+
+Always ask:
+
+
+
+How does this asset grow inside the existing world?
+
+
+
+The world is permanent.
+
+
+
+Only life inside the world changes.
+
+
+
+16\. Success Criteria
+
+
+
+The project succeeds when a player reaches Day 35 and believes:
+
+
+
+This is the same garden.
+
+This is the same tree.
+
+I grew this world myself.
+
+
+
+The player should never feel:
+
+
+
+The layout changed.
+
+The world was regenerated.
+
+Assets were randomly replaced.
+
+A completely different scene appeared.
+
+
+
+Growth must feel continuous.
+
+
+
+17\. Golden Rule
+
+
+
+The Master Artwork is sacred.
+
+
+
+It is the only valid Living Garden world.
+
+
+
+Everything else exists to support it.
+
+
+
+No AI, designer, or developer is allowed to redesign, regenerate, or replace it.
+
+
+
+The only acceptable work is to create layered assets that naturally grow inside this world.
 

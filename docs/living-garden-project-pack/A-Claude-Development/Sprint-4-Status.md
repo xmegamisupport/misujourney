@@ -135,7 +135,7 @@ no artwork generated.
   overlap/depth were touched, not the map: pink flower moved off the centre
   sprouts (x42→60), small tree nudged out (x25→22), first grass cleared of the
   tree (x30→34), butterfly lifted and moved to hover over the flower (x46,30→60,34).
-- **Artwork Guideline added** (`B-Art-Generation/Artwork-Guideline.md`). Short,
+- **Artwork Guideline added** (`B-Art-Generation/Artwork-Integration-Guideline.md`). Short,
   integration-only rules that prevent rework (bottom-centre anchor, trimmed
   padding, relative scale, exact filenames, consistent upper-left light, defer
   effects). Style/colour/lighting mood deliberately deferred to the existing
