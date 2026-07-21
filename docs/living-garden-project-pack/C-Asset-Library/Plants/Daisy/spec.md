@@ -26,7 +26,7 @@ _To be filled._
 
 _To be filled._
 
-**File Name:** `flower_daisy_white_01.png`
+**File Name:** `daisy.png`
 
 ## Export Rules
 

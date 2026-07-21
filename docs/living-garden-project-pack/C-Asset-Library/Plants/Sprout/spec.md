@@ -32,7 +32,7 @@ Cute, simple, healthy and full of life.
 
 Small
 
-**File Name:** `LG_Sprout_v1.png`
+**File Name:** `sprout.png`
 
 ## Export Rules
 

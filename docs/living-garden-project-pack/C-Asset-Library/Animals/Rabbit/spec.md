@@ -26,7 +26,7 @@ _To be filled._
 
 _To be filled._
 
-**File Name:** `rabbit_cream_01.png`
+**File Name:** `rabbit.png`
 
 ## Export Rules
 
