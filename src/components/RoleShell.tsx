@@ -87,12 +87,17 @@ export function RoleShell({ role, children }: RoleShellProps) {
             </div>
           </div>
         )}
-        {/* Immersive fills the viewport naturally (flex column, dynamic vh) —
-            no hardcoded height subtraction, so it survives the mobile address
-            bar expanding and collapsing. Normal pages keep the padded column. */}
+        {/* Immersive fills the viewport with a DEFINITE dynamic-viewport height,
+            not a min-height. The garden/book below fill this via `flex-1
+            min-h-0`, and mobile Safari only resolves a nested flex-1 chain when
+            the top has a real measured height — `min-h-[100dvh]` (height:auto)
+            left it unresolved, collapsing them to a strip while the absolutely
+            positioned overlays still showed. `h-[100dvh]` is a viewport unit, so
+            it still tracks the address bar expanding/collapsing; it is not a
+            hardcoded device height. Normal pages keep the padded column. */}
         <main
           className={cn(
-            immersive ? "flex min-h-[100dvh] flex-col" : "mx-auto min-h-screen max-w-5xl pb-24 pt-6 md:pb-12",
+            immersive ? "flex h-[100dvh] flex-col overflow-hidden" : "mx-auto min-h-screen max-w-5xl pb-24 pt-6 md:pb-12",
           )}
         >
           {children}
