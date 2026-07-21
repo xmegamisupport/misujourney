@@ -5,7 +5,7 @@ import { GardenScene } from "@/components/living-garden/GardenScene";
 import { GardenHud, type GardenSheetKey } from "@/components/living-garden/GardenHud";
 import { GardenSheet, GardenSheetPlaceholder } from "@/components/living-garden/GardenSheet";
 import { FounderPreviewBar } from "@/components/living-garden/FounderPreviewBar";
-import { useGardenPreview, useGardenState } from "@/lib/living-garden/hooks";
+import { useGardenPreview, useGardenState, usePreviewFlag } from "@/lib/living-garden/hooks";
 import type { GardenChapter } from "@/lib/living-garden/types";
 
 /** Stage 2: Immersion — the garden itself.
@@ -19,6 +19,10 @@ export function GardenView({ chapter, initialDay, onBack }: { chapter: GardenCha
   const preview = useGardenPreview(chapter, initialDay);
   const state = useGardenState(preview.day, chapter);
   const [sheet, setSheet] = useState<GardenSheetKey | null>(null);
+  // Production customers see their garden at their real Journey day and nothing
+  // else. The day scrubber is a founder tool, shown only with ?preview=1. When
+  // hidden, nothing moves `preview.day`, so it stays at the real initial day.
+  const showFounderPreview = usePreviewFlag();
 
   return (
     <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -51,7 +55,7 @@ export function GardenView({ chapter, initialDay, onBack }: { chapter: GardenCha
           <GardenSheetPlaceholder emoji="🌱" line="花园的更多设定与说明，之后会放在这里。" />
         </GardenSheet>
 
-        <FounderPreviewBar controller={preview} />
+        {showFounderPreview && <FounderPreviewBar controller={preview} />}
       </div>
     </div>
   );

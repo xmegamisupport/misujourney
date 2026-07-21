@@ -8,6 +8,7 @@ import {
   type GardenPaletteKeyframe,
   type GardenState,
 } from "./types";
+import { isUnlocked, type GardenProgress } from "./discovery";
 
 /** ── The engine — pure, deterministic, content-agnostic ─────────────────────
  *
@@ -70,26 +71,31 @@ export function paletteForDay(keyframes: GardenPaletteKeyframe[], day: number): 
   return last.palette;
 }
 
-/** The sprite an element shows on a given day, or null if it has not appeared
- * yet. Latest stage whose day ≤ current wins. */
-function itemForDay(el: GardenElement, day: number): GardenItem | null {
+/** The sprite an element shows for the given progress, or null if it has not
+ * been unlocked yet. Each stage's unlock is evaluated by the generic discovery
+ * engine (a day threshold today); the latest satisfied stage wins. */
+function itemForProgress(el: GardenElement, progress: GardenProgress): GardenItem | null {
   let chosen: GardenElement["stages"][number] | null = null;
   for (const stage of el.stages) {
-    if (stage.day <= day && (!chosen || stage.day >= chosen.day)) chosen = stage;
+    if (isUnlocked({ type: "day", day: stage.day }, progress) && (!chosen || stage.day >= chosen.day)) chosen = stage;
   }
   if (!chosen) return null;
   return { id: el.id, sprite: chosen.sprite, x: el.x, y: el.y, scale: chosen.scale, depth: el.depth };
 }
 
-/** Assemble the full GardenState for one day of a chapter. */
+/** Assemble the full GardenState for one day of a chapter. `day` is wrapped into
+ * a GardenProgress so every stage goes through the discovery engine; the public
+ * signature stays `(chapter, day)` until a non-day condition actually needs to
+ * flow in. */
 export function buildGardenState(chapter: GardenChapter, day: number): GardenState {
+  const progress: GardenProgress = { day };
   const palette = paletteForDay(chapter.palette, day);
 
   const byLayer = new Map<GardenLayer["id"], GardenItem[]>();
   for (const layerId of GARDEN_LAYERS) byLayer.set(layerId, []);
 
   for (const el of chapter.elements) {
-    const item = itemForDay(el, day);
+    const item = itemForProgress(el, progress);
     if (item) byLayer.get(el.layer)!.push(item);
   }
 

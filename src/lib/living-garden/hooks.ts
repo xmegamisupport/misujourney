@@ -1,9 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { buildGardenState } from "./engine";
 import { PLACEHOLDER_CHAPTER } from "./garden-data";
 import type { GardenChapter, GardenState } from "./types";
+
+/** Founder-only preview flag, read from the URL: `?preview=1`.
+ *
+ * The garden is a shipping customer experience; the day scrubber is an internal
+ * founder/dev tool that production users must never see. A URL flag is the whole
+ * gate — no roles, no backend. useSyncExternalStore keeps SSR honest (server
+ * renders false, so there is no hydration mismatch and no setState-in-effect). */
+export function usePreviewFlag(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => new URLSearchParams(window.location.search).get("preview") === "1",
+    () => false,
+  );
+}
 
 /** The scene for a given day. Pure derivation over the chapter, memoised so a
  * scrub or autoplay tick only recomputes when the day actually changes. The
