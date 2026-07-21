@@ -22,13 +22,17 @@ const elements: GardenElement[] = GARDEN_PLACEMENTS.map((placement) => {
   // rotation is intentionally carried in the placement but not mapped onto the
   // element: the current text renderer has no rotation, and the framework is
   // not modified this sprint. It is ready for the image renderer to read later.
+  // The sprite is the emoji glyph until this asset's real art is switched on
+  // (`art: true`), at which point it becomes the PNG path. The renderer decides
+  // image-vs-text from the string itself, so nothing else in the pipeline changes.
+  const sprite = asset.art ? asset.src : asset.glyph;
   return {
     id: placement.id,
     layer: asset.layer,
     x: placement.x,
     y: placement.y,
     depth: placement.zIndex,
-    stages: [{ day: placement.visibleFromDay, sprite: asset.glyph, scale: placement.scale ?? asset.baseScale }],
+    stages: [{ day: placement.visibleFromDay, sprite, scale: placement.scale ?? asset.baseScale }],
   } satisfies GardenElement;
 });
 

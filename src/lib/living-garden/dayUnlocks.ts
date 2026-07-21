@@ -31,17 +31,22 @@ export interface AssetPlacement {
   visibleFromDay: number;
 }
 
-/** Day 1 is bare ground (GROUND_EMPTY = nothing placed). From Day 2 one thing
- * arrives each day. Read top-to-bottom as the garden's diary. */
+/** Day 1 is never empty: a first sprout is already breaking through, so the very
+ * first visit reads as "this is my garden — it has just begun." Every later day
+ * keeps its exact placement (the timeline is NOT shifted); one obvious new thing
+ * still arrives each day. Read top-to-bottom as the garden's diary. */
 export const GARDEN_PLACEMENTS: AssetPlacement[] = [
-  // Day 2 — the first sprout
+  // Day 1 — the garden begins: one sprout already up, off-centre so Day 2's
+  // sprout sits beside it rather than on top of it.
+  { id: "p_sprout_0", asset: "SPROUT", x: 38, y: 7, rotation: -4, visibleFromDay: 1 },
+  // Day 2 — a second sprout, at centre (the anchor of the scene)
   { id: "p_sprout", asset: "SPROUT", x: 50, y: 8, visibleFromDay: 2 },
-  // Day 3 — grass begins
-  { id: "p_grass_1", asset: "GRASS_01", x: 30, y: 6, visibleFromDay: 3 },
+  // Day 3 — grass begins (nudged right, clear of the Day-10 tree)
+  { id: "p_grass_1", asset: "GRASS_01", x: 34, y: 6, visibleFromDay: 3 },
   // Day 4 — more grass
   { id: "p_grass_2", asset: "GRASS_01", x: 70, y: 6, visibleFromDay: 4 },
-  // Day 5 — first flower
-  { id: "p_flower_1", asset: "FLOWER_PINK", x: 42, y: 7, rotation: -8, visibleFromDay: 5 },
+  // Day 5 — first flower (moved right of the centre sprouts, its own space)
+  { id: "p_flower_1", asset: "FLOWER_PINK", x: 60, y: 7, rotation: -8, visibleFromDay: 5 },
   // Day 6 — a mushroom
   { id: "p_mushroom_1", asset: "MUSHROOM", x: 20, y: 5, visibleFromDay: 6 },
   // Day 7 — a stone
@@ -50,16 +55,18 @@ export const GARDEN_PLACEMENTS: AssetPlacement[] = [
   { id: "p_ladybug", asset: "LADYBUG", x: 35, y: 15, visibleFromDay: 8 },
   // Day 9 — a yellow flower
   { id: "p_flower_2", asset: "FLOWER_YELLOW", x: 60, y: 7, rotation: 6, visibleFromDay: 9 },
-  // Day 10 — a small tree
-  { id: "p_tree_1", asset: "TREE_SMALL", x: 25, y: 8, zIndex: 1, visibleFromDay: 10 },
+  // Day 10 — a small tree (left, nudged out so it anchors depth without
+  // crowding the grass; zIndex keeps it clearly in front of the ground layer)
+  { id: "p_tree_1", asset: "TREE_SMALL", x: 22, y: 8, zIndex: 1, visibleFromDay: 10 },
   // Day 11 — grass spreads to the edge
   { id: "p_grass_3", asset: "GRASS_01", x: 88, y: 6, visibleFromDay: 11 },
   // Day 12 — warm light
   { id: "p_sunlight", asset: "SUNLIGHT", x: 82, y: 74, zIndex: 0, visibleFromDay: 12 },
   // Day 13 — a white flower
   { id: "p_flower_3", asset: "FLOWER_WHITE", x: 52, y: 8, visibleFromDay: 13 },
-  // Day 14 — a butterfly
-  { id: "p_butterfly_1", asset: "BUTTERFLY", x: 46, y: 30, visibleFromDay: 14 },
+  // Day 14 — a butterfly (lifted and moved off-centre to hover over the flower,
+  // adding air-layer depth instead of sitting directly above the centre sprout)
+  { id: "p_butterfly_1", asset: "BUTTERFLY", x: 60, y: 34, visibleFromDay: 14 },
   // Day 15 — a bush
   { id: "p_bush_1", asset: "BUSH", x: 66, y: 7, zIndex: 2, visibleFromDay: 15 },
   // Day 16 — a little dirt path
@@ -107,8 +114,8 @@ export const GARDEN_PLACEMENTS: AssetPlacement[] = [
 /** Founder-readable diary of what each day introduces. Not shown to customers —
  * discovery must stay silent — but handy when reviewing pacing. */
 export const DAY_UNLOCK_NOTES: Record<number, string> = {
-  1: "空地",
-  2: "第一株嫩芽",
+  1: "第一株嫩芽破土 —— 花园开始了",
+  2: "旁边又冒出一株嫩芽",
   3: "草地开始",
   4: "更多草",
   5: "第一朵花",

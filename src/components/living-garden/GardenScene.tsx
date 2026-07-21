@@ -35,6 +35,18 @@ export function GardenScene({ state }: { state: GardenState }) {
  * from the bottom of the scene, so plants placed at small y sit on the soil. */
 const GROUND_BAND = "26%";
 
+/** Base on-screen size of a scale-1.0 sprite. Emoji use it as font-size; images
+ * use it as height (width follows aspect). Per-item `scale` multiplies it. Kept
+ * identical to the original emoji metric so current placeholder rendering is
+ * unchanged; the artwork guideline tells the illustrator to design each subject
+ * to this reference footprint, and it is re-calibrated with the first real PNGs. */
+const SPRITE_SIZE = "clamp(20px, 6vw, 44px)";
+
+/** A sprite string is an image when it points at a file (the registry emits a
+ * `/assets/...` path once an asset's `art` is switched on); otherwise it is an
+ * emoji glyph drawn as text. One cheap check keeps the renderer un-redesigned. */
+const isImageSprite = (sprite: string) => sprite.startsWith("/");
+
 function LayerView({ layer }: { layer: GardenLayer }) {
   // Full-bleed wash layers (sky, ground) render as a coloured band.
   const wash =
@@ -48,21 +60,37 @@ function LayerView({ layer }: { layer: GardenLayer }) {
   return (
     <div className="pointer-events-none absolute inset-0">
       {wash}
-      {layer.items.map((item) => (
-        <span
-          key={item.id}
-          className="absolute block select-none leading-none"
-          style={{
-            left: `${item.x}%`,
-            bottom: `${item.y}%`,
-            transform: `translate(-50%, 0) scale(${item.scale ?? 1})`,
-            transformOrigin: "bottom center",
-            fontSize: "clamp(20px, 6vw, 44px)",
-          }}
-        >
-          {item.sprite}
-        </span>
-      ))}
+      {layer.items.map((item) => {
+        // Shared placement: same origin/anchor for emoji and images, so an asset
+        // swaps from glyph to PNG without moving. Bottom-center means a sprite
+        // "stands" where it is placed — which is why artwork must put its
+        // ground-contact point at the bottom-centre of the canvas.
+        const place = {
+          left: `${item.x}%`,
+          bottom: `${item.y}%`,
+          transform: `translate(-50%, 0) scale(${item.scale ?? 1})`,
+          transformOrigin: "bottom center" as const,
+        };
+        return isImageSprite(item.sprite) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={item.id}
+            src={item.sprite}
+            alt=""
+            draggable={false}
+            className="absolute block select-none"
+            style={{ ...place, height: SPRITE_SIZE, width: "auto" }}
+          />
+        ) : (
+          <span
+            key={item.id}
+            className="absolute block select-none leading-none"
+            style={{ ...place, fontSize: SPRITE_SIZE }}
+          >
+            {item.sprite}
+          </span>
+        );
+      })}
     </div>
   );
 }

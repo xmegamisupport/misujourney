@@ -103,3 +103,65 @@ awaits approval per the continuous-improvement rule).
    canonical in code. *Solution:* at art-integration time, rename registry IDs
    and `src` paths to the official names in one pass. *Effort:* ~30 min.
    *Priority:* Medium (do it with the first real art drop, not before).
+
+---
+
+# PNG Integration Preparation Sprint
+
+**Status: Completed**
+
+Goal: make Chapter 1 technically ready to receive its first production PNGs with
+minimal future change — no new gameplay, no Discovery change, no pacing change,
+no artwork generated.
+
+**Changed:**
+
+- **Image rendering path in the renderer** (`GardenScene.tsx`). The renderer now
+  draws an `<img>` when a sprite string is a file path and an emoji `<span>`
+  otherwise — one `isImageSprite` check, same placement/anchor for both. The
+  renderer was not redesigned; emoji output is unchanged (same base sprite
+  metric). Verified: build/typecheck/lint clean.
+- **Registry is now explicit** (`gardenAssets.ts`). Each asset declares
+  `id, category, layer, fileName, glyph, baseScale`; `src` is composed from
+  `category + fileName` and there is a per-asset `art` boolean. Auto-deriving the
+  filename from the ID is gone. Flipping `art: true` (once the PNG is on disk) is
+  the entire emoji→PNG switch for one asset — nothing downstream changes. The
+  adapter (`assetChapter.ts`) emits `art ? src : glyph`.
+- **Day 1 is never empty** (`dayUnlocks.ts`). A first sprout (`p_sprout_0`) is
+  already up on Day 1, off-centre so the Day-2 centre sprout sits beside it. The
+  timeline was **not** shifted — every Day 2–35 placement keeps its exact day;
+  one new thing still arrives daily. Diary notes for Day 1/2 updated.
+- **Five validation assets spaced for artwork** (`dayUnlocks.ts`). Only spacing/
+  overlap/depth were touched, not the map: pink flower moved off the centre
+  sprouts (x42→60), small tree nudged out (x25→22), first grass cleared of the
+  tree (x30→34), butterfly lifted and moved to hover over the flower (x46,30→60,34).
+- **Artwork Guideline added** (`B-Art-Generation/Artwork-Guideline.md`). Short,
+  integration-only rules that prevent rework (bottom-centre anchor, trimmed
+  padding, relative scale, exact filenames, consistent upper-left light, defer
+  effects). Style/colour/lighting mood deliberately deferred to the existing
+  `Living-Garden-Design-System.md` — not duplicated.
+
+**Not done (deliberately):** artwork generation, an image renderer for effects
+(sunlight/rainbow stay deferred), scale calibration of real PNGs (happens with
+the first five), and the naming-mismatch debt below.
+
+## Technical Debt
+
+| # | Item | Priority |
+|---|---|---|
+| 1 | Registry ID (`FLOWER_PINK`) vs official filename (`flower-pink.png`) still two layers | Low |
+| 2 | Image base size (`SPRITE_SIZE`) is a placeholder, uncalibrated to real art | Medium (do with first 5 PNGs) |
+
+1. **Two naming layers persist.** *Problem:* the registry key stays an
+   UPPER_SNAKE ID while `fileName` carries the official `flower-pink.png`. *Why it
+   matters:* a reader must hold two names for one asset; low, because the mapping
+   is now explicit in one place. *Solution:* leave as-is — the indirection is
+   intentional (code refers to stable IDs; files use human names). Only revisit
+   if it ever causes confusion. *Effort:* n/a. *Priority:* Low.
+2. **`SPRITE_SIZE` is a single placeholder metric for both emoji and images.**
+   *Problem:* it is tuned to emoji; a watercolor tree vs a ladybug may not read
+   correctly at the same base height × `baseScale`. *Why it matters:* wrong base
+   size = every asset looks slightly off and needs a `baseScale` sweep. *Solution:*
+   calibrate `SPRITE_SIZE` and per-asset `baseScale` against the first five real
+   PNGs, in the integration sprint — not before (nothing to calibrate against
+   yet). *Effort:* ~30 min with real art. *Priority:* Medium.
