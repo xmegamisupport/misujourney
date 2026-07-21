@@ -8,14 +8,19 @@ They are **not** instructions to modify the application.
 
 ## Recommended usage
 
-1. Read `Living-Garden-Visual-DNA.md`.
-2. Use `Master-Asset-Prompt.md` as the fixed base prompt.
-3. Select one subject prompt from `Asset-Prompt-Library.md`.
-4. Generate only the five calibration assets first.
-5. Review them with `Asset-QA-Checklist.md`.
-6. Continue producing the remaining assets only after the visual style is approved.
-7. Save approved assets using the exact filenames in `Asset-Inventory.md`.
-8. Give approved PNG files to Claude Code in a later integration sprint.
+1. Read the Visual DNA in `Living-Garden-Design-System.md`.
+2. Follow `Asset-Production-Workflow.md` — the concept→live pipeline (this is the
+   spine; the steps below are its short form).
+3. Use `Master-Asset-Prompt.md` as the fixed base prompt.
+4. Select one subject prompt from `Asset-Prompt-Library.md`.
+5. Generate only the five calibration assets first
+   (`../C-Asset-Library/Calibration-Assets.md`).
+6. Review them against `Asset-QA-Checklist.md` and the build rules in
+   `Artwork-Guideline.md`.
+7. Continue producing the remaining assets only after the visual style is approved.
+8. Save approved assets using the official filenames (see
+   `../C-Asset-Library/README.md`) and hand the PNGs to Claude Code for the
+   integration phase.
 
 ## Important
 
