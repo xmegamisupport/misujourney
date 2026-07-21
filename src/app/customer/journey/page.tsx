@@ -1,62 +1,53 @@
 "use client";
 
-import Link from "next/link";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { useState } from "react";
+import { GardenScene } from "@/components/living-garden/GardenScene";
+import { GardenHud, type GardenSheetKey } from "@/components/living-garden/GardenHud";
+import { GardenSheet, GardenSheetPlaceholder } from "@/components/living-garden/GardenSheet";
+import { FounderPreviewBar } from "@/components/living-garden/FounderPreviewBar";
+import { useGardenPreview, useGardenState } from "@/lib/living-garden/hooks";
 
-/** ✨ The gamification section — reserved, not themed.
+/** Living Garden — Sprint 3 framework shell.
  *
- * This slot used to be 学习, which now lives on the Dashboard. It is being held
- * for the reward layer built on top of Journey Points: levels, badges, a garden
- * that grows, streak rewards. The founder has NOT settled the theme or the name
- * yet, so this page deliberately does not commit to one — no "Journey", no
- * "Garden", nothing that would then clash with the daily Journey already on the
- * Dashboard. It is an honest placeholder.
+ * Entering the section shows the GARDEN, immediately and almost full-bleed: no
+ * menu, no cards, no module grid. The first question a customer asks here must
+ * be "what changed in my garden today?", never "what buttons are here?".
  *
- * The one concrete thing that exists today — Journey Points — is not re-explained
- * here; it has its own guide in My Account, and the running total already shows
- * in the Dashboard header. This page only promises what is coming. */
+ * This is a framework sprint. The day shown is driven by the Founder Preview
+ * scrubber, not by real Journey data — wiring the garden to the real Journey
+ * day is a later sprint and touches nothing but which number feeds
+ * useGardenState. The renderer, the layers, the HUD and the overlays are the
+ * deliverable, all proven with placeholder art. */
+export default function LivingGardenPage() {
+  const preview = useGardenPreview();
+  const state = useGardenState(preview.day);
+  const [sheet, setSheet] = useState<GardenSheetKey | null>(null);
 
-const TEASERS = [
-  { icon: "🌱", label: "秘密花园" },
-  { icon: "🏅", label: "等级与徽章" },
-  { icon: "🎁", label: "奖励兑换" },
-  { icon: "🔥", label: "坚持奖励" },
-];
-
-export default function JourneyComingSoonPage() {
   return (
-    <div className="flex flex-col gap-6 px-4 pb-8 md:px-8">
-      <PageHeader title="✨ 即将推出" subtitle="你的每一次坚持，之后都会有意义" />
+    // Break out of the layout's centered padded column so the scene reaches the
+    // edges. The scene is tall enough to read as "the whole screen" while the
+    // app's own nav stays as chrome around it.
+    <div className="-mt-6 h-[calc(100dvh-9rem)] min-h-[520px] overflow-hidden md:mx-0 md:rounded-3xl">
+      <div className="relative h-full w-full">
+        <GardenScene state={state} />
 
-      <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-sky-50 px-5 py-9 text-center">
-        <p className="text-4xl">✨</p>
-        <p className="mt-3 text-base font-semibold text-slate-800">正在准备中</p>
-        <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-slate-500">
-          你在 Journey 里完成的每一件小事，都会累积成 Journey Points。之后，这些积分会变成看得见的成长。
-        </p>
+        <GardenHud onOpen={setSheet} />
+
+        <GardenSheet open={sheet === "points"} title="⭐ Journey Points" onClose={() => setSheet(null)}>
+          <GardenSheetPlaceholder emoji="⭐" line="你累积的 Journey Points 会在这里出现 —— 就在你的花园里，而不是另一个页面。" />
+        </GardenSheet>
+        <GardenSheet open={sheet === "badges"} title="🏅 徽章" onClose={() => setSheet(null)}>
+          <GardenSheetPlaceholder emoji="🏅" line="你在旅程里达成的时刻，之后会变成一枚枚徽章，收藏在这里。" />
+        </GardenSheet>
+        <GardenSheet open={sheet === "rewards"} title="🎁 奖励" onClose={() => setSheet(null)}>
+          <GardenSheetPlaceholder emoji="🎁" line="用 Journey Points 兑换的奖励，之后会放在这里。" />
+        </GardenSheet>
+        <GardenSheet open={sheet === "more"} title="☰ 更多" onClose={() => setSheet(null)}>
+          <GardenSheetPlaceholder emoji="🌱" line="花园的更多设定与说明，之后会放在这里。" />
+        </GardenSheet>
+
+        <FounderPreviewBar controller={preview} />
       </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        {TEASERS.map((item) => (
-          <div key={item.label} className="flex items-center gap-2.5 rounded-2xl border border-slate-100 bg-white px-3.5 py-3.5">
-            <span className="text-lg">{item.icon}</span>
-            <span className="min-w-0 truncate text-sm font-medium text-slate-600">{item.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* The one part of this section that is real today. */}
-      <Link
-        href="/customer/points-guide"
-        className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-white p-4 transition hover:border-emerald-200"
-      >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-lg">🌱</span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-slate-800">Journey Points 是怎么运作的？</p>
-          <p className="mt-0.5 text-xs text-slate-400">看看每天可以怎么累积</p>
-        </div>
-        <span className="shrink-0 text-xs font-medium text-emerald-600">查看 →</span>
-      </Link>
     </div>
   );
 }
