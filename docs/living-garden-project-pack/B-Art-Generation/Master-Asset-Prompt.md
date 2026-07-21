@@ -97,3 +97,28 @@ watermark.
 ```
 
 The visual reference image selected by the founder should also be attached whenever the chosen image-generation tool supports image references.
+
+Master Prompt v2
+GLOBAL STYLE
+A cozy illustrated storybook asset.
+Soft painterly rendering.
+Rounded shapes.
+Warm morning lighting.
+Muted natural palette.
+Premium wellness aesthetic.
+Transparent PNG.
+SUBJECT
+Replace only this section:
+Sprout / Daisy / Lavender / Rabbit / Stone / Tree / Bird / Bench
+TECHNICAL
+Transparent background.
+Centered object.
+No text.
+High resolution.
+NEGATIVE
+No photorealism.
+No anime.
+No neon colors.
+No UI.
+No background.
+No watermark.
