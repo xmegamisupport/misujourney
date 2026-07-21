@@ -1,21 +1,35 @@
 # Master Prompt
 
-_To be filled._
+Reference: use the official `../../../B-Art-Generation/Master-Asset-Prompt.md` as
+the fixed visual base. Only the Subject Prompt below changes.
 
 # Subject Prompt
 
-_To be filled._
+Create a tiny sprout with two rounded leaves.
+Cozy illustrated storybook style.
+Rounded shapes.
+Soft painterly texture.
+Warm morning lighting.
+Muted natural colors.
+Premium wellness aesthetic.
+Transparent PNG.
+Centered composition.
 
 # Negative Prompt
 
-_To be filled._
+No photorealism.
+No anime.
+No harsh shadows.
+No neon colors.
+No background.
+No text.
+No extra objects.
 
 # Generation Notes
 
-_To be filled._
+This asset is the visual benchmark for every future plant asset.
 
 # Revision History
 
-| Version | Date | File | Notes | Result |
-| --- | --- | --- | --- | --- |
-| — | | | | Pending |
+**Version 1.0**
+Initial specification.

@@ -1,35 +1,43 @@
 # Sprout
 
-**Category:** Plants
+**Category:** Plant
 
-**Purpose:** _To be filled._
+**Purpose:** Represents the first sign of growth in the Living Garden.
 
-**Unlock Stage:** Day 2
+**Unlock Stage:** Day 1
 
 ## Visual Description
 
-_To be filled._
+A tiny fresh sprout with two rounded leaves emerging from the soil.
+Cute, simple, healthy and full of life.
 
 ## Primary Colors
 
-_To be filled._
+- Soft Green
+- Fresh Leaf Green
 
 ## Shape Language
 
-_To be filled._
+- Rounded
+- Minimal
+- Friendly
+- Organic
 
 ## Lighting
 
-_To be filled._
+- Warm morning sunlight
+- Soft ambient shadow
 
 ## Scale
 
-_To be filled._
+Small
 
-**File Name:** `sprout_01.png`
+**File Name:** `LG_Sprout_v1.png`
 
 ## Export Rules
 
 - Transparent PNG
-- Centered Composition
-- High Resolution
+- Centered composition
+- High resolution
+- No background
+- No text
