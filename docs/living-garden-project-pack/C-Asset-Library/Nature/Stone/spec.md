@@ -1,40 +1,35 @@
-# Stone
-
-**Asset Name:** Rounded Mossy Stone
+# Rounded Mossy Stone
 
 **Category:** Nature
 
-**Purpose:** A grounding natural element — adds age and believability, and later
-defines pond and path edges. The neutral reference for the palette's earth tones.
+**Purpose:** _To be filled._
 
 **Unlock Stage:** Day 6
 
 ## Visual Description
 
-A naturally rounded garden stone in warm grey, muted olive and soft brown tones,
-with slight moss details, a smooth organic shape and gentle painterly texture.
+_To be filled._
 
-## Color Palette
+## Primary Colors
 
-- Stone: warm grey, muted olive, soft earth brown
-- Moss: moss green accents
+_To be filled._
 
 ## Shape Language
 
-Smooth rounded organic boulder form, irregular natural outline, no facets or
-hard edges. Slight asymmetry.
+_To be filled._
 
 ## Lighting
 
-Warm golden morning light from the upper left; soft highlight on the top-left
-face; gentle natural shadow beneath; no harsh black shadow.
+_To be filled._
 
 ## Scale
 
-Small-to-medium; low and grounded. Sits on the earth, never floating.
+_To be filled._
 
-## Export
+**File Name:** `stone_round_01.png`
+
+## Export Rules
 
 - Transparent PNG
-- High resolution
-- Centered composition with safe transparent padding
+- Centered Composition
+- High Resolution

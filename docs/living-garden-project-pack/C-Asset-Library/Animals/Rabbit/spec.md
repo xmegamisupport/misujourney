@@ -1,43 +1,35 @@
-# Rabbit
-
-**Asset Name:** Cream Garden Rabbit
+# Cream Garden Rabbit
 
 **Category:** Animals
 
-**Purpose:** The first larger living companion — a sign the garden has become a
-place something wants to live in. A warm, calm focal character.
+**Purpose:** _To be filled._
 
 **Unlock Stage:** Day 14
 
 ## Visual Description
 
-A small cream-colored garden rabbit sitting naturally, with soft rounded
-features, warm beige shading, gentle pink inner ears and a calm friendly
-expression. Cute but not exaggerated or toy-like.
+_To be filled._
 
-## Color Palette
+## Primary Colors
 
-- Fur: warm cream, soft beige
-- Inner ears: gentle dusty pink
-- Shading: warm earth brown
+_To be filled._
 
 ## Shape Language
 
-Soft rounded body, gently curved ears, natural seated pose. Organic and
-asymmetrical — not a stiff, symmetric mascot.
+_To be filled._
 
 ## Lighting
 
-Warm golden morning light from the upper left; soft highlight along the back and
-head; gentle natural shadow; no harsh black shadow.
+_To be filled._
 
 ## Scale
 
-Medium — larger than the plants and insects; a clear focal character, but not so
-large it dominates the garden.
+_To be filled._
 
-## Export
+**File Name:** `rabbit_cream_01.png`
+
+## Export Rules
 
 - Transparent PNG
-- High resolution
-- Centered composition with safe transparent padding
+- Centered Composition
+- High Resolution

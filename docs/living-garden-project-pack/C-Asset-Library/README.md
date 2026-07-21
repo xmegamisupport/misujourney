@@ -1,25 +1,26 @@
 # C-Asset-Library
 
-The official storage location for every Living Garden visual asset.
+This folder is the official Living Garden Asset Library.
 
-Each asset lives in its own folder under a category (`Plants/`, `Animals/`,
-`Nature/`, …) and must contain all four of:
+Every asset must permanently keep:
 
-- **`spec.md`** — what the asset is, its palette, shape language, lighting, scale and export rules.
-- **`prompt.md`** — the exact prompt used to generate it, plus a revision history.
-- **`preview/`** — preview / candidate images generated during review.
-- **`final/`** — the approved, exported PNG that production uses.
+- `spec.md`
+- `prompt.md`
+- preview images (in `preview/`)
+- final PNG (in `final/`)
 
 ## Rules
 
-- **Never overwrite previous versions.** Add a new file (e.g. `sprout_v2.png`)
-  and record it in the asset's `prompt.md` revision history. Old versions stay.
-- One asset per folder. Keep the folder name and the filenames consistent with
-  the Asset Inventory in `../C-Product-Planning/Asset-Inventory.md`.
-- Only files inside a `final/` folder that have been marked **APPROVED** in the
-  QA checklist may be integrated into the application.
+- **Never overwrite previous versions.**
+- **Always keep version history.** When an asset is revised, add a new file
+  (e.g. `sprout_v2.png`) and record it in that asset's `prompt.md` → Revision
+  History. Old files stay.
+- One asset per folder. Keep folder names and filenames consistent with
+  `../C-Product-Planning/Asset-Inventory.md`.
+- Only a file in a `final/` folder that has been marked APPROVED may be
+  integrated into the application.
 
-## Folder layout
+## Layout
 
 ```
 C-Asset-Library/
@@ -34,8 +35,3 @@ C-Asset-Library/
 └── Nature/
     └── Stone/
 ```
-
-## Related folders
-
-- Visual direction & prompts: `../B-Art-Generation/`
-- Product plan & inventory: `../C-Product-Planning/`

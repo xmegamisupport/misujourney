@@ -1,40 +1,35 @@
-# Daisy
-
-**Asset Name:** White Daisy Plant
+# White Daisy Plant
 
 **Category:** Plants
 
-**Purpose:** The garden's first flower — the first burst of bloom and cheer.
+**Purpose:** _To be filled._
 
 **Unlock Stage:** Day 5
 
 ## Visual Description
 
-A charming white daisy plant with three open flowers, warm yellow centers and
-several soft green leaves. Hand-painted, cheerful and clearly readable.
+_To be filled._
 
-## Color Palette
+## Primary Colors
 
-- Petals: warm white / cream
-- Centers: warm honey yellow
-- Leaves: olive green, moss green
+_To be filled._
 
 ## Shape Language
 
-Rounded petals in a soft radial cluster, gently curved leaves, natural
-asymmetry — the three flowers at slightly different angles, not identical.
+_To be filled._
 
 ## Lighting
 
-Warm golden morning light from the upper left; soft highlights on the petals;
-gentle natural shadow; no harsh black shadow.
+_To be filled._
 
 ## Scale
 
-Small-to-medium. Noticeable as an accent but not dominating the greenery.
+_To be filled._
 
-## Export
+**File Name:** `flower_daisy_white_01.png`
+
+## Export Rules
 
 - Transparent PNG
-- High resolution
-- Centered composition with safe transparent padding
+- Centered Composition
+- High Resolution

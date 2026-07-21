@@ -1,42 +1,35 @@
 # Sprout
 
-**Asset Name:** Sprout
-
 **Category:** Plants
 
-**Purpose:** The garden's first living thing — the seed becoming life. A tiny,
-hopeful focal point on otherwise bare ground.
+**Purpose:** _To be filled._
 
 **Unlock Stage:** Day 2
 
 ## Visual Description
 
-A tiny fresh green sprout with two rounded leaves growing from a small warm-brown
-soil mound. Lively and hopeful, easy to notice against empty ground, but small
-and gentle.
+_To be filled._
 
-## Color Palette
+## Primary Colors
 
-- Leaves: lively olive green, moss green, with a soft golden highlight
-- Soil mound: warm earth brown
+_To be filled._
 
 ## Shape Language
 
-Rounded organic leaves, softly curved stem, irregular natural soil mound. No
-rigid geometry, no symmetry.
+_To be filled._
 
 ## Lighting
 
-Warm golden morning light from the upper left; soft highlight on the leaves;
-gentle natural shadow; no harsh black shadow.
+_To be filled._
 
 ## Scale
 
-Small — one of the smallest assets. Reads clearly at mobile size without
-dominating the scene.
+_To be filled._
 
-## Export
+**File Name:** `sprout_01.png`
+
+## Export Rules
 
 - Transparent PNG
-- High resolution
-- Centered composition with safe transparent padding
+- Centered Composition
+- High Resolution
