@@ -26,6 +26,19 @@ export async function refreshJourneyRewards(): Promise<JourneyPointAward[]> {
   return data as unknown as JourneyPointAward[];
 }
 
+/** The current worth of each action, straight from journey_point_values.
+ *
+ * Read live rather than hardcoded so the guide can never contradict what the
+ * engine actually awards: re-tuning a value is a single UPDATE, and this page
+ * reflects it on the next open. Readable by any signed-in user (RLS), because a
+ * customer is allowed to know what things are worth. */
+export async function getPointValues(): Promise<Record<string, number>> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("journey_point_values").select("action, points");
+  if (error || !data) return {};
+  return Object.fromEntries(data.map((r) => [r.action, r.points]));
+}
+
 export async function getJourneyPoints(): Promise<JourneyPointBalance> {
   const supabase = createClient();
   const { data, error } = await supabase.rpc("get_my_journey_points");

@@ -3,7 +3,7 @@ export type Language = "zh" | "en";
 export const translations = {
   zh: {
     nav: {
-      customer: { home: "首页", healthyPicks: "好物", learn: "学习", progress: "成长", profile: "我的" },
+      customer: { home: "首页", healthyPicks: "好物", rewards: "即将推出", progress: "成长", profile: "我的" },
       coach: { dashboard: "概览", customers: "顾客", alerts: "提醒", referral: "推荐", profile: "账户" },
       admin: { dashboard: "概览", users: "用户", coaches: "教练", customers: "顾客", cms: "知识 CMS", settings: "设置" },
     },
@@ -49,7 +49,7 @@ export const translations = {
   },
   en: {
     nav: {
-      customer: { home: "Home", healthyPicks: "Healthy Picks", learn: "Learn", progress: "Progress", profile: "Profile" },
+      customer: { home: "Home", healthyPicks: "Healthy Picks", rewards: "Coming Soon", progress: "Growth", profile: "Profile" },
       coach: { dashboard: "Dashboard", customers: "Customers", alerts: "Alerts", referral: "Referral", profile: "Profile" },
       admin: { dashboard: "Dashboard", users: "Users", coaches: "Coaches", customers: "Customers", cms: "Knowledge CMS", settings: "Settings" },
     },

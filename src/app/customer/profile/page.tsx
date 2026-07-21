@@ -15,7 +15,8 @@ import type { ProductCode } from "@/lib/inventory/types";
 const inventoryProducts: ProductCode[] = ["MISU_N_PLUS", "MISU_DX_PLUS"];
 
 const linkItems = [
-  { href: "/customer/progress", label: "我的成长", icon: "📈" },
+  { href: "/customer/progress", label: "我的进展", icon: "📈" },
+  { href: "/customer/points-guide", label: "Journey Points 说明", icon: "🌱" },
   { href: "/customer/coach", label: "我的 Journey Coach", icon: "🌿" },
   { href: "/customer/notifications", label: "通知中心", icon: "🔔" },
   { href: "/customer/learn/guide", label: "产品使用指南", icon: "📦" },
