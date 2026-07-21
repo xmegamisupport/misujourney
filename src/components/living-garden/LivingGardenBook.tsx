@@ -1,105 +1,138 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { LIVING_GARDEN_CHAPTERS, type LivingGardenChapterMeta } from "@/lib/living-garden/chapters";
+import { VolumeCover } from "./VolumeCover";
 
-/** ── The Living Garden Book — Stage 1: Wonder ───────────────────────────────
+/** ── The Storybook — Stage 1: Wonder ────────────────────────────────────────
  *
- * The first screen is NOT the garden. It is the cover of a storybook, whose one
- * job is anticipation: "there are many worlds waiting for me." Immersion —
- * "this is my own garden" — comes only after she chooses to open a chapter.
- * Skipping this stage was the bug; the entrance now restores it.
+ * The founder's note: the first version read as a chapter LIST — clean, but a
+ * management system. This is the correction. The screen is an illustrated
+ * storybook, not a selector: each volume is a full page you swipe through, the
+ * cover art is the first thing the eye lands on, and the page ITSELF is the way
+ * in — no "Open" button, no "Enter". You tap the book the way you'd open a real
+ * one.
  *
- * Deliberately not a dashboard: no cards, no feature list, no settings. Just a
- * title, a prominent first chapter, and the locked ones beneath it as a promise.
- * The book maps over the chapter registry, so Chapter IV+ appear here with no
- * change to this file. */
+ * Reading order, by design: cover art → title → one-line story → progress →
+ * (tap) → the world. A button must never be the first thing noticed, so there
+ * isn't one; the only affordance is a whisper at the foot of the page.
+ *
+ * Optimised for the feeling, not for information density. Adding Volume IV+ is
+ * one entry in the chapter registry — this page never needs redrawing. */
 export function LivingGardenBook({ currentDay, onOpen }: { currentDay: number | null; onOpen: (chapterId: string) => void }) {
-  return (
-    <div className="mx-auto flex min-h-[calc(100dvh-11rem)] max-w-md flex-col px-5">
-      {/* Cover title */}
-      <div className="pt-6 text-center">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-emerald-700/60">Living Garden</p>
-        <p className="mt-2 font-serif text-2xl font-semibold text-slate-800">你的秘密花园</p>
-        <p className="mt-1.5 text-sm text-slate-400">每一个坚持，都会唤醒一个世界</p>
-      </div>
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
 
-      <div className="mt-8 flex flex-col gap-4">
-        {LIVING_GARDEN_CHAPTERS.map((chapter, i) => (
-          <ChapterSpine
-            key={chapter.id}
-            chapter={chapter}
-            currentDay={currentDay}
-            featured={i === 0}
-            onOpen={() => onOpen(chapter.id)}
-          />
+  function onScroll() {
+    const el = trackRef.current;
+    if (!el) return;
+    setActive(Math.round(el.scrollLeft / el.clientWidth));
+  }
+
+  return (
+    // Full-bleed: the book is held, not floated in a padded column.
+    <div className="-mt-6 flex h-[calc(100dvh-8rem)] min-h-[560px] flex-col bg-gradient-to-b from-[#faf3e6] to-[#eef3ea] px-0">
+      <p className="shrink-0 pt-5 text-center text-[11px] font-medium uppercase tracking-[0.4em] text-emerald-800/45">
+        Living Garden
+      </p>
+
+      {/* One page per volume, swiped horizontally like turning a storybook. */}
+      <div
+        ref={trackRef}
+        onScroll={onScroll}
+        className="no-scrollbar flex flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden"
+      >
+        {LIVING_GARDEN_CHAPTERS.map((chapter) => (
+          <VolumePage key={chapter.id} chapter={chapter} currentDay={currentDay} onOpen={() => onOpen(chapter.id)} />
         ))}
       </div>
 
-      <p className="mt-auto py-8 text-center text-xs text-slate-300">更多章节，正在书写中</p>
+      {/* Page dots — a quiet hint that more worlds are waiting. */}
+      <div className="flex shrink-0 items-center justify-center gap-1.5 pb-5 pt-1">
+        {LIVING_GARDEN_CHAPTERS.map((c, i) => (
+          <span
+            key={c.id}
+            className={`h-1.5 rounded-full transition-all ${i === active ? "w-4 bg-emerald-500/80" : "w-1.5 bg-emerald-900/15"}`}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
-function ChapterSpine({
+function VolumePage({
   chapter,
   currentDay,
-  featured,
   onOpen,
 }: {
   chapter: LivingGardenChapterMeta;
   currentDay: number | null;
-  featured: boolean;
   onOpen: () => void;
 }) {
   const available = chapter.status === "available";
-  const day = available ? Math.max(1, Math.min(chapter.totalDays, currentDay ?? 1)) : 0;
-  const percent = available ? Math.round((day / chapter.totalDays) * 100) : 0;
+  const day = Math.max(1, Math.min(chapter.totalDays, currentDay ?? 1));
+  const percent = Math.round((day / chapter.totalDays) * 100);
 
-  // The featured (first) chapter is warm and open; later chapters are quiet and
-  // dimmed — present enough to promise a world, not enough to compete.
-  if (!available) {
-    return (
-      <div className="flex items-center gap-4 rounded-3xl border border-slate-100 bg-white/50 px-5 py-5 opacity-70">
-        <span className="font-serif text-2xl font-semibold text-slate-300">{chapter.numeral}</span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-slate-500">{chapter.title}</p>
-          <p className="mt-0.5 truncate text-xs italic text-slate-400">{chapter.subtitle}</p>
-        </div>
-        <span className="shrink-0 text-xs font-medium text-slate-300">🔒 敬请期待</span>
-      </div>
-    );
-  }
+  // The whole page is the interaction for an openable world; a locked one is
+  // just a page you cannot turn yet.
+  const Tag = available ? "button" : "div";
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className={`group flex flex-col rounded-3xl border p-6 text-left transition ${
-        featured
-          ? "border-emerald-100 bg-gradient-to-br from-emerald-50/80 to-amber-50/60 shadow-sm active:scale-[0.99]"
-          : "border-slate-100 bg-white active:scale-[0.99]"
-      }`}
-    >
-      <div className="flex items-start gap-4">
-        <span className="font-serif text-3xl font-semibold text-emerald-700/80">{chapter.numeral}</span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium uppercase tracking-widest text-emerald-700/50">Chapter {chapter.numeral}</p>
-          <p className="mt-0.5 font-serif text-xl font-semibold text-slate-800">{chapter.title}</p>
-          <p className="mt-0.5 text-xs italic text-slate-400">{chapter.subtitle}</p>
-        </div>
-      </div>
+    <div className="flex w-full shrink-0 snap-center items-stretch px-6 pb-2 pt-3">
+      <Tag
+        {...(available ? { type: "button" as const, onClick: onOpen, "aria-label": `翻开 ${chapter.title}` } : {})}
+        className={`relative flex w-full flex-col overflow-hidden rounded-[1.75rem] text-left shadow-[0_18px_50px_-20px_rgba(60,50,30,0.45)] ring-1 ring-black/5 transition ${
+          available ? "active:scale-[0.985]" : ""
+        }`}
+      >
+        {/* ① Cover illustration — the largest thing, and the first thing seen. */}
+        <div className="relative h-[58%] w-full">
+          <VolumeCover theme={chapter.cover} muted={!available} />
 
-      <div className="mt-5">
-        <div className="mb-1.5 flex items-baseline justify-between">
-          <span className="text-xs text-slate-400">
-            旅程进度 <span className="font-semibold text-slate-600">{day}</span> / {chapter.totalDays} 天
-          </span>
-          <span className="text-xs font-semibold text-emerald-600 transition group-active:translate-x-0.5">翻开这一章 →</span>
+          {/* Title plate, set into the base of the illustration like a book cover. */}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 via-black/15 to-transparent px-6 pb-5 pt-12">
+            <p className="text-[11px] font-medium uppercase tracking-[0.35em] text-white/75">Volume {chapter.numeral}</p>
+            {/* ③ Chapter title */}
+            <p className="mt-1 font-serif text-[26px] font-semibold leading-tight text-white drop-shadow-sm">{chapter.title}</p>
+            <p className="mt-0.5 text-xs italic text-white/70">{chapter.subtitle}</p>
+          </div>
+
+          {!available && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/25">
+              <span className="text-2xl">🔒</span>
+              <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-medium tracking-wide text-slate-600">
+                敬请期待
+              </span>
+            </div>
+          )}
         </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/70">
-          <div className="h-full rounded-full bg-emerald-400/80" style={{ width: `${percent}%` }} />
+
+        {/* The lower half of the page — paper. */}
+        <div className="flex flex-1 flex-col bg-[#fdfaf2] px-6 py-6">
+          {/* ④ One-line story */}
+          <p className="font-serif text-[15px] italic leading-relaxed text-slate-600">{chapter.story}</p>
+
+          <div className="mt-auto">
+            {available ? (
+              <>
+                {/* ⑤ Progress — woven into the page as a line, not a card. */}
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs tracking-wide text-slate-400">
+                    第 <span className="font-serif text-lg font-semibold text-emerald-700">{day}</span> 天 · 共 {chapter.totalDays} 天
+                  </span>
+                </div>
+                <div className="mt-2 h-px w-full bg-slate-200">
+                  <div className="h-px bg-emerald-500/70" style={{ width: `${percent}%` }} />
+                </div>
+                {/* ⑥ The only affordance — a whisper, never a button. */}
+                <p className="mt-4 text-center text-[11px] tracking-[0.25em] text-emerald-700/50">轻 触 翻 开</p>
+              </>
+            ) : (
+              <p className="mt-4 text-center text-[11px] tracking-[0.25em] text-slate-300">即 将 展 开</p>
+            )}
+          </div>
         </div>
-      </div>
-    </button>
+      </Tag>
+    </div>
   );
 }
