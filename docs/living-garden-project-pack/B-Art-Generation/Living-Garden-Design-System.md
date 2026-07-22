@@ -2,11 +2,13 @@ MISU Journey — Living Garden Design System
 
 
 
-Version: 1.0
+Version: 2.0
 
 Status: LOCKED
 
 Priority: Highest (Single Source of Truth)
+
+v2.0 — refinement of v1.0 (not a rewrite): the philosophy is sharpened toward behaviour design, mobile-first readability, reusable assets, and sustainable production. Structure and locked world rules are unchanged.
 
 
 
@@ -14,7 +16,9 @@ Priority: Highest (Single Source of Truth)
 
 
 
-Living Garden is not a traditional mobile game.
+Living Garden is not a traditional mobile game, and not a game to be played or completed.
+
+At its heart it is behaviour design: a living world that reflects consistent healthy habits, so continuing the wellness journey feels rewarding rather than demanded.
 
 
 
@@ -22,11 +26,13 @@ It is a wellness companion that visualizes healthy habits through a living world
 
 
 
-Players should never feel they are completing tasks.
+People should never feel they are completing tasks.
 
 
 
 Instead, they should feel they are gently caring for a garden that grows together with them.
+
+Progress should be felt, not counted. The garden is designed so people experience a natural sense of growth without consciously tracking progression. The reward is emotional, not mechanical: no one should feel they are advancing a progress bar — they should simply notice the world quietly becoming more alive.
 
 
 
@@ -50,7 +56,9 @@ The objective is not entertainment.
 
 
 
-The objective is emotional attachment.
+The objective is emotional attachment and long-term engagement.
+
+This is behaviour design, not a game loop. The world should stay fresh across a long journey and remain sustainable to produce, so it can keep growing alongside the person.
 
 
 
@@ -508,11 +516,73 @@ Never overload the screen.
 
 
 
+\## Mobile-First Asset Philosophy
+
+This section is the single home for the mobile-readability philosophy. The later sections (Mobile First Principle, Asset Complexity Guidelines) cover only how to apply it and should not restate it.
+
+
+
+Living Garden is a mobile experience, not a printed illustration book.
+
+
+
+Every asset must be designed for the size people actually see on a phone.
+
+
+
+When artistic detail conflicts with readability, always prioritize readability.
+
+
+
+The goal is not to create the most detailed illustration.
+
+The goal is to create the most emotionally recognizable asset.
+
+
+
+An asset should remain beautiful and immediately recognizable at its intended mobile display size.
+
+
+
+Prioritize:
+
+
+
+\- Clear silhouette
+
+\- Warm emotional feeling
+
+\- Simple readable shapes
+
+\- Consistent watercolor language
+
+
+
+Avoid adding fine detail that disappears at mobile size.
+
+
+
+Every production asset should pass both:
+
+
+
+1\. Full-size review (master resolution)
+
+2\. Mobile-size review (at normal mobile viewing size)
+
+
+
+If an asset looks better after zooming in than it does at its intended display size, it is over-designed.
+
+
+
+
+
 7\. World Architecture
 
 
 
-The game is built with independent layers.
+The world is built with independent layers.
 
 
 
@@ -622,7 +692,7 @@ Only use the fixed Living Garden perspective.
 
 
 
-Every growth stage must share exactly the same anchor point.
+Every growth milestone must share exactly the same anchor point, regardless of how many milestones an asset has.
 
 
 
@@ -630,37 +700,19 @@ Example:
 
 
 
-Stage 1
+First milestone
 
 ↓
 
 
 
-Stage 2
+…as many milestones as the asset needs…
 
 ↓
 
 
 
-Stage 3
-
-↓
-
-
-
-Stage 4
-
-↓
-
-
-
-Stage 5
-
-↓
-
-
-
-Stage 6
+Final milestone
 
 
 
@@ -680,15 +732,15 @@ It never shifts position.
 
 
 
-Assets are viewed primarily on phones.
+This section covers implementation only; the philosophy lives in Mobile-First Asset Philosophy. Assets are viewed primarily on phones, at their intended mobile display size.
 
 
 
-Typical display size:
+Typical display context:
 
 
 
-80–150 px.
+the intended mobile display size.
 
 
 
@@ -710,7 +762,7 @@ Fine details are secondary.
 
 
 
-If a detail disappears on mobile, it should not drive the design.
+If a detail disappears at normal mobile viewing size, it should not drive the design.
 
 
 
@@ -723,6 +775,8 @@ Growth must feel natural.
 
 
 Never simply scale an object larger.
+
+Growth represents emotional milestones, not a fixed number of stages. How many steps an asset takes is a creative choice per asset; the stage count is never hardcoded. What matters is that each visible change feels like a meaningful moment of progress. The stages below are illustrative, not a required count.
 
 
 
@@ -774,7 +828,7 @@ Final Tree
 
 
 
-Every stage must clearly feel like the same living organism.
+Every stage must clearly feel like the same living organism, growing continuously — it never jumps, and it never restarts.
 
 
 
@@ -826,7 +880,7 @@ Lock Perspective
 
 
 
-Create Stage 6
+Create the final stage
 
 
 
@@ -836,13 +890,7 @@ Create Stage 6
 
 Reverse Engineer
 
-
-
-↓
-
-
-
-Stage 5
+(The stages below are illustrative — an asset uses as many stages as its growth needs.)
 
 
 
@@ -850,7 +898,7 @@ Stage 5
 
 
 
-Stage 4
+Earlier stage
 
 
 
@@ -858,7 +906,7 @@ Stage 4
 
 
 
-Stage 3
+…as many earlier stages as the asset needs…
 
 
 
@@ -866,19 +914,11 @@ Stage 3
 
 
 
-Stage 2
+First stage
 
 
 
-↓
-
-
-
-Stage 1
-
-
-
-Never start from Stage 1.
+Never start from the first stage.
 
 
 
@@ -974,7 +1014,7 @@ Only life inside the world changes.
 
 
 
-The project succeeds when a player reaches Day 35 and believes:
+The project succeeds when a person reaches Day 35 and believes:
 
 
 
@@ -986,7 +1026,7 @@ I grew this world myself.
 
 
 
-The player should never feel:
+The person should never feel:
 
 
 
@@ -1002,9 +1042,59 @@ A completely different scene appeared.
 
 Growth must feel continuous.
 
+Beyond that continuity, Living Garden succeeds only when these hold together:
+
+Emotional progression — the world feels like it is growing with the person.
+
+Mobile readability — every asset reads clearly at the size people actually see.
+
+Sustainable production — the asset set stays small and affordable to extend.
+
+Reusable assets — variation comes mostly from recomposing existing pieces.
+
+Consistent visual identity — everything looks painted by the same hand.
+
+Artwork quality alone is not sufficient. A beautiful asset that is unreadable on mobile, costly to sustain, or inconsistent with the world does not count as success.
 
 
-17\. Golden Rule
+
+17\. Asset Strategy
+
+Living Garden is built from a small, reusable asset library — not an ever-growing pile of one-off art.
+
+Keep the asset set small and high-reuse.
+
+Favour recomposition: new moments come from arranging and combining existing assets, not from constantly creating new ones.
+
+Keep production cost low so the world stays sustainable to extend.
+
+Let strong emotional progression, not asset volume, carry the experience.
+
+A small library used well creates more emotional impact than a large library used once.
+
+18\. Asset Complexity Guidelines
+
+Only create detail that survives at normal mobile viewing size.
+
+Before adding complexity, ask whether it will still be visible — and still matter — at the intended mobile display size. If it will not, it is decoration for a screenshot, not for the person using the app.
+
+Prioritize, in order: silhouette, readability, warmth, emotional clarity.
+
+Avoid unnecessary illustration complexity. Detail that only reads when zoomed in is over-design (see Mobile-First Asset Philosophy).
+
+19\. Production Scope
+
+Living Garden intentionally keeps a compact production scope. Assets fall into three roles:
+
+Core Assets define the emotional progression — the hero growth objects.
+
+Supporting Assets provide variation around the core.
+
+Decoration Assets are intended for reuse and recomposition across the world.
+
+The objective is maximum emotional impact with sustainable production: a compact, reusable set that can carry a long journey without an ever-expanding art backlog.
+
+20\. Golden Rule
 
 
 
@@ -1025,4 +1115,10 @@ No AI, designer, or developer is allowed to redesign, regenerate, or replace it.
 
 
 The only acceptable work is to create layered assets that naturally grow inside this world.
+
+
+
+Emotion should scale.
+
+Detail does not have to.
 
