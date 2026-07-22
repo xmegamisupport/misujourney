@@ -1,6 +1,6 @@
 # Living Garden — Asset QA Checklist
 
-Version: 1.0  
+Version: 2.0  
 Status: Production Ready
 
 This document is the final quality gate before any Living Garden asset enters production.
@@ -10,6 +10,8 @@ Every asset must pass every check below.
 Assets that fail any item must return to **Phase 2 – Illustration** in `Asset-Production-Workflow.md`.
 
 No exceptions.
+
+This checklist applies the Living Garden Design System (the canonical reference on any conflict) and the Production Workflow. QA is pass/fail against these criteria — not a pursuit of illustration perfection. Once an asset passes, it is production-ready and should not be endlessly refined.
 
 ---
 
@@ -21,6 +23,7 @@ No exceptions.
 - [ ] Matches the Living Garden Design System
 - [ ] Belongs naturally to the same illustrated world
 - [ ] Feels painted by the same illustrator
+- [ ] Belongs beside the approved calibration assets (the quality bar)
 
 ---
 
@@ -57,11 +60,12 @@ No exceptions.
 
 ---
 
-# 2. Mobile Readability
+# 2. Mobile Readability & Emotional Clarity
 
-- [ ] Readable at approximately 80–150 px
-- [ ] Strong silhouette
-- [ ] Important shapes remain recognizable
+- [ ] Reviewed at the intended mobile display size — not zoomed in
+- [ ] Immediately recognizable at that size
+- [ ] Strong, clear silhouette
+- [ ] Emotional feeling reads at that size (emotion should scale; detail need not)
 - [ ] Fine details are not required for recognition
 
 ---
@@ -139,7 +143,8 @@ No exceptions.
 - [ ] Correct layer
 - [ ] No overlap issues
 - [ ] No unexpected scaling
-- [ ] No gameplay changes required
+- [ ] No behaviour or logic changes required
+- [ ] Benchmark: if an approved version already exists, this candidate is objectively better — otherwise keep the approved asset
 
 ---
 
@@ -155,7 +160,7 @@ Reject assets that show any of the following:
 - [ ] Incorrect proportions
 - [ ] Different painting style
 - [ ] Looks like another game
-- [ ] Too much detail for mobile
+- [ ] Contains unnecessary detail for the intended mobile display size.
 - [ ] Multiple subjects
 - [ ] Entire garden scene
 - [ ] Background included
@@ -169,6 +174,8 @@ Choose one:
 - ☐ APPROVED
 - ☐ REVISE
 - ☐ REJECTED
+
+Approve only when every check above passes. If this asset replaces an existing approved benchmark, approve only when it is objectively better; otherwise keep the current production asset (Benchmark Protection).
 
 ---
 
