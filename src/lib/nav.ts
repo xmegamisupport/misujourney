@@ -16,11 +16,11 @@ export const customerNav: NavItem[] = [
   { href: "/customer/healthy-picks", label: "好物", icon: "🥗", key: "healthyPicks" },
   // Learning is no longer a tab — it is reached from the Dashboard's 今日学习
   // card, so the sidebar holds product SECTIONS, not duplicate task entry
-  // points. This slot is reserved for the gamification section (points, levels,
-  // badges, rewards). Its name and theme are not decided yet, so the tab reads
-  // as a plain "coming soon" rather than committing to a brand that would then
-  // clash with the daily Journey already on the Dashboard.
-  { href: "/customer/journey", label: "即将推出", icon: "✨", key: "rewards" },
+  // points. This slot is the gamification section (points, levels, badges,
+  // rewards). It points at /customer/rewards; the Living Garden at
+  // /customer/journey is intentionally NOT linked here (feature paused), so it
+  // stays in the codebase but is not customer-facing.
+  { href: "/customer/rewards", label: "健康收藏", icon: "🏅", key: "rewards" },
   { href: "/customer/progress", label: "成长", icon: "📈", key: "progress" },
   { href: "/customer/profile", label: "我的", icon: "👤", key: "profile" },
 ];
