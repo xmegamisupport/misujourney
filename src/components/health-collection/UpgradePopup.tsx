@@ -26,7 +26,7 @@ export function UpgradePopup({ upgrade, onDismiss }: { upgrade: BadgeUpgrade; on
           </span>
         </div>
 
-        <p className="mt-4 text-xs font-medium uppercase tracking-widest text-slate-400">Habit Strengthened</p>
+        <p className="mt-4 text-sm font-medium text-slate-400">👏 又坚持了一步</p>
         <p className="mt-1 text-lg font-bold text-slate-900">{upgrade.title}</p>
         <p className="mt-0.5 text-sm text-slate-500">已成长到</p>
         <p className="mt-1 text-2xl font-extrabold" style={{ color: level.color }}>

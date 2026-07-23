@@ -5,14 +5,20 @@ import type { BadgeView } from "@/lib/health-collection/types";
 import { BadgeRing } from "./BadgeRing";
 
 /**
- * One habit in the collection grid. Icon ring, English title, Habit Level, and
- * progress — nothing else. A habit that hasn't been started yet invites
- * "Start Building" rather than reading as locked.
+ * One habit in the collection. Leads with a warm Chinese habit name and a
+ * gentle status — never technical ("4 of 14"). A habit not yet started invites
+ * "开始培养" instead of reading as locked.
  */
 export function BadgeCard({ badge, onClick }: { badge: BadgeView; onClick: () => void }) {
   const started = badge.levelIndex >= 0;
   const level = started ? badge.levels[badge.levelIndex] : null;
   const color = level?.color ?? BRAND;
+
+  const hint = !started
+    ? "点亮你的第一天"
+    : badge.maxed
+      ? "已养成 · 继续保持"
+      : `还差 ${badge.remaining} ${badge.def.unit}`;
 
   return (
     <button
@@ -22,11 +28,11 @@ export function BadgeCard({ badge, onClick }: { badge: BadgeView; onClick: () =>
     >
       <BadgeRing percent={badge.ringPercent} color={color} icon={badgeIcon(badge.def, badge.levelKey)} />
 
-      <p className="mt-2.5 text-sm font-semibold text-slate-800">{badge.def.title}</p>
+      <p className="mt-2.5 text-sm font-semibold text-slate-800">{badge.def.habitName}</p>
 
       {!started ? (
         <span className="mt-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600">
-          Start Building
+          开始培养
         </span>
       ) : (
         <span
@@ -37,9 +43,7 @@ export function BadgeCard({ badge, onClick }: { badge: BadgeView; onClick: () =>
         </span>
       )}
 
-      <p className="mt-1.5 text-[11px] font-medium tabular-nums text-slate-400">
-        {!started ? " " : badge.maxed ? "Mastered" : `${badge.progressInLevel} of ${badge.targetInLevel}`}
-      </p>
+      <p className="mt-1.5 text-[11px] font-medium text-slate-400">{hint}</p>
     </button>
   );
 }

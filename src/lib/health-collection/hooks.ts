@@ -62,7 +62,7 @@ export function useHealthCollection(customerId: string) {
         nextAck[v.def.id] = v.levelIndex;
         if (prevAck && v.levelIndex > (prevAck[v.def.id] ?? -1) && v.levelKey) {
           const level = v.levels[v.levelIndex];
-          if (level) found.push({ badgeId: v.def.id, title: v.def.title, icon: badgeIcon(v.def, level.key), level });
+          if (level) found.push({ badgeId: v.def.id, title: v.def.habitName, icon: badgeIcon(v.def, level.key), level });
         }
       }
       writeAck(customerId, nextAck);

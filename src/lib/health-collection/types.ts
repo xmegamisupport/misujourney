@@ -60,9 +60,13 @@ export interface BadgeDef {
    * Left empty in Phase 1 — the architecture just supports it (see badgeIcon).
    */
   levelIcons?: Partial<Record<LevelKey, string>>;
-  /** English title — never translated. */
+  /** English title (kept for reference; the UI leads with habitName). */
   title: string;
-  /** Short Chinese description (max ~2 lines). */
+  /** Warm Chinese habit name shown to the customer (e.g. 喝水习惯). */
+  habitName: string;
+  /** Unit a completion is counted in: 天 (day-based) or 次 (per sachet). */
+  unit: string;
+  /** Short encouraging Chinese sentence (max ~2 lines). */
   description: string;
   /** Whether "highest streak" is meaningful for this badge (day-based ones). */
   trackStreak: boolean;
