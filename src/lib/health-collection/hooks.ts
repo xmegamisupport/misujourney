@@ -4,7 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { resolveLevel } from "./calc";
 import { BADGES, badgeIcon, getBadgeLevels } from "./config";
 import { fetchBadgeData } from "./data";
-import type { BadgeUpgrade, BadgeView } from "./types";
+import { buildGlow } from "./glow";
+import type { BadgeUpgrade, BadgeView, GlowMessage, GlowSummary } from "./types";
+
+const EMPTY_GLOW: { summary: GlowSummary; message: GlowMessage } = {
+  summary: { habitsBuilt: 0, actionsCompleted: 0, longestStreak: 0 },
+  message: { headline: "", sub: "" },
+};
 
 const ACK_KEY = (customerId: string) => `misu:hc:ack:${customerId}`;
 
@@ -36,6 +42,7 @@ function writeAck(customerId: string, map: Record<string, number>) {
  */
 export function useHealthCollection(customerId: string) {
   const [badges, setBadges] = useState<BadgeView[]>([]);
+  const [glow, setGlow] = useState(EMPTY_GLOW);
   const [upgrades, setUpgrades] = useState<BadgeUpgrade[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,6 +75,7 @@ export function useHealthCollection(customerId: string) {
       writeAck(customerId, nextAck);
 
       setBadges(views);
+      setGlow(buildGlow(views));
       setUpgrades(prevAck ? found : []);
       setLoading(false);
     })();
@@ -79,5 +87,12 @@ export function useHealthCollection(customerId: string) {
 
   const dismissUpgrade = useCallback(() => setUpgrades((q) => q.slice(1)), []);
 
-  return { badges, loading, upgrade: upgrades[0] ?? null, dismissUpgrade };
+  return {
+    badges,
+    loading,
+    summary: glow.summary,
+    message: glow.message,
+    upgrade: upgrades[0] ?? null,
+    dismissUpgrade,
+  };
 }

@@ -104,3 +104,19 @@ export interface BadgeUpgrade {
   icon: string;
   level: LevelDef;
 }
+
+/** The Growth Card headline numbers — the "you're glowing" evidence. */
+export interface GlowSummary {
+  /** habits that have reached at least Beginner. */
+  habitsBuilt: number;
+  /** total healthy actions completed across every habit. */
+  actionsCompleted: number;
+  /** the single best streak across day-based habits. */
+  longestStreak: number;
+}
+
+/** A personal, state-dependent encouragement shown on the Growth Card. */
+export interface GlowMessage {
+  headline: string;
+  sub: string;
+}

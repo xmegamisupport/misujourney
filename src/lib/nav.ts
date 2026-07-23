@@ -20,7 +20,7 @@ export const customerNav: NavItem[] = [
   // rewards). It points at /customer/rewards; the Living Garden at
   // /customer/journey is intentionally NOT linked here (feature paused), so it
   // stays in the codebase but is not customer-facing.
-  { href: "/customer/rewards", label: "健康收藏", icon: "🏅", key: "rewards" },
+  { href: "/customer/rewards", label: "Glowing You", icon: "🌸", key: "rewards" },
   { href: "/customer/progress", label: "成长", icon: "📈", key: "progress" },
   { href: "/customer/profile", label: "我的", icon: "👤", key: "profile" },
 ];

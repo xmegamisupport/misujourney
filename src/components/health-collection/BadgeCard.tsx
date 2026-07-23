@@ -5,20 +5,20 @@ import type { BadgeView } from "@/lib/health-collection/types";
 import { BadgeRing } from "./BadgeRing";
 
 /**
- * One habit in the collection. Leads with a warm Chinese habit name and a
- * gentle status — never technical ("4 of 14"). A habit not yet started invites
- * "开始培养" instead of reading as locked.
+ * One habit in "My Journey". Simple and premium: icon, name, current stage,
+ * progress — nothing more. A habit not yet started invites 开始培养 rather than
+ * reading as locked.
  */
 export function BadgeCard({ badge, onClick }: { badge: BadgeView; onClick: () => void }) {
   const started = badge.levelIndex >= 0;
   const level = started ? badge.levels[badge.levelIndex] : null;
   const color = level?.color ?? BRAND;
 
-  const hint = !started
+  const progressText = !started
     ? "点亮你的第一天"
     : badge.maxed
-      ? "已养成 · 继续保持"
-      : `还差 ${badge.remaining} ${badge.def.unit}`;
+      ? "已达成 · 继续保持"
+      : `${badge.progressInLevel} / ${badge.targetInLevel} ${badge.def.unit}`;
 
   return (
     <button
@@ -43,7 +43,7 @@ export function BadgeCard({ badge, onClick }: { badge: BadgeView; onClick: () =>
         </span>
       )}
 
-      <p className="mt-1.5 text-[11px] font-medium text-slate-400">{hint}</p>
+      <p className="mt-1.5 text-[11px] font-medium tabular-nums text-slate-400">{progressText}</p>
     </button>
   );
 }
