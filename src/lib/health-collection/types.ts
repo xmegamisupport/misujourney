@@ -13,7 +13,12 @@ import type { ProductCode } from "@/lib/inventory/types";
  * rewrite of the engine.
  */
 
-export type LevelKey = "bronze" | "silver" | "gold" | "platinum" | "diamond" | "legend";
+/**
+ * Habit-level keys. These describe personal growth ("your habit is getting
+ * stronger"), not game ranking — see config.ts for the display names. Keys are
+ * stable identifiers; renaming a display name never touches these.
+ */
+export type LevelKey = "beginner" | "builder" | "progress" | "achiever" | "elite" | "master";
 
 export interface LevelDef {
   key: LevelKey;
@@ -47,8 +52,17 @@ export interface BadgeCount {
 
 export interface BadgeDef {
   id: string;
+  /** Default icon, used when no per-level icon is set. */
   icon: string;
+  /**
+   * Optional per-habit-level icon overrides. The habit can look different as it
+   * strengthens (Beginner 💧 → Master 💎💧) without changing anything else.
+   * Left empty in Phase 1 — the architecture just supports it (see badgeIcon).
+   */
+  levelIcons?: Partial<Record<LevelKey, string>>;
+  /** English title — never translated. */
   title: string;
+  /** Short Chinese description (max ~2 lines). */
   description: string;
   /** Whether "highest streak" is meaningful for this badge (day-based ones). */
   trackStreak: boolean;

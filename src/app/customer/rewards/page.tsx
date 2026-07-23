@@ -56,7 +56,7 @@ export default function HealthCollectionPage() {
           )}
 
           <p className="mt-5 text-center text-[11px] leading-relaxed text-slate-400">
-            每一枚徽章都会一直升级 —— 铜 · 银 · 金 · 铂金 · 钻石 · 传奇。<br />
+            每个习惯都会慢慢成长 —— Beginner · Builder · Progress · Achiever · Elite · Master。<br />
             累计计算，错过一天也不会失去进度。
           </p>
         </section>

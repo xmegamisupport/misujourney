@@ -26,9 +26,9 @@ export function UpgradePopup({ upgrade, onDismiss }: { upgrade: BadgeUpgrade; on
           </span>
         </div>
 
-        <p className="mt-4 text-xs font-medium uppercase tracking-widest text-slate-400">Level Up</p>
+        <p className="mt-4 text-xs font-medium uppercase tracking-widest text-slate-400">Habit Strengthened</p>
         <p className="mt-1 text-lg font-bold text-slate-900">{upgrade.title}</p>
-        <p className="mt-0.5 text-sm text-slate-500">升级到</p>
+        <p className="mt-0.5 text-sm text-slate-500">已成长到</p>
         <p className="mt-1 text-2xl font-extrabold" style={{ color: level.color }}>
           {level.name}
         </p>
@@ -39,7 +39,7 @@ export function UpgradePopup({ upgrade, onDismiss }: { upgrade: BadgeUpgrade; on
           className="mt-6 w-full rounded-2xl py-3 text-sm font-semibold text-white transition active:scale-[0.99]"
           style={{ backgroundColor: level.color }}
         >
-          收下这枚徽章
+          继续保持
         </button>
       </div>
     </div>

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
+import { badgeIcon, BRAND } from "@/lib/health-collection/config";
 import type { BadgeView } from "@/lib/health-collection/types";
 import { BadgeRing } from "./BadgeRing";
 
-/** Bottom sheet with a badge's full detail: level, lifetime, streak, next
- * level, and the full ladder it keeps climbing. */
+/** Bottom sheet with a habit's full detail. Terminology reinforces that a habit
+ * is getting stronger — Habit Level, Next Stage, Completions — not a game rank. */
 export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeView | null; onClose: () => void }) {
   useEffect(() => {
     if (!badge) return;
@@ -15,8 +16,9 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeView | null; 
   }, [badge, onClose]);
 
   if (!badge) return null;
-  const level = badge.levelKey ? badge.levels[badge.levelIndex] : null;
-  const color = level?.color ?? "#9aa4ad";
+  const started = badge.levelIndex >= 0;
+  const level = started ? badge.levels[badge.levelIndex] : null;
+  const color = level?.color ?? BRAND;
   const next = badge.nextKey ? badge.levels[badge.levelIndex + 1] : null;
 
   return (
@@ -26,62 +28,47 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeView | null; 
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200 sm:hidden" />
 
         <div className="flex flex-col items-center text-center">
-          <BadgeRing percent={badge.ringPercent} color={color} icon={badge.def.icon} size={116} stroke={8} locked={badge.levelIndex < 0} />
+          <BadgeRing percent={badge.ringPercent} color={color} icon={badgeIcon(badge.def, badge.levelKey)} size={116} stroke={8} />
           <h2 className="mt-3 text-lg font-semibold text-slate-900">{badge.def.title}</h2>
-          {level ? (
-            <span className="mt-1 rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ backgroundColor: level.soft, color: level.color }}>
-              {level.name}
+          {started ? (
+            <span className="mt-1 rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ backgroundColor: level!.soft, color: level!.color }}>
+              {level!.name}
             </span>
           ) : (
-            <span className="mt-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-400">未解锁</span>
-          )}
-          <p className="mt-2.5 max-w-xs text-sm leading-relaxed text-slate-500">{badge.def.description}</p>
-        </div>
-
-        {/* stats */}
-        <div className="mt-5 grid grid-cols-3 gap-2">
-          <Stat label="累计" value={`${badge.lifetime}`} />
-          {badge.def.trackStreak ? (
-            <Stat label="最高连续" value={`${badge.streak} 天`} />
-          ) : (
-            <Stat label="当前等级" value={level?.name ?? "—"} />
-          )}
-          <Stat label={badge.maxed ? "已满级" : "距下一级"} value={badge.maxed ? "✓" : `${badge.remaining}`} />
-        </div>
-
-        {/* next level */}
-        {next && (
-          <div className="mt-3 flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-            <span className="text-xs text-slate-500">下一级</span>
-            <span className="text-sm font-semibold" style={{ color: next.color }}>
-              {next.name} · 还需 {badge.remaining}
+            <span className="mt-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-600">
+              Start Building
             </span>
-          </div>
-        )}
+          )}
+          <p className="mt-2.5 max-w-xs whitespace-pre-line text-sm leading-relaxed text-slate-500">
+            {badge.def.description}
+          </p>
+        </div>
 
-        {/* ladder */}
-        <div className="mt-5">
-          <div className="flex items-center justify-between">
-            {badge.levels.map((lv, i) => {
-              const reached = i <= badge.levelIndex;
-              return (
-                <div key={lv.key} className="flex flex-1 flex-col items-center gap-1">
-                  <span
-                    className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold"
-                    style={{
-                      backgroundColor: reached ? lv.color : "#eef1f4",
-                      color: reached ? "#fff" : "#adb5bd",
-                    }}
-                  >
-                    {i + 1}
-                  </span>
-                  <span className="text-[9px] font-medium" style={{ color: reached ? lv.color : "#adb5bd" }}>
-                    {lv.name}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+        {/* detail list */}
+        <div className="mt-5 overflow-hidden rounded-2xl border border-slate-100">
+          <Row label="Habit Level" value={started ? level!.name : "Start Building"} valueColor={color} />
+          <Row label="Lifetime Progress" value={plural(badge.lifetime, "Completion")} />
+          {badge.def.trackStreak && <Row label="Highest Streak" value={plural(badge.streak, "Day")} />}
+          <Row label="Next Stage" value={next ? next.name : "—"} valueColor={next?.color} />
+          {!badge.maxed && <Row label="Remaining" value={plural(badge.remaining, "Completion")} last />}
+        </div>
+
+        {/* habit ladder */}
+        <div className="mt-5 flex items-center justify-between">
+          {badge.levels.map((lv, i) => {
+            const reached = i <= badge.levelIndex;
+            return (
+              <div key={lv.key} className="flex flex-1 flex-col items-center gap-1">
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: reached ? lv.color : "#e6ebe9" }}
+                />
+                <span className="text-[9px] font-medium" style={{ color: reached ? lv.color : "#b6bdc2" }}>
+                  {lv.name}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         <button
@@ -96,11 +83,27 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeView | null; 
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Row({
+  label,
+  value,
+  valueColor,
+  last,
+}: {
+  label: string;
+  value: string;
+  valueColor?: string;
+  last?: boolean;
+}) {
   return (
-    <div className="rounded-2xl bg-slate-50 px-2 py-3 text-center">
-      <p className="text-base font-bold tabular-nums text-slate-900">{value}</p>
-      <p className="mt-0.5 text-[11px] text-slate-400">{label}</p>
+    <div className={`flex items-center justify-between px-4 py-3 ${last ? "" : "border-b border-slate-100"}`}>
+      <span className="text-sm text-slate-500">{label}</span>
+      <span className="text-sm font-semibold" style={{ color: valueColor ?? "#0f172a" }}>
+        {value}
+      </span>
     </div>
   );
+}
+
+function plural(n: number, word: string): string {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
 }
