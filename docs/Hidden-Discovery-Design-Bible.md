@@ -291,6 +291,13 @@ consistent:
 > into disagreement. Unifying the two vocabularies into one is a deliberate future task, not
 > an accident to be silently patched.
 
+> **Phase 3 update:** the event-driven engine ([`Hidden-Discovery-Engine.md`](./Hidden-Discovery-Engine.md))
+> now dispatches on the canonical trigger names directly and implements
+> `weight_delta`, `comeback`, `goal_achievement`, and `journey_completion` (the rows above
+> marked "roadmap"). Auto-unlock-on-load was retired; the clue/reveal engine kept. The DB
+> catalogue is now a synced projection of the Registry JSON, which resolves §10 in favour of a
+> Registry-derived runtime.
+
 ### 6.4 Clues & hint evolution (surprise preservation)
 
 A discovery the user hasn't earned yet is represented to them only as a **clue**: a category,

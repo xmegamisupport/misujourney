@@ -917,6 +917,7 @@ export type Database = {
       discovery_achievements: {
         Row: {
           category: string
+          celebration_type: string | null
           code: string
           created_at: string
           description: string
@@ -927,11 +928,14 @@ export type Database = {
           id: string
           name: string
           rarity: string
+          registry_version: string | null
           trigger_condition: Json
           trigger_type: string
+          unlock_scope: string
         }
         Insert: {
           category: string
+          celebration_type?: string | null
           code: string
           created_at?: string
           description: string
@@ -942,11 +946,14 @@ export type Database = {
           id?: string
           name: string
           rarity?: string
+          registry_version?: string | null
           trigger_condition?: Json
           trigger_type: string
+          unlock_scope?: string
         }
         Update: {
           category?: string
+          celebration_type?: string | null
           code?: string
           created_at?: string
           description?: string
@@ -957,8 +964,10 @@ export type Database = {
           id?: string
           name?: string
           rarity?: string
+          registry_version?: string | null
           trigger_condition?: Json
           trigger_type?: string
+          unlock_scope?: string
         }
         Relationships: [
           {
@@ -967,6 +976,67 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "discovery_trigger_types"
             referencedColumns: ["key"]
+          },
+        ]
+      }
+      discovery_celebration_queue: {
+        Row: {
+          achievement_id: string
+          acknowledged_at: string | null
+          created_at: string
+          discovery_unlock_id: string
+          displayed_at: string | null
+          id: string
+          priority: number
+          queued_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          acknowledged_at?: string | null
+          created_at?: string
+          discovery_unlock_id: string
+          displayed_at?: string | null
+          id?: string
+          priority?: number
+          queued_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          acknowledged_at?: string | null
+          created_at?: string
+          discovery_unlock_id?: string
+          displayed_at?: string | null
+          id?: string
+          priority?: number
+          queued_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discovery_celebration_queue_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "discovery_achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discovery_celebration_queue_discovery_unlock_id_fkey"
+            columns: ["discovery_unlock_id"]
+            isOneToOne: true
+            referencedRelation: "user_discoveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discovery_celebration_queue_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1892,19 +1962,37 @@ export type Database = {
       user_discoveries: {
         Row: {
           achievement_id: string
+          id: string
+          journey_id: string | null
+          registry_version: string | null
           revealed_at: string | null
+          source_event: string | null
+          stage: number | null
+          trigger_evidence: Json | null
           unlocked_at: string
           user_id: string
         }
         Insert: {
           achievement_id: string
+          id?: string
+          journey_id?: string | null
+          registry_version?: string | null
           revealed_at?: string | null
+          source_event?: string | null
+          stage?: number | null
+          trigger_evidence?: Json | null
           unlocked_at?: string
           user_id: string
         }
         Update: {
           achievement_id?: string
+          id?: string
+          journey_id?: string | null
+          registry_version?: string | null
           revealed_at?: string | null
+          source_event?: string | null
+          stage?: number | null
+          trigger_evidence?: Json | null
           unlocked_at?: string
           user_id?: string
         }
@@ -2159,6 +2247,7 @@ export type Database = {
           name: string
         }[]
       }
+      get_hidden_discovery_snapshot: { Args: never; Returns: Json }
       get_inventory_alert_status: {
         Args: {
           p_product_code: Database["public"]["Enums"]["product_code"]
@@ -2264,6 +2353,10 @@ export type Database = {
       normalize_international_phone_number: {
         Args: { p_country_calling_code: string; p_local_phone_number: string }
         Returns: string
+      }
+      record_hidden_discovery_unlocks: {
+        Args: { p_unlocks: Json }
+        Returns: Json
       }
       record_journey_baseline: {
         Args: {
