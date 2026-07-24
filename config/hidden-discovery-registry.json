@@ -1,7 +1,7 @@
 {
   "$meta": {
     "name": "MISU Hidden Discovery Registry",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "updated": "2026-07-24",
     "governedBy": "docs/Hidden-Discovery-Design-Bible.md",
     "roadmap": "docs/Hidden-Discovery-Roadmap.md",
@@ -417,7 +417,7 @@
       "icon": "🌱",
       "enabled": false,
       "version": "1.1.0",
-      "futureNotes": "Activates when cumulative weight-change verification is available. Deliberately framed to celebrate the EFFORT behind the change, not body type (Design Bible: reward effort, not body). Product review pending — see reconciliation note.",
+      "futureNotes": "Universal Milestone (Design Bible §2.3). Losing 5kg is an effort-based achievement, not a body-type reward — every user earns it through the same effort regardless of starting body. Endorsed. Activates when cumulative weight-change verification is available.",
       "hints": [
         { "stage": 1, "text": "和你的坚持有关。" },
         { "stage": 2, "text": "一点一点的改变，累积起来了。" }
@@ -437,7 +437,7 @@
       "icon": "🌿",
       "enabled": false,
       "version": "1.1.0",
-      "futureNotes": "Activates when cumulative weight-change verification is available. Framed to celebrate effort, not body type. Product review pending.",
+      "futureNotes": "Universal Milestone (Design Bible §2.3). Effort-based achievement, not a body-type reward. Endorsed. Activates when cumulative weight-change verification is available.",
       "hints": [
         { "stage": 1, "text": "和你的坚持有关。" },
         { "stage": 2, "text": "又向前了一步。" }
@@ -457,7 +457,7 @@
       "icon": "🌳",
       "enabled": false,
       "version": "1.1.0",
-      "futureNotes": "Activates when cumulative weight-change verification is available. Framed to celebrate effort, not body type. Product review pending.",
+      "futureNotes": "Universal Milestone (Design Bible §2.3). Effort-based achievement, not a body-type reward. Endorsed. Activates when cumulative weight-change verification is available.",
       "hints": [
         { "stage": 1, "text": "和你的坚持有关。" },
         { "stage": 2, "text": "一段很长的路，快走完了。" }

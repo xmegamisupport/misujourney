@@ -92,6 +92,44 @@ Discovery celebrates *"the first time you ever hit your water goal"* — a momen
 
 The rule of thumb: **Habits count. Discovery remembers.**
 
+### 2.3 Effort, not body type (the fairness rule)
+
+A Discovery may celebrate **what a user *did*** — never **what a user *is*.** This is a
+permanent fairness rule: every future decision about whether something can become a Discovery
+must pass it.
+
+**❌ Rewarding body type is NOT allowed.** A Discovery must never unlock from a natural body
+condition or a starting advantage — something the user did not earn through effort:
+
+- BMI landing in the "normal" range
+- Being naturally thin to begin with
+- Having a high (or low) starting weight
+- Any state that reflects a user's given body rather than their effort
+
+Rewarding these would congratulate genetics and quietly shame everyone whose body started
+somewhere else. We never do it.
+
+**✅ Rewarding meaningful achievement earned through effort IS encouraged.** A Discovery may
+celebrate a real accomplishment that took work, regardless of the body it started from:
+
+- Losing 5 kg, 7 kg, or 10 kg *(universal milestones — see below)*
+- Completing a personal stage goal the user set
+- Completing a Journey (Kickstart 30 / Momentum 60 / Transformation 90)
+
+**Why weight-loss milestones are allowed.** *Losing* 5/7/10 kg is a **universal achievement
+discovery**: the same effort-based accomplishment for everyone, measured as a *change the user
+produced*, not as their starting body. A person who begins at 120 kg and one who begins at
+70 kg each earn "lost 5 kg" through the same effort — the milestone is the **journey they
+travelled**, never the body they began with. This is categorically different from rewarding a
+low BMI or a naturally slim frame, which no effort produced.
+
+These live under **Achievement Moment → Universal Milestone**. They are framed to celebrate
+the persistence behind the change, never the appearance of the result.
+
+> **The test, in one line:** *Could a user with a different natural body, putting in the same
+> effort, earn this too?* If **yes**, it may be a Discovery. If it unlocks from the body they
+> were simply born with or started at, it must not.
+
 ---
 
 ## 3. Design Principles
@@ -313,6 +351,7 @@ The whole point of this architecture is that **growth is data, not code.**
 Before appending a discovery to the registry, confirm **all**:
 
 - [ ] It is a **moment**, not a metric. (Passes the §2.1 Non-Overlap test.)
+- [ ] It rewards **effort, not body type**. (Passes the §2.3 fairness rule — it celebrates what the user *did*, never a natural body condition or starting advantage.)
 - [ ] It does **not** duplicate anything the Habit system already tracks.
 - [ ] Its `name` and `description` lead with **emotion**, contain **no statistics**.
 - [ ] Its `rarity` is honest (no implied population claim).
@@ -348,6 +387,7 @@ defined.
 - ❌ Turning Discovery into a visible checklist or quest log.
 - ❌ Exposing unlock conditions or hint catalogues to the client.
 - ❌ Overlapping the Habit system (double-counting the same growth).
+- ❌ Rewarding body type or a natural advantage (low BMI, naturally thin, starting weight). Effort-based achievements — including losing 5/7/10 kg — are encouraged (§2.3).
 - ❌ Fabricated rarity percentages or social proof.
 - ❌ Revealing many discoveries at once (dumping).
 - ❌ Any "expired / missed" state that shames the user.
