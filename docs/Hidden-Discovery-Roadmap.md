@@ -104,3 +104,4 @@ Per the Design Bible, these are permanent non-goals, not "later":
 | Date | Version | Change |
 |---|---|---|
 | 2026-07-24 | 1.0.0 | Framework established: Design Bible + registry scaffold + roadmap. `discoveries[]` intentionally empty. |
+| 2026-07-24 | 1.1.0 | First official Discovery collection: 23 discoveries across Early / Water / Food / Reflection / Calendar / Achievement / Milestone. Added `epic` rarity, `surprise`/`proud`/`celebration` celebration types, `water`/`food`/`reflection` categories, planned signals (`meal`/`meal_balanced`/`reflection`), and the `futureNotes` field. 5 are live now; 18 ship as `enabled:false` specs awaiting their trigger/signal. No engine or UI changes. |

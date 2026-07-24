@@ -156,7 +156,7 @@ The canonical field set:
 | `hints` | array of `{ stage, text }` | The clue text that evolves vague → less vague. Never the exact condition. |
 | `hintAdvanceDays` | integer | Per-discovery pacing: days before a clue advances one stage. |
 | `priority` | integer | Reveal ordering when several are earned at once (lower = revealed first). |
-| `notes` | string | Author notes (never shown to users). |
+| `futureNotes` | string | Author / roadmap notes, never shown to users: activation conditions, future variants. |
 
 ### 4.1 Field rules
 
@@ -179,11 +179,18 @@ The V1 canonical set:
 | Category key | Name | The moment it celebrates | Emotional tone |
 |---|---|---|---|
 | `early` | **Early Moment** | First steps — the very first time something happens | Encouragement, "you've begun" |
-| `habit` | **Habit Moment** | Rhythm forming — consistency becoming natural | Quiet pride, "it's becoming you" |
+| `water` | **Water Moment** | The quiet discipline of staying hydrated | Refreshing, light |
+| `food` | **Food Moment** | Mindful, consistent eating — not dieting | Nourishing, warm |
+| `reflection` | **Reflection Moment** | Showing up for yourself and closing the day well | Grounded, calm |
 | `calendar` | **Calendar Moment** | Something meaningful tied to a date, season, or time of day | Warmth, serendipity |
-| `achievement` | **Achievement Moment** | A goal the user set for themselves, reached | Satisfaction, "you did it" |
+| `achievement` | **Achievement Moment** | A self-set goal, a weight breakthrough, or a Journey reached | Satisfaction, "you did it" |
 | `milestone` | **Milestone Moment** | Accumulated scale — a big round total, looking back | Awe at the distance travelled |
-| `comeback` | **Comeback Moment** | Returning after a pause, without judgment | Compassion, "welcome back" |
+| `comeback` | **Comeback Moment** | Returning after a pause, without judgment *(reserved for V2)* | Compassion, "welcome back" |
+
+> **v1.1 note:** the earlier generic `habit` category was split into the more specific
+> `water` / `food` / `reflection` moment families as the first content batch landed. `comeback`
+> stays defined but empty until the engine supports gap detection (V2); the one comeback-flavoured
+> moment authored so far (*节奏回来了*) is filed under `reflection` per this taxonomy.
 
 > Future categories (e.g. *Seasonal Moment*, *Together Moment*) are added by appending to
 > `categories[]`. See the Roadmap. **No code change is required to add a category.**
@@ -262,14 +269,13 @@ The *reveal itself* is data-driven. `celebrationType` selects the emotional regi
 unlock moment — pacing, motion, sound (if any), copy tone. It is decoupled from category so a
 single reveal style can serve many categories and vice-versa.
 
-Starter set (extensible via `registry → celebrationTypes[]`):
+Starter set (extensible via `registry → celebrationTypes[]`) — three emotional registers:
 
 | Key | Feel | Typical use |
 |---|---|---|
-| `gentle` | Soft bloom, understated | Early / everyday moments |
-| `milestone` | Fuller, weightier reveal | Milestone / big accumulations |
-| `calendar` | Serendipitous, seasonal shimmer | Calendar moments |
-| `comeback` | Warm, welcoming, unhurried | Comeback moments |
+| `surprise` | Delightful, unexpected | First-times, serendipity, calendar moments |
+| `proud` | Quiet, warm pride | Consistency, effort, showing up |
+| `celebration` | Full, joyful | Milestones, Journeys, breakthroughs |
 
 New celebration types are added as data + a mapping in the reveal component. Adding a *new*
 celebration *style* is a small, bounded code touchpoint (the animation); assigning an
@@ -280,7 +286,7 @@ celebration *style* is a small, bounded code touchpoint (the animation); assigni
 ## 8. Rarity — an emotional label, not a statistic
 
 `rarity` communicates *how special this moment feels*, not how many people have it. Starter
-set: `common`, `rare`, `legendary`.
+set: `common`, `rare`, `epic`, `legendary`.
 
 **Hard rule:** rarity is **never** rendered as a population percentage ("only 2% of users")
 unless and until we have real, defensible population data *and* a product decision to show

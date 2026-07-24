@@ -1,29 +1,34 @@
 {
   "$meta": {
     "name": "MISU Hidden Discovery Registry",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "updated": "2026-07-24",
     "governedBy": "docs/Hidden-Discovery-Design-Bible.md",
     "roadmap": "docs/Hidden-Discovery-Roadmap.md",
-    "description": "Single source of truth for every Hidden Discovery. No discovery logic is hardcoded in application code; the engine dispatches on trigger type and reads content from this registry (or a seed derived from it). This is the v1 ARCHITECTURE registry: reference data (categories, trigger types, celebration types, rarities) is defined, but `discoveries` is intentionally empty and will be populated later per the Design Bible authoring gate."
+    "description": "Single source of truth for every Hidden Discovery. No discovery logic is hardcoded in application code; the engine dispatches on trigger type and reads content from this registry (or a seed derived from it). v1.1 populates the first official Discovery collection. A discovery is `enabled: true` only when BOTH its trigger type AND its signal are already live in the engine; everything else is a complete spec shipped as `enabled: false` with a `futureNotes` activation note, so nothing unwinnable is ever teased."
   },
 
   "signals": [
-    { "key": "water",          "label": "Hydration goal met",      "description": "A day the user reached their water goal." },
-    { "key": "weighin",        "label": "Weigh-in / check-in",     "description": "A day the user recorded their weight." },
-    { "key": "learning",       "label": "Learning completed",      "description": "A completed piece of learning content." },
-    { "key": "daily_complete", "label": "Daily journey completed", "description": "A day the full daily journey was completed." },
-    { "key": "n_plus",         "label": "MISU N+ used",            "description": "A logged use of MISU N+." },
-    { "key": "dx_plus",        "label": "MISU DX+ used",           "description": "A logged use of MISU DX+." }
+    { "key": "water",          "label": "Hydration goal met",      "description": "A day the user reached their water goal.",            "status": "live" },
+    { "key": "weighin",        "label": "Weigh-in / check-in",     "description": "A day the user recorded their weight.",                "status": "live" },
+    { "key": "learning",       "label": "Learning completed",      "description": "A completed piece of learning content.",              "status": "live" },
+    { "key": "daily_complete", "label": "Daily journey completed", "description": "A day the full daily journey was completed.",          "status": "live" },
+    { "key": "n_plus",         "label": "MISU N+ used",            "description": "A logged use of MISU N+.",                            "status": "live" },
+    { "key": "dx_plus",        "label": "MISU DX+ used",           "description": "A logged use of MISU DX+.",                           "status": "live" },
+    { "key": "meal",           "label": "Meal logged",             "description": "A logged meal.",                                      "status": "planned" },
+    { "key": "meal_balanced",  "label": "Balanced meal (211)",     "description": "A meal that meets the 211 balance guideline.",         "status": "planned" },
+    { "key": "reflection",     "label": "Evening reflection",      "description": "An on-time evening reflection / day-close.",           "status": "planned" }
   ],
 
   "categories": [
-    { "key": "early",       "name": "Early Moment",       "intent": "Celebrate first steps — the very first time something happens.", "tone": "encouraging" },
-    { "key": "habit",       "name": "Habit Moment",       "intent": "Celebrate rhythm forming — consistency becoming natural.",      "tone": "quiet-pride" },
-    { "key": "calendar",    "name": "Calendar Moment",    "intent": "Celebrate something meaningful tied to a date, season, or time.", "tone": "serendipity" },
-    { "key": "achievement", "name": "Achievement Moment", "intent": "Celebrate a goal the user set for themselves, reached.",         "tone": "satisfaction" },
-    { "key": "milestone",   "name": "Milestone Moment",   "intent": "Celebrate accumulated scale — a big total, looking back.",       "tone": "awe" },
-    { "key": "comeback",    "name": "Comeback Moment",    "intent": "Celebrate returning after a pause, without judgment.",          "tone": "compassion" }
+    { "key": "early",       "name": "Early Moment",       "intent": "Celebrate first steps — the very first time something happens.",     "tone": "encouraging" },
+    { "key": "water",       "name": "Water Moment",       "intent": "Celebrate the quiet discipline of staying hydrated.",                "tone": "refreshing" },
+    { "key": "food",        "name": "Food Moment",        "intent": "Celebrate mindful, consistent eating — not dieting.",                "tone": "nourishing" },
+    { "key": "reflection",  "name": "Reflection Moment",  "intent": "Celebrate showing up for yourself and closing the day well.",        "tone": "grounded" },
+    { "key": "calendar",    "name": "Calendar Moment",    "intent": "Celebrate something meaningful tied to a date, season, or time.",    "tone": "serendipity" },
+    { "key": "achievement", "name": "Achievement Moment", "intent": "Celebrate a self-set goal, weight breakthrough, or journey reached.", "tone": "satisfaction" },
+    { "key": "milestone",   "name": "Milestone Moment",   "intent": "Celebrate accumulated scale — a big total, looking back.",           "tone": "awe" },
+    { "key": "comeback",    "name": "Comeback Moment",    "intent": "Celebrate returning after a pause, without judgment. (Reserved for V2.)", "tone": "compassion" }
   ],
 
   "triggerTypes": [
@@ -49,26 +54,27 @@
       "paramsSchema": { "source": "signal key (required)", "count": "integer (required)" }
     },
     {
-      "key": "journey_completion",
-      "description": "A journey or chapter is completed.",
-      "engineKey": null,
-      "status": "planned",
-      "paramsSchema": { "scope": "'journey' | 'chapter' (required)", "which": "identifier (optional)" }
-    },
-    {
       "key": "goal_achievement",
-      "description": "A user-set goal is reached.",
+      "description": "A user-set personal goal is reached.",
       "engineKey": null,
       "status": "planned",
       "paramsSchema": { "goal": "goal key (required)" }
     },
     {
+      "key": "journey_completion",
+      "description": "A journey (or chapter) is completed.",
+      "engineKey": null,
+      "status": "planned",
+      "paramsSchema": { "scope": "'journey' | 'chapter' (required)", "which": "identifier, e.g. 'kickstart' (optional)" }
+    },
+    {
       "key": "calendar_condition",
-      "description": "A signal under a date, season, or time-of-day rule.",
+      "description": "A signal under a date, weekday, season, or time-of-day rule.",
       "engineKey": "calendar_date | time_of_day",
       "status": "live",
       "paramsSchema": {
         "on": "MM-DD specific date (optional)",
+        "weekday": "day name, e.g. 'sunday' (optional; PLANNED — not yet in engine)",
         "before": "time-of-day upper bound, e.g. '07:00' (optional)",
         "after": "time-of-day lower bound (optional)",
         "season": "named season window (optional)",
@@ -86,15 +92,15 @@
   ],
 
   "celebrationTypes": [
-    { "key": "gentle",    "description": "Soft bloom, understated.",           "feel": "quiet" },
-    { "key": "milestone", "description": "Fuller, weightier reveal.",          "feel": "significant" },
-    { "key": "calendar",  "description": "Serendipitous, seasonal shimmer.",   "feel": "delightful" },
-    { "key": "comeback",  "description": "Warm, welcoming, unhurried reveal.", "feel": "compassionate" }
+    { "key": "surprise",    "description": "A delightful, unexpected reveal — for first-times and serendipity.", "feel": "delighted" },
+    { "key": "proud",       "description": "A quiet, warm pride — for consistency, effort, and showing up.",     "feel": "warm-pride" },
+    { "key": "celebration", "description": "A full, joyful celebration — for milestones, journeys, breakthroughs.", "feel": "joyful" }
   ],
 
   "rarities": [
     { "key": "common",    "label": "Common",    "note": "Emotional weight only. NEVER a population percentage." },
     { "key": "rare",      "label": "Rare",      "note": "Emotional weight only. NEVER a population percentage." },
+    { "key": "epic",      "label": "Epic",      "note": "Emotional weight only. NEVER a population percentage." },
     { "key": "legendary", "label": "Legendary", "note": "Emotional weight only. NEVER a population percentage." }
   ],
 
@@ -106,14 +112,14 @@
     "trigger":         "object — { type: one of triggerTypes[].key, params: per trigger paramsSchema }.",
     "celebrationType": "enum — one of celebrationTypes[].key.",
     "description":     "string — the warm line shown once discovered. No statistics.",
-    "icon":            "string — emoji or asset reference.",
-    "enabled":         "boolean — false = spec exists but is never evaluated or assigned.",
     "rarity":          "enum — one of rarities[].key. Emotional weight, not probability.",
+    "icon":            "string — emoji or asset reference.",
+    "enabled":         "boolean — false = complete spec that is never evaluated or assigned until its trigger/signal is live.",
     "version":         "string(semver) — registry version this discovery was introduced/last changed in.",
+    "futureNotes":     "string — author/roadmap notes (never shown to users): activation conditions, future variants. (optional)",
     "hints":           "array of { stage: integer>=1, text: string } — evolving clue, vague to less vague. Never states the exact condition. (optional)",
     "hintAdvanceDays": "integer — days before a clue advances one stage. (optional, per-discovery pacing)",
-    "priority":        "integer — reveal ordering when several are earned at once; lower reveals first. (optional)",
-    "notes":           "string — author notes, never shown to users. (optional)"
+    "priority":        "integer — reveal ordering when several are earned at once; lower reveals first. (optional)"
   },
 
   "discoveryTemplate": {
@@ -123,20 +129,481 @@
     "category": "early",
     "habit": null,
     "trigger": { "type": "first_time", "params": { "source": "water" } },
-    "celebrationType": "gentle",
+    "celebrationType": "surprise",
     "description": "",
+    "rarity": "common",
     "icon": "",
     "enabled": false,
-    "rarity": "common",
-    "version": "1.0.0",
+    "version": "1.1.0",
+    "futureNotes": "",
     "hints": [
       { "stage": 1, "text": "" },
       { "stage": 2, "text": "" }
     ],
     "hintAdvanceDays": 10,
-    "priority": 100,
-    "notes": ""
+    "priority": 100
   },
 
-  "discoveries": []
+  "discoveries": [
+    {
+      "id": "today-ahead",
+      "name": "今天领先",
+      "category": "early",
+      "habit": "daily_complete",
+      "trigger": { "type": "first_time", "params": { "source": "daily_complete" } },
+      "celebrationType": "surprise",
+      "description": "你第一次早早地把今天走完了 —— 原来主动一点，一整天都更从容。",
+      "rarity": "common",
+      "icon": "🌅",
+      "enabled": true,
+      "version": "1.1.0",
+      "futureNotes": "Consider a time-based variant (completed before noon) once daily-completion timestamps are aggregated.",
+      "hints": [
+        { "stage": 1, "text": "和「今天」有关。" },
+        { "stage": 2, "text": "早一点，就不一样。" }
+      ],
+      "hintAdvanceDays": 7,
+      "priority": 12
+    },
+    {
+      "id": "early-bird",
+      "name": "早起鸟",
+      "category": "early",
+      "habit": "weighin",
+      "trigger": { "type": "calendar_condition", "params": { "source": "weighin", "before": "07:00", "count": 1 } },
+      "celebrationType": "surprise",
+      "description": "天刚亮，你就已经记录了自己 —— 早起的人，先遇见了最安静的世界。",
+      "rarity": "rare",
+      "icon": "🐦",
+      "enabled": true,
+      "version": "1.1.0",
+      "futureNotes": "",
+      "hints": [
+        { "stage": 1, "text": "和清晨有关。" },
+        { "stage": 2, "text": "太阳升起之前……" }
+      ],
+      "hintAdvanceDays": 9,
+      "priority": 14
+    },
+    {
+      "id": "watertight",
+      "name": "滴水不漏",
+      "category": "water",
+      "habit": "water",
+      "trigger": { "type": "consecutive_days", "params": { "source": "water", "days": 7 } },
+      "celebrationType": "proud",
+      "description": "连续七天，一天都没落下 —— 喝水这件小事，你做得滴水不漏。",
+      "rarity": "rare",
+      "icon": "🌊",
+      "enabled": true,
+      "version": "1.1.0",
+      "futureNotes": "",
+      "hints": [
+        { "stage": 1, "text": "需要一点坚持。" },
+        { "stage": 2, "text": "和水，也和「不间断」有关。" }
+      ],
+      "hintAdvanceDays": 10,
+      "priority": 32
+    },
+    {
+      "id": "hundredth-cup",
+      "name": "第一百杯",
+      "category": "water",
+      "habit": "water",
+      "trigger": { "type": "accumulated_count", "params": { "source": "water", "count": 100 } },
+      "celebrationType": "celebration",
+      "description": "第一百次喝够了水 —— 一百天的温柔，都藏在这一杯里。",
+      "rarity": "epic",
+      "icon": "💧",
+      "enabled": true,
+      "version": "1.1.0",
+      "futureNotes": "Canonical 100-water discovery. The Milestone category intentionally does NOT repeat a 100-water entry, to avoid double-counting the same signal.",
+      "hints": [
+        { "stage": 1, "text": "和水有关。" },
+        { "stage": 2, "text": "日积月累，才见分晓。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 62
+    },
+    {
+      "id": "early-finish",
+      "name": "提前收工",
+      "category": "water",
+      "habit": "water",
+      "trigger": { "type": "calendar_condition", "params": { "source": "water", "before": "18:00", "count": 1 } },
+      "celebrationType": "surprise",
+      "description": "太阳还没落，你已经喝够了今天的水 —— 提前收工，剩下的时间都是轻松。",
+      "rarity": "rare",
+      "icon": "⏰",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when the TIME a user reaches their water goal is tracked; the engine currently knows the day a goal was met, not the hour.",
+      "hints": [
+        { "stage": 1, "text": "和水有关。" },
+        { "stage": 2, "text": "在一天结束之前……" }
+      ],
+      "hintAdvanceDays": 10,
+      "priority": 34
+    },
+    {
+      "id": "good-chooser",
+      "name": "会挑的人",
+      "category": "food",
+      "habit": "meal_balanced",
+      "trigger": { "type": "first_time", "params": { "source": "meal_balanced" } },
+      "celebrationType": "surprise",
+      "description": "你第一次搭出了均衡的一餐 —— 会挑的人，把健康吃成了享受。",
+      "rarity": "common",
+      "icon": "🍽️",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when balanced-meal (211 plate) events are aggregated as a discovery signal (`meal_balanced`).",
+      "hints": [
+        { "stage": 1, "text": "和吃有关。" },
+        { "stage": 2, "text": "第一次，就挑得刚刚好。" }
+      ],
+      "hintAdvanceDays": 8,
+      "priority": 24
+    },
+    {
+      "id": "no-missed-meal",
+      "name": "没有漏餐",
+      "category": "food",
+      "habit": "meal",
+      "trigger": { "type": "consecutive_days", "params": { "source": "meal", "days": 5 } },
+      "celebrationType": "proud",
+      "description": "一连好几天，一餐都没有落下 —— 好好吃饭，是你对自己的认真。",
+      "rarity": "rare",
+      "icon": "🍚",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when per-day meal logging is aggregated (`meal` signal). Consider a same-day 'complete meals' variant.",
+      "hints": [
+        { "stage": 1, "text": "和吃饭有关。" },
+        { "stage": 2, "text": "一餐都别落下。" }
+      ],
+      "hintAdvanceDays": 10,
+      "priority": 36
+    },
+    {
+      "id": "after-hundred-meals",
+      "name": "百餐之后",
+      "category": "food",
+      "habit": "meal",
+      "trigger": { "type": "accumulated_count", "params": { "source": "meal", "count": 100 } },
+      "celebrationType": "celebration",
+      "description": "记录了一百餐之后，你更懂得怎么喂饱自己 —— 也更懂得，怎么爱自己。",
+      "rarity": "epic",
+      "icon": "🍱",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when meal events are aggregated as a discovery signal (`meal`).",
+      "hints": [
+        { "stage": 1, "text": "和吃有关。" },
+        { "stage": 2, "text": "一餐一餐，累积成百。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 64
+    },
+    {
+      "id": "today-not-tomorrow",
+      "name": "今天不留到明天",
+      "category": "reflection",
+      "habit": "reflection",
+      "trigger": { "type": "first_time", "params": { "source": "reflection" } },
+      "celebrationType": "proud",
+      "description": "今天的事，今天就想明白了 —— 不留到明天，是一种温柔的果断。",
+      "rarity": "common",
+      "icon": "🌙",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when an on-time evening reflection / day-close signal (`reflection`) is aggregated.",
+      "hints": [
+        { "stage": 1, "text": "和「今天」有关。" },
+        { "stage": 2, "text": "别把它留到明天。" }
+      ],
+      "hintAdvanceDays": 8,
+      "priority": 26
+    },
+    {
+      "id": "rhythm-returns",
+      "name": "节奏回来了",
+      "category": "reflection",
+      "habit": "daily_complete",
+      "trigger": { "type": "custom", "params": { "rule": "return_after_gap", "params": { "minGapDays": 7 } } },
+      "celebrationType": "proud",
+      "description": "停了一阵子，你又回来了 —— 节奏回来了，一切都还来得及。",
+      "rarity": "rare",
+      "icon": "🔄",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when the engine supports comeback detection (returning after an inactivity gap). Conceptually a Comeback moment; filed under Reflection per the V1 taxonomy.",
+      "hints": [
+        { "stage": 1, "text": "和「回来」有关。" },
+        { "stage": 2, "text": "停下之后，重新开始。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 40
+    },
+    {
+      "id": "sunday-too",
+      "name": "星期天也来了",
+      "category": "calendar",
+      "habit": "daily_complete",
+      "trigger": { "type": "calendar_condition", "params": { "source": "daily_complete", "weekday": "sunday", "count": 1 } },
+      "celebrationType": "surprise",
+      "description": "连星期天，你也来了 —— 在别人休息的日子，你依然记得自己。",
+      "rarity": "rare",
+      "icon": "🗓️",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when weekday-based calendar conditions are supported (the engine currently matches specific MM-DD dates and time-of-day, not weekdays).",
+      "hints": [
+        { "stage": 1, "text": "和某一天有关。" },
+        { "stage": 2, "text": "别人休息的那天……" }
+      ],
+      "hintAdvanceDays": 10,
+      "priority": 42
+    },
+    {
+      "id": "phase-one-complete",
+      "name": "第一阶段完成",
+      "category": "achievement",
+      "habit": null,
+      "trigger": { "type": "goal_achievement", "params": { "goal": "phase_1" } },
+      "celebrationType": "celebration",
+      "description": "你亲手定下的第一个阶段，完成了 —— 说到做到，本身就值得庆祝。",
+      "rarity": "epic",
+      "icon": "🎯",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when goal_achievement triggers are implemented and the user's personal phase goals are exposed to the engine.",
+      "hints": [
+        { "stage": 1, "text": "和你定下的目标有关。" },
+        { "stage": 2, "text": "第一步，走完了。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 66
+    },
+    {
+      "id": "phase-two-complete",
+      "name": "第二阶段完成",
+      "category": "achievement",
+      "habit": null,
+      "trigger": { "type": "goal_achievement", "params": { "goal": "phase_2" } },
+      "celebrationType": "celebration",
+      "description": "第二个阶段也完成了 —— 你正在把「坚持」变成一种习惯。",
+      "rarity": "epic",
+      "icon": "🎯",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when goal_achievement triggers are implemented and personal phase goals are exposed to the engine.",
+      "hints": [
+        { "stage": 1, "text": "和你定下的目标有关。" },
+        { "stage": 2, "text": "又完成了一个。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 67
+    },
+    {
+      "id": "breakthrough-5kg",
+      "name": "突破5kg",
+      "category": "achievement",
+      "habit": "weighin",
+      "trigger": { "type": "custom", "params": { "rule": "weight_loss_reached", "params": { "kg": 5 } } },
+      "celebrationType": "proud",
+      "description": "五公斤的改变，是你一次次坚持换来的 —— 数字背后，是看不见的努力。",
+      "rarity": "rare",
+      "icon": "🌱",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when cumulative weight-change verification is available. Deliberately framed to celebrate the EFFORT behind the change, not body type (Design Bible: reward effort, not body). Product review pending — see reconciliation note.",
+      "hints": [
+        { "stage": 1, "text": "和你的坚持有关。" },
+        { "stage": 2, "text": "一点一点的改变，累积起来了。" }
+      ],
+      "hintAdvanceDays": 14,
+      "priority": 68
+    },
+    {
+      "id": "breakthrough-7kg",
+      "name": "突破7kg",
+      "category": "achievement",
+      "habit": "weighin",
+      "trigger": { "type": "custom", "params": { "rule": "weight_loss_reached", "params": { "kg": 7 } } },
+      "celebrationType": "proud",
+      "description": "七公斤 —— 你没有走捷径，只是每天都比昨天多认真了一点。",
+      "rarity": "epic",
+      "icon": "🌿",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when cumulative weight-change verification is available. Framed to celebrate effort, not body type. Product review pending.",
+      "hints": [
+        { "stage": 1, "text": "和你的坚持有关。" },
+        { "stage": 2, "text": "又向前了一步。" }
+      ],
+      "hintAdvanceDays": 14,
+      "priority": 69
+    },
+    {
+      "id": "breakthrough-10kg",
+      "name": "突破10kg",
+      "category": "achievement",
+      "habit": "weighin",
+      "trigger": { "type": "custom", "params": { "rule": "weight_loss_reached", "params": { "kg": 10 } } },
+      "celebrationType": "celebration",
+      "description": "十公斤的距离，是无数个平凡日子堆出来的 —— 了不起，是你自己做到的。",
+      "rarity": "legendary",
+      "icon": "🌳",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when cumulative weight-change verification is available. Framed to celebrate effort, not body type. Product review pending.",
+      "hints": [
+        { "stage": 1, "text": "和你的坚持有关。" },
+        { "stage": 2, "text": "一段很长的路，快走完了。" }
+      ],
+      "hintAdvanceDays": 14,
+      "priority": 70
+    },
+    {
+      "id": "journey-kickstart",
+      "name": "启程之证",
+      "category": "achievement",
+      "habit": null,
+      "trigger": { "type": "journey_completion", "params": { "scope": "journey", "which": "kickstart" } },
+      "celebrationType": "celebration",
+      "description": "你走完了 Kickstart Journey —— 最难的「开始」，你已经跨过。",
+      "rarity": "epic",
+      "icon": "🏁",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when journey_completion triggers are implemented. 30-day Journey = Kickstart Journey (official naming).",
+      "hints": [
+        { "stage": 1, "text": "和你的旅程有关。" },
+        { "stage": 2, "text": "第一段路，走完了。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 72
+    },
+    {
+      "id": "journey-momentum",
+      "name": "渐入佳境",
+      "category": "achievement",
+      "habit": null,
+      "trigger": { "type": "journey_completion", "params": { "scope": "journey", "which": "momentum" } },
+      "celebrationType": "celebration",
+      "description": "Momentum Journey 完成 —— 你已经不只是在坚持，而是在享受节奏。",
+      "rarity": "legendary",
+      "icon": "🏁",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when journey_completion triggers are implemented. 60-day Journey = Momentum Journey (official naming).",
+      "hints": [
+        { "stage": 1, "text": "和你的旅程有关。" },
+        { "stage": 2, "text": "越走，越稳。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 73
+    },
+    {
+      "id": "journey-transformation",
+      "name": "焕然一新",
+      "category": "achievement",
+      "habit": null,
+      "trigger": { "type": "journey_completion", "params": { "scope": "journey", "which": "transformation" } },
+      "celebrationType": "celebration",
+      "description": "Transformation Journey 完成 —— 九十天，你把自己活成了另一个样子。",
+      "rarity": "legendary",
+      "icon": "🏆",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when journey_completion triggers are implemented. 90-day Journey = Transformation Journey (official naming).",
+      "hints": [
+        { "stage": 1, "text": "和你的旅程有关。" },
+        { "stage": 2, "text": "最长的那一段。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 74
+    },
+    {
+      "id": "next-chapter-two",
+      "name": "开启第二阶段",
+      "category": "achievement",
+      "habit": null,
+      "trigger": { "type": "custom", "params": { "rule": "start_next_chapter", "params": { "chapter": 2 } } },
+      "celebrationType": "celebration",
+      "description": "你选择了开启下一段 —— 满足于现在很好，但你想要更多。",
+      "rarity": "rare",
+      "icon": "🚪",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when 'starting a new chapter/journey' is exposed as a trigger to the engine.",
+      "hints": [
+        { "stage": 1, "text": "和「下一段」有关。" },
+        { "stage": 2, "text": "一段结束，另一段开始。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 50
+    },
+    {
+      "id": "set-off-again",
+      "name": "再次启程",
+      "category": "achievement",
+      "habit": null,
+      "trigger": { "type": "custom", "params": { "rule": "start_new_journey" } },
+      "celebrationType": "proud",
+      "description": "你又一次踏上了新的旅程 —— 愿意重新出发的人，最勇敢。",
+      "rarity": "epic",
+      "icon": "🧭",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when 'starting a new journey' is exposed as a trigger to the engine.",
+      "hints": [
+        { "stage": 1, "text": "和「再一次」有关。" },
+        { "stage": 2, "text": "重新出发。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 52
+    },
+    {
+      "id": "hundred-mornings",
+      "name": "百次晨光",
+      "category": "milestone",
+      "habit": "weighin",
+      "trigger": { "type": "accumulated_count", "params": { "source": "weighin", "count": 100 } },
+      "celebrationType": "celebration",
+      "description": "一百个清晨，你都认真面对了镜中的自己 —— 这份坦诚，很珍贵。",
+      "rarity": "epic",
+      "icon": "🌄",
+      "enabled": true,
+      "version": "1.1.0",
+      "futureNotes": "",
+      "hints": [
+        { "stage": 1, "text": "和清晨、和记录有关。" },
+        { "stage": 2, "text": "一百次面对自己。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 60
+    },
+    {
+      "id": "hundred-healthy-meals",
+      "name": "百次好好吃饭",
+      "category": "milestone",
+      "habit": "meal_balanced",
+      "trigger": { "type": "accumulated_count", "params": { "source": "meal_balanced", "count": 100 } },
+      "celebrationType": "celebration",
+      "description": "一百次好好吃饭 —— 你把「健康」吃成了本能。",
+      "rarity": "epic",
+      "icon": "🥗",
+      "enabled": false,
+      "version": "1.1.0",
+      "futureNotes": "Activates when balanced-meal events are aggregated (`meal_balanced`). The 100-water milestone lives in Water Moment as 第一百杯 to avoid duplication.",
+      "hints": [
+        { "stage": 1, "text": "和吃有关。" },
+        { "stage": 2, "text": "一百次的好好吃饭。" }
+      ],
+      "hintAdvanceDays": 12,
+      "priority": 61
+    }
+  ]
 }
