@@ -1,0 +1,142 @@
+{
+  "$meta": {
+    "name": "MISU Hidden Discovery Registry",
+    "version": "1.0.0",
+    "updated": "2026-07-24",
+    "governedBy": "docs/Hidden-Discovery-Design-Bible.md",
+    "roadmap": "docs/Hidden-Discovery-Roadmap.md",
+    "description": "Single source of truth for every Hidden Discovery. No discovery logic is hardcoded in application code; the engine dispatches on trigger type and reads content from this registry (or a seed derived from it). This is the v1 ARCHITECTURE registry: reference data (categories, trigger types, celebration types, rarities) is defined, but `discoveries` is intentionally empty and will be populated later per the Design Bible authoring gate."
+  },
+
+  "signals": [
+    { "key": "water",          "label": "Hydration goal met",      "description": "A day the user reached their water goal." },
+    { "key": "weighin",        "label": "Weigh-in / check-in",     "description": "A day the user recorded their weight." },
+    { "key": "learning",       "label": "Learning completed",      "description": "A completed piece of learning content." },
+    { "key": "daily_complete", "label": "Daily journey completed", "description": "A day the full daily journey was completed." },
+    { "key": "n_plus",         "label": "MISU N+ used",            "description": "A logged use of MISU N+." },
+    { "key": "dx_plus",        "label": "MISU DX+ used",           "description": "A logged use of MISU DX+." }
+  ],
+
+  "categories": [
+    { "key": "early",       "name": "Early Moment",       "intent": "Celebrate first steps — the very first time something happens.", "tone": "encouraging" },
+    { "key": "habit",       "name": "Habit Moment",       "intent": "Celebrate rhythm forming — consistency becoming natural.",      "tone": "quiet-pride" },
+    { "key": "calendar",    "name": "Calendar Moment",    "intent": "Celebrate something meaningful tied to a date, season, or time.", "tone": "serendipity" },
+    { "key": "achievement", "name": "Achievement Moment", "intent": "Celebrate a goal the user set for themselves, reached.",         "tone": "satisfaction" },
+    { "key": "milestone",   "name": "Milestone Moment",   "intent": "Celebrate accumulated scale — a big total, looking back.",       "tone": "awe" },
+    { "key": "comeback",    "name": "Comeback Moment",    "intent": "Celebrate returning after a pause, without judgment.",          "tone": "compassion" }
+  ],
+
+  "triggerTypes": [
+    {
+      "key": "first_time",
+      "description": "The first time a signal ever occurs.",
+      "engineKey": "first_time",
+      "status": "live",
+      "paramsSchema": { "source": "signal key (required)" }
+    },
+    {
+      "key": "consecutive_days",
+      "description": "N consecutive days of a signal.",
+      "engineKey": "streak_days",
+      "status": "live",
+      "paramsSchema": { "source": "signal key (required)", "days": "integer (required)" }
+    },
+    {
+      "key": "accumulated_count",
+      "description": "A signal reaches N total occurrences.",
+      "engineKey": "cumulative_count",
+      "status": "live",
+      "paramsSchema": { "source": "signal key (required)", "count": "integer (required)" }
+    },
+    {
+      "key": "journey_completion",
+      "description": "A journey or chapter is completed.",
+      "engineKey": null,
+      "status": "planned",
+      "paramsSchema": { "scope": "'journey' | 'chapter' (required)", "which": "identifier (optional)" }
+    },
+    {
+      "key": "goal_achievement",
+      "description": "A user-set goal is reached.",
+      "engineKey": null,
+      "status": "planned",
+      "paramsSchema": { "goal": "goal key (required)" }
+    },
+    {
+      "key": "calendar_condition",
+      "description": "A signal under a date, season, or time-of-day rule.",
+      "engineKey": "calendar_date | time_of_day",
+      "status": "live",
+      "paramsSchema": {
+        "on": "MM-DD specific date (optional)",
+        "before": "time-of-day upper bound, e.g. '07:00' (optional)",
+        "after": "time-of-day lower bound (optional)",
+        "season": "named season window (optional)",
+        "source": "signal key when the rule qualifies a signal (optional)",
+        "count": "integer, how many qualifying occurrences (optional, default 1)"
+      }
+    },
+    {
+      "key": "custom",
+      "description": "Escape hatch — a named rule evaluated by the engine. Adding a new rule is the one case that touches code; promote proven rules to first-class trigger types.",
+      "engineKey": null,
+      "status": "planned",
+      "paramsSchema": { "rule": "named handler the engine knows (required)", "params": "object passed to the handler (optional)" }
+    }
+  ],
+
+  "celebrationTypes": [
+    { "key": "gentle",    "description": "Soft bloom, understated.",           "feel": "quiet" },
+    { "key": "milestone", "description": "Fuller, weightier reveal.",          "feel": "significant" },
+    { "key": "calendar",  "description": "Serendipitous, seasonal shimmer.",   "feel": "delightful" },
+    { "key": "comeback",  "description": "Warm, welcoming, unhurried reveal.", "feel": "compassionate" }
+  ],
+
+  "rarities": [
+    { "key": "common",    "label": "Common",    "note": "Emotional weight only. NEVER a population percentage." },
+    { "key": "rare",      "label": "Rare",      "note": "Emotional weight only. NEVER a population percentage." },
+    { "key": "legendary", "label": "Legendary", "note": "Emotional weight only. NEVER a population percentage." }
+  ],
+
+  "discoverySchema": {
+    "id":              "string — stable, permanent, kebab-case slug. Never reused or renamed.",
+    "name":            "string — the title shown on reveal. Warm, human, emotion-first.",
+    "category":        "enum — one of categories[].key.",
+    "habit":           "enum(signal key) | null — the related habit domain, for clue biasing only.",
+    "trigger":         "object — { type: one of triggerTypes[].key, params: per trigger paramsSchema }.",
+    "celebrationType": "enum — one of celebrationTypes[].key.",
+    "description":     "string — the warm line shown once discovered. No statistics.",
+    "icon":            "string — emoji or asset reference.",
+    "enabled":         "boolean — false = spec exists but is never evaluated or assigned.",
+    "rarity":          "enum — one of rarities[].key. Emotional weight, not probability.",
+    "version":         "string(semver) — registry version this discovery was introduced/last changed in.",
+    "hints":           "array of { stage: integer>=1, text: string } — evolving clue, vague to less vague. Never states the exact condition. (optional)",
+    "hintAdvanceDays": "integer — days before a clue advances one stage. (optional, per-discovery pacing)",
+    "priority":        "integer — reveal ordering when several are earned at once; lower reveals first. (optional)",
+    "notes":           "string — author notes, never shown to users. (optional)"
+  },
+
+  "discoveryTemplate": {
+    "_comment": "NON-CONTENT illustrative shape only. Not a real discovery. `enabled` is false and `id` is a placeholder. Copy this shape when authoring; do not ship it.",
+    "id": "TEMPLATE-do-not-ship",
+    "name": "",
+    "category": "early",
+    "habit": null,
+    "trigger": { "type": "first_time", "params": { "source": "water" } },
+    "celebrationType": "gentle",
+    "description": "",
+    "icon": "",
+    "enabled": false,
+    "rarity": "common",
+    "version": "1.0.0",
+    "hints": [
+      { "stage": 1, "text": "" },
+      { "stage": 2, "text": "" }
+    ],
+    "hintAdvanceDays": 10,
+    "priority": 100,
+    "notes": ""
+  },
+
+  "discoveries": []
+}
