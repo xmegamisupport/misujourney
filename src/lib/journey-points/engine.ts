@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { notifyDiscoveryEvent, EVENT } from "@/lib/discovery/notify";
 import type { JourneyPointAward, JourneyPointBalance } from "./types";
 
 export const EMPTY_BALANCE: JourneyPointBalance = { total: 0, today: 0 };
@@ -23,7 +24,13 @@ export async function refreshJourneyRewards(): Promise<JourneyPointAward[]> {
   const supabase = createClient();
   const { data, error } = await supabase.rpc("refresh_journey_rewards");
   if (error || !Array.isArray(data)) return [];
-  return data as unknown as JourneyPointAward[];
+  const awards = data as unknown as JourneyPointAward[];
+  // A freshly-awarded full-day completion may unlock daily/consistency/comeback
+  // discoveries — fire only when the day actually completed, not on every refresh.
+  if (awards.some((a) => a.action === "daily_complete")) {
+    notifyDiscoveryEvent(EVENT.DAILY_CHECK_IN_COMPLETED);
+  }
+  return awards;
 }
 
 /** The current worth of each action, straight from journey_point_values.

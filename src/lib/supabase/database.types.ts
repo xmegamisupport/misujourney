@@ -1962,6 +1962,7 @@ export type Database = {
       user_discoveries: {
         Row: {
           achievement_id: string
+          dedup_key: string
           id: string
           journey_id: string | null
           registry_version: string | null
@@ -1974,6 +1975,7 @@ export type Database = {
         }
         Insert: {
           achievement_id: string
+          dedup_key?: string
           id?: string
           journey_id?: string | null
           registry_version?: string | null
@@ -1986,6 +1988,7 @@ export type Database = {
         }
         Update: {
           achievement_id?: string
+          dedup_key?: string
           id?: string
           journey_id?: string | null
           registry_version?: string | null

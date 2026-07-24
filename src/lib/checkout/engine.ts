@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { notifyDiscoveryEvent, EVENT } from "@/lib/discovery/notify";
 import type { Database } from "@/lib/supabase/database.types";
 import type { BowelMovementLevel, CheckoutEngineResult, EveningCheckout, SpecialCondition } from "./types";
 
@@ -76,5 +77,8 @@ export async function submitEveningCheckout(input: SubmitEveningCheckoutInput): 
     .select()
     .single();
   if (error) return { ok: false, error: error.message };
+  // Completing the evening reflection may unlock reflection discoveries
+  // (currently disabled in the Registry).
+  notifyDiscoveryEvent(EVENT.DAILY_REFLECTION_COMPLETED);
   return { ok: true, data: mapCheckoutRow(data) };
 }

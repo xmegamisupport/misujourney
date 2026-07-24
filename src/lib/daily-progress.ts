@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { todayDateStr } from "@/lib/inventory/engine";
+import { notifyDiscoveryEvent, EVENT } from "@/lib/discovery/notify";
 
 async function fetchTodayWater(customerId: string): Promise<number> {
   const supabase = createClient();
@@ -67,6 +68,9 @@ export function useWaterIntake(customerId: string): { water: number; loading: bo
       setWater(next);
       try {
         await persistWaterLog(customerId, next);
+        // Reaching the day's water target may unlock water discoveries; the
+        // engine reads the day's total, so it self-limits to the real threshold.
+        notifyDiscoveryEvent(EVENT.WATER_TARGET_COMPLETED);
       } catch (error) {
         console.error("Failed to persist water log", error);
         waterRef.current = previous;

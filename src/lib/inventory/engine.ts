@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { notifyDiscoveryEvent, EVENT } from "@/lib/discovery/notify";
 import type { Database } from "@/lib/supabase/database.types";
 import type { MealEntry, MealMisuItem, MealFoodItem } from "@/lib/types";
 import type {
@@ -388,6 +389,8 @@ export async function submitCheckIn(input: SubmitCheckInInput): Promise<EngineRe
   const record = await getCheckInForDate(input.customerId, input.date);
   if (!record) return { ok: false, error: "打卡失败，请重试" };
   notifyInventoryChange();
+  // A morning weigh-in may unlock early/morning + weight-milestone discoveries.
+  notifyDiscoveryEvent(EVENT.MORNING_WEIGHT_RECORDED);
   return { ok: true, data: record };
 }
 
@@ -493,6 +496,8 @@ export async function recordMeal(input: RecordMealInput): Promise<EngineResult> 
   });
   if (error) return { ok: false, error: rpcErrorMessage(error) };
   notifyInventoryChange();
+  // A logged meal may unlock food discoveries (currently disabled in the Registry).
+  notifyDiscoveryEvent(EVENT.MEAL_RECORDED);
   return { ok: true };
 }
 
