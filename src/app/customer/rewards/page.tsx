@@ -9,6 +9,8 @@ import { BadgeCard } from "@/components/health-collection/BadgeCard";
 import { BadgeDetailSheet } from "@/components/health-collection/BadgeDetailSheet";
 import { UpgradePopup } from "@/components/health-collection/UpgradePopup";
 import { SecretSection } from "@/components/health-collection/SecretSection";
+import { DiscoveryReveal } from "@/components/health-collection/DiscoveryReveal";
+import { useDiscoveries } from "@/lib/discovery/hooks";
 
 /**
  * 🌸 Glowing You — the most rewarding page in MISU Journey.
@@ -23,6 +25,7 @@ export default function GlowingYouPage() {
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
   const { badges, loading, summary, message, upgrade, dismissUpgrade } = useHealthCollection(customerId);
+  const { state: discovery, revealed, dismissReveal } = useDiscoveries(customerId);
   const [view, setView] = useState<"growth" | "journey">("growth");
   const [selected, setSelected] = useState<BadgeView | null>(null);
 
@@ -73,10 +76,11 @@ export default function GlowingYouPage() {
       </section>
 
       {/* Secret Achievements — the surprises still waiting */}
-      <SecretSection />
+      <SecretSection clues={discovery.clues} discovered={discovery.discovered} />
 
       <BadgeDetailSheet badge={selected} onClose={() => setSelected(null)} />
       {upgrade && <UpgradePopup upgrade={upgrade} onDismiss={dismissUpgrade} />}
+      {revealed && <DiscoveryReveal discovery={revealed} onClose={dismissReveal} />}
     </div>
   );
 }

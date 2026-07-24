@@ -914,6 +914,177 @@ export type Database = {
           },
         ]
       }
+      discovery_achievements: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          description: string
+          discovery_priority: number
+          enabled: boolean
+          hint_advance_days: number
+          icon: string
+          id: string
+          name: string
+          rarity: string
+          trigger_condition: Json
+          trigger_type: string
+        }
+        Insert: {
+          category: string
+          code: string
+          created_at?: string
+          description: string
+          discovery_priority?: number
+          enabled?: boolean
+          hint_advance_days?: number
+          icon: string
+          id?: string
+          name: string
+          rarity?: string
+          trigger_condition?: Json
+          trigger_type: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          description?: string
+          discovery_priority?: number
+          enabled?: boolean
+          hint_advance_days?: number
+          icon?: string
+          id?: string
+          name?: string
+          rarity?: string
+          trigger_condition?: Json
+          trigger_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discovery_achievements_trigger_type_fkey"
+            columns: ["trigger_type"]
+            isOneToOne: false
+            referencedRelation: "discovery_trigger_types"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      discovery_engine_logs: {
+        Row: {
+          clue_rotation_date: string | null
+          last_progress_date: string | null
+          last_reveal_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clue_rotation_date?: string | null
+          last_progress_date?: string | null
+          last_reveal_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clue_rotation_date?: string | null
+          last_progress_date?: string | null
+          last_reveal_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discovery_engine_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discovery_hints: {
+        Row: {
+          achievement_id: string
+          hint_text: string
+          id: string
+          stage: number
+        }
+        Insert: {
+          achievement_id: string
+          hint_text: string
+          id?: string
+          stage: number
+        }
+        Update: {
+          achievement_id?: string
+          hint_text?: string
+          id?: string
+          stage?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discovery_hints_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "discovery_achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discovery_progress_signals: {
+        Row: {
+          description: string
+          enabled: boolean
+          key: string
+        }
+        Insert: {
+          description: string
+          enabled?: boolean
+          key: string
+        }
+        Update: {
+          description?: string
+          enabled?: boolean
+          key?: string
+        }
+        Relationships: []
+      }
+      discovery_settings: {
+        Row: {
+          description: string | null
+          key: string
+          value: string
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          value: string
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      discovery_trigger_types: {
+        Row: {
+          description: string
+          enabled: boolean
+          key: string
+        }
+        Insert: {
+          description: string
+          enabled?: boolean
+          key: string
+        }
+        Update: {
+          description?: string
+          enabled?: boolean
+          key?: string
+        }
+        Relationships: []
+      }
       faq_items: {
         Row: {
           answer: string
@@ -1718,6 +1889,81 @@ export type Database = {
           },
         ]
       }
+      user_discoveries: {
+        Row: {
+          achievement_id: string
+          revealed_at: string | null
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          revealed_at?: string | null
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          revealed_at?: string | null
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_discoveries_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "discovery_achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_discoveries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_discovery_clues: {
+        Row: {
+          achievement_id: string
+          assigned_at: string
+          current_stage: number
+          stage_advanced_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          assigned_at?: string
+          current_stage?: number
+          stage_advanced_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          assigned_at?: string
+          current_stage?: number
+          stage_advanced_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_discovery_clues_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "discovery_achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_discovery_clues_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weight_goal_rules: {
         Row: {
           created_at: string
@@ -1892,6 +2138,8 @@ export type Database = {
         Returns: string
       }
       customer_local_date: { Args: { p_customer_id: string }; Returns: string }
+      discovery_longest_streak: { Args: { p_dates: string[] }; Returns: number }
+      evaluate_discoveries: { Args: never; Returns: Json }
       generate_journey_nutrition_target: {
         Args: {
           p_activity_level: Database["public"]["Enums"]["activity_level"]
@@ -1942,6 +2190,7 @@ export type Database = {
           whatsapp_normalized_number: string
         }[]
       }
+      get_my_discoveries: { Args: never; Returns: Json }
       get_my_journey_points: { Args: never; Returns: Json }
       get_my_learning_history: {
         Args: never

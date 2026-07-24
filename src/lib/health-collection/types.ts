@@ -127,22 +127,3 @@ export interface GlowMessage {
   sub: string;
 }
 
-/**
- * Secret Achievements — the "there's still more waiting for me" layer. They are
- * always visible as mysteries so the page never feels finished.
- *   unknown  — nothing revealed at all
- *   hint     — a direction is hinted, remaining conditions stay hidden
- *   unlocked — earned; the real icon/title/description show
- */
-export type SecretStatus = "unknown" | "hint" | "unlocked";
-
-export interface SecretAchievement {
-  id: string;
-  status: SecretStatus;
-  /** shown for `hint`. */
-  hint?: string;
-  /** shown for `unlocked`. */
-  icon?: string;
-  title?: string;
-  description?: string;
-}

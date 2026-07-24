@@ -1,5 +1,5 @@
 import { earliest, longestConsecutive, longestStreak } from "./calc";
-import type { BadgeDef, LevelDef, LevelKey, SecretAchievement } from "./types";
+import type { BadgeDef, LevelDef, LevelKey } from "./types";
 
 /**
  * The shared habit-level ladder. A habit doesn't "rank up" — it gradually
@@ -111,22 +111,6 @@ export const BADGES: BadgeDef[] = [
       firstDate: earliest(d.dailyCompleteDates),
     }),
   },
-];
-
-/**
- * Secret Achievements — always shown as mysteries so Glowing You never feels
- * "finished". Some give a small direction (hint); some reveal nothing yet.
- * Real unlock logic is intentionally NOT built in this phase — these stay as
- * discovery placeholders. When one is earned later, set status: "unlocked" and
- * fill icon/title/description; the UI already renders that.
- */
-export const SECRET_ACHIEVEMENTS: SecretAchievement[] = [
-  { id: "s1", status: "hint", hint: "连续照顾自己很多天。" },
-  { id: "s2", status: "unknown" },
-  { id: "s3", status: "hint", hint: "完成一个特别的挑战。" },
-  { id: "s4", status: "unknown" },
-  { id: "s5", status: "hint", hint: "在清晨，坚持一件小事。" },
-  { id: "s6", status: "unknown" },
 ];
 
 export function getBadgeLevels(def: BadgeDef): LevelDef[] {
