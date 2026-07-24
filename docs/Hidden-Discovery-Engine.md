@@ -230,10 +230,14 @@ No UI, no animations, no badge page, no producer wiring, and no change to Habit 
 ## 12. Discovery Inspector (Phase 4 — internal/admin only)
 
 A support/debugging tool at **`/admin/discovery-inspector`** (admin-gated) that shows, for any
-customer, **every** discovery (enabled + disabled) with: status (locked/unlocked), live trigger
-progress, evaluation result, trigger evidence, unlock scope, registry version, unlock history,
-queue status, and **why it's locked** (disabled / unsupported+reason / not-yet-met+progress /
-"met but no unlock recorded — event not yet fired"). Not customer-facing; no animations.
+customer, **every** discovery (enabled + disabled) with: a four-value status
+(**Unlocked / Locked / Disabled / Unsupported**), an evaluation verdict
+(**Eligible / Not Eligible / Already Unlocked / Skipped / Unsupported**), live trigger progress
+(`5 / 7`, `85 / 100`, `3.2 / 5 kg`, `Journey Day 22 / 30`), trigger evidence, unlock scope,
+registry version, unlock history, queue status, and **why it's locked** (disabled /
+unsupported+reason / not-yet-met+progress / "met but no unlock recorded — event not yet fired").
+Filters: status · category · rarity; a customer picker; and an **Evaluate Now** button that
+re-runs the evaluators server-side (read-only). Not customer-facing; no animations.
 
 - `src/lib/discovery/inspector.ts` — server-only; runs the evaluators for all 23 discoveries
   against the target user's snapshot and joins unlock + queue state.

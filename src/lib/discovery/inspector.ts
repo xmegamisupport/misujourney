@@ -39,6 +39,17 @@ interface AdminState {
   queue: QueueRow[];
 }
 
+/** Four-value display status (spec): the one badge to show at a glance. */
+export type DisplayStatus = "unlocked" | "disabled" | "unsupported" | "locked";
+
+/** Latest evaluation verdict (spec). */
+export type EvaluationLabel =
+  | "already_unlocked"
+  | "skipped"
+  | "unsupported"
+  | "eligible"
+  | "not_eligible";
+
 export interface InspectionRow {
   discoveryId: string;
   name: string;
@@ -53,7 +64,10 @@ export interface InspectionRow {
   condition: Record<string, unknown>;
   supported: boolean;
   unsupportedReason?: string;
+  /** true/false unlock; kept for back-compat. See `displayStatus` for the badge. */
   status: "unlocked" | "locked";
+  displayStatus: DisplayStatus;
+  evaluationLabel: EvaluationLabel;
   evaluation: EvalResult;
   progress: string;
   progressPercent: number | null;
@@ -108,10 +122,14 @@ function deriveProgress(def: DiscoveryDef, r: EvalResult): { text: string; perce
         percent: r.met ? 100 : 0,
       };
     case "journey_completion":
-      return {
-        text: `journey ${e.journeyDays}d (need ${e.requiredDays}d), completed=${e.completed}`,
-        percent: r.met ? 100 : 0,
-      };
+      if (Number(e.journeyDays) !== Number(e.requiredDays)) {
+        return { text: `journey length ${e.journeyDays}d ≠ required ${e.requiredDays}d`, percent: 0 };
+      }
+      return pct(
+        e.currentDay,
+        e.requiredDays,
+        `Journey Day ${e.currentDay ?? 0} / ${e.requiredDays}${e.completed ? " · completed" : ""}`,
+      );
     case "comeback":
       return {
         text: `gap ${e.gapDays}/${e.minGapDays}d, return ${e.returnStreak}/${e.returnDays}d`,
@@ -140,7 +158,27 @@ export async function inspectUserDiscoveries(supabase: EngineClient, userId: str
     const unlock = unlockByCode.get(def.id);
     const queue = queueByCode.get(def.id);
     const status: "unlocked" | "locked" = unlock ? "unlocked" : "locked";
+    const isSupported = sup?.supported ?? true;
     const progress = deriveProgress(def, evaluation);
+
+    // Four-value badge + evaluation verdict (unlocked wins, then disabled,
+    // then unsupported, then locked).
+    const displayStatus: DisplayStatus = unlock
+      ? "unlocked"
+      : !def.enabled
+        ? "disabled"
+        : !isSupported
+          ? "unsupported"
+          : "locked";
+    const evaluationLabel: EvaluationLabel = unlock
+      ? "already_unlocked"
+      : !def.enabled
+        ? "skipped"
+        : !isSupported || !evaluation.supported
+          ? "unsupported"
+          : evaluation.met
+            ? "eligible"
+            : "not_eligible";
 
     let whyLocked: string | undefined;
     if (status === "locked") {
@@ -162,9 +200,11 @@ export async function inspectUserDiscoveries(supabase: EngineClient, userId: str
       registryVersion: def.registryVersion,
       triggerType: def.triggerType,
       condition: def.condition,
-      supported: sup?.supported ?? true,
+      supported: isSupported,
       unsupportedReason: sup?.reason,
       status,
+      displayStatus,
+      evaluationLabel,
       evaluation,
       progress: progress.text,
       progressPercent: progress.percent,

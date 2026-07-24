@@ -4,15 +4,30 @@ import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useAllUsersForAdmin } from "@/lib/admin/users";
 import { cn } from "@/lib/utils";
-import type { InspectionReport, InspectionRow } from "@/lib/discovery/inspector";
+import type { DisplayStatus, EvaluationLabel, InspectionReport, InspectionRow } from "@/lib/discovery/inspector";
 
-type StatusFilter = "all" | "unlocked" | "locked";
+type StatusFilter = "all" | DisplayStatus;
 
 const rarityStyle: Record<string, string> = {
   legendary: "bg-amber-50 text-amber-700 border-amber-200",
   epic: "bg-violet-50 text-violet-700 border-violet-200",
   rare: "bg-sky-50 text-sky-700 border-sky-200",
   common: "bg-slate-50 text-slate-600 border-slate-200",
+};
+
+const statusStyle: Record<DisplayStatus, string> = {
+  unlocked: "bg-emerald-100 text-emerald-700",
+  locked: "bg-slate-100 text-slate-500",
+  disabled: "bg-slate-100 text-slate-400",
+  unsupported: "bg-rose-50 text-rose-600",
+};
+
+const evalLabelText: Record<EvaluationLabel, string> = {
+  already_unlocked: "Already Unlocked",
+  skipped: "Skipped",
+  unsupported: "Unsupported",
+  eligible: "Eligible",
+  not_eligible: "Not Eligible",
 };
 
 function Json({ value }: { value: unknown }) {
@@ -45,7 +60,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function RowCard({ row }: { row: InspectionRow }) {
-  const unlocked = row.status === "unlocked";
+  const unlocked = row.displayStatus === "unlocked";
   return (
     <div className={cn("rounded-2xl border bg-white p-4 shadow-sm", unlocked ? "border-emerald-200" : "border-slate-100")}>
       <div className="flex items-start gap-3">
@@ -65,13 +80,8 @@ function RowCard({ row }: { row: InspectionRow }) {
             )}
           </div>
         </div>
-        <span
-          className={cn(
-            "shrink-0 rounded-full px-3 py-1 text-xs font-semibold",
-            unlocked ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500",
-          )}
-        >
-          {unlocked ? "UNLOCKED" : "LOCKED"}
+        <span className={cn("shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase", statusStyle[row.displayStatus])}>
+          {row.displayStatus}
         </span>
       </div>
 
@@ -79,9 +89,18 @@ function RowCard({ row }: { row: InspectionRow }) {
         <Field label="Trigger">
           <code className="text-[11px]">{row.triggerType}</code>
         </Field>
-        <Field label="Eval">
-          <span className={row.evaluation.met ? "text-emerald-600" : "text-slate-500"}>
-            {row.evaluation.met ? "met ✓" : "not met"} · {row.evaluation.supported ? "supported" : "unsupported"}
+        <Field label="Evaluation">
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[11px] font-medium",
+              row.evaluationLabel === "eligible" || row.evaluationLabel === "already_unlocked"
+                ? "bg-emerald-50 text-emerald-700"
+                : row.evaluationLabel === "unsupported"
+                  ? "bg-rose-50 text-rose-600"
+                  : "bg-slate-100 text-slate-500",
+            )}
+          >
+            {evalLabelText[row.evaluationLabel]}
           </span>
         </Field>
         <Field label="Scope">{row.unlockScope}</Field>
@@ -139,6 +158,8 @@ export default function DiscoveryInspectorPage() {
   const [userId, setUserId] = useState("");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [category, setCategory] = useState("all");
+  const [rarity, setRarity] = useState("all");
   const [report, setReport] = useState<InspectionReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -169,9 +190,23 @@ export default function DiscoveryInspectorPage() {
     }
   }
 
+  const categories = useMemo(
+    () => Array.from(new Set((report?.rows ?? []).map((r) => r.category))).sort(),
+    [report],
+  );
+  const rarities = useMemo(
+    () => Array.from(new Set((report?.rows ?? []).map((r) => r.rarity))).sort(),
+    [report],
+  );
   const rows = useMemo(
-    () => (report?.rows ?? []).filter((r) => status === "all" || r.status === status),
-    [report, status],
+    () =>
+      (report?.rows ?? []).filter(
+        (r) =>
+          (status === "all" || r.displayStatus === status) &&
+          (category === "all" || r.category === category) &&
+          (rarity === "all" || r.rarity === rarity),
+      ),
+    [report, status, category, rarity],
   );
 
   return (
@@ -210,18 +245,32 @@ export default function DiscoveryInspectorPage() {
 
       {report && (
         <>
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-sm shadow-sm">
-            <span className="font-semibold text-slate-700">Registry v{report.registryVersion}</span>
-            <span className="text-slate-400">·</span>
-            <span className="text-emerald-600">{report.counts.unlocked} unlocked</span>
-            <span className="text-slate-500">{report.counts.locked} locked</span>
-            <span className="text-slate-400">·</span>
-            <span className="text-slate-500">{report.counts.supported} supported / {report.counts.unsupported} unsupported</span>
-            {!report.snapshotAvailable && (
-              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700">no snapshot (not a customer / no data)</span>
-            )}
-            <div className="ml-auto flex gap-1">
-              {(["all", "unlocked", "locked"] as StatusFilter[]).map((s) => (
+          <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-sm shadow-sm">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="font-semibold text-slate-700">Registry v{report.registryVersion}</span>
+              <span className="text-slate-400">·</span>
+              <span className="text-emerald-600">{report.counts.unlocked} unlocked</span>
+              <span className="text-slate-500">{report.counts.locked} locked</span>
+              <span className="text-slate-400">·</span>
+              <span className="text-slate-500">
+                {report.counts.supported} supported / {report.counts.unsupported} unsupported
+              </span>
+              {!report.snapshotAvailable && (
+                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700">no snapshot (not a customer / no data)</span>
+              )}
+              <button
+                type="button"
+                onClick={() => inspect(userId)}
+                disabled={loading}
+                className="ml-auto rounded-full border border-violet-300 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-100 disabled:opacity-50"
+                title="Re-run the engine's evaluation for this user (read-only)"
+              >
+                ↻ Evaluate Now
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {(["all", "unlocked", "locked", "disabled", "unsupported"] as StatusFilter[]).map((s) => (
                 <button
                   key={s}
                   onClick={() => setStatus(s)}
@@ -233,6 +282,28 @@ export default function DiscoveryInspectorPage() {
                   {s}
                 </button>
               ))}
+              <span className="mx-1 h-4 w-px bg-slate-200" />
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 outline-none"
+              >
+                <option value="all">all categories</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <select
+                value={rarity}
+                onChange={(e) => setRarity(e.target.value)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 outline-none"
+              >
+                <option value="all">all rarities</option>
+                {rarities.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+              <span className="ml-auto text-xs text-slate-400">{rows.length} shown</span>
             </div>
           </div>
 

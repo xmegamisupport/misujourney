@@ -109,10 +109,10 @@ export function evaluateDiscovery(def: DiscoveryDef, ctx: SnapshotContext): Eval
       const which = str(c.which);
       const requiredDays = which ? JOURNEY_DAYS[which] : undefined;
       if (!requiredDays) return unsupported(`unrecognized journey "${which}"`);
-      const { days, completed } = ctx.journey;
+      const { days, completed, currentDay } = ctx.journey;
       if (days == null) return unsupported("no journey length recorded");
       const met = days === requiredDays && completed === true;
-      return { met, supported: true, evidence: { journeyDays: days, requiredDays, completed } };
+      return { met, supported: true, evidence: { journeyDays: days, requiredDays, currentDay, completed } };
     }
 
     case "comeback": {
