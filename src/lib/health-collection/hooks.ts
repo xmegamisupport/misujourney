@@ -57,8 +57,13 @@ export function useHealthCollection(customerId: string) {
 
       const views: BadgeView[] = BADGES.map((def) => {
         const levels = getBadgeLevels(def);
-        const { lifetime, streak } = def.compute(data);
-        return { def, levels, ...resolveLevel(lifetime, streak, levels) };
+        const c = def.compute(data);
+        return {
+          def,
+          levels,
+          firstDate: c.firstDate ?? null,
+          ...resolveLevel(c.lifetime, c.streak, levels),
+        };
       });
 
       // Level-up detection vs acknowledged levels.

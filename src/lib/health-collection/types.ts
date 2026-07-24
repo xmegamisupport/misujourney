@@ -48,6 +48,8 @@ export interface BadgeCount {
   lifetime: number;
   /** Highest run of consecutive days (0 when a badge doesn't track streaks). */
   streak: number;
+  /** Earliest completion date (YYYY-MM-DD), or null when unavailable. */
+  firstDate?: string | null;
 }
 
 export interface BadgeDef {
@@ -68,6 +70,8 @@ export interface BadgeDef {
   unit: string;
   /** Short encouraging Chinese sentence (max ~2 lines). */
   description: string;
+  /** A warm "growth quote" specific to this habit, shown in the detail. */
+  quote: string;
   /** Whether "highest streak" is meaningful for this badge (day-based ones). */
   trackStreak: boolean;
   /** Pure: turn the raw data into this badge's cumulative count + streak. */
@@ -95,6 +99,8 @@ export interface BadgeState extends BadgeCount {
 export interface BadgeView extends BadgeState {
   def: BadgeDef;
   levels: LevelDef[];
+  /** Earliest completion date (YYYY-MM-DD), or null when unavailable. */
+  firstDate: string | null;
 }
 
 /** A level-up to celebrate. */

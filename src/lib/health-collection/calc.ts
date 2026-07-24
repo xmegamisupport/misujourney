@@ -1,5 +1,11 @@
 import type { BadgeState, LevelDef } from "./types";
 
+/** Earliest date in a list of YYYY-MM-DD strings (null when empty). */
+export function earliest(dates: string[]): string | null {
+  if (dates.length === 0) return null;
+  return dates.reduce((min, d) => (d < min ? d : min));
+}
+
 /** Longest run of consecutive calendar days in a list of YYYY-MM-DD strings. */
 export function longestStreak(dates: string[]): number {
   const uniq = Array.from(new Set(dates)).sort();

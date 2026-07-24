@@ -72,7 +72,7 @@ export default function GlowingYouPage() {
 
       {tab === "master" ? (
         <section className="mt-5">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2.5">
             {badges.map((b) => (
               <BadgeCard key={b.def.id} badge={b} onClick={() => setSelected(b)} />
             ))}
