@@ -221,6 +221,23 @@ The engine returns a clear reason; it never fakes support. Current gaps:
 
 ## 11. What Phase 3 did **not** do
 
-No UI, no animations, no badge page, no Inspector, no producer wiring, and no change to Habit
-logic. Wiring events into the producers (record_morning_checkin, checkout, record_meal, journey
-completion) and building the presentation UI are Phase 4.
+No UI, no animations, no badge page, no producer wiring, and no change to Habit logic.
+
+*(Phase 3.5 wired the producers; Phase 4 added the internal Inspector — see below.)*
+
+---
+
+## 12. Discovery Inspector (Phase 4 — internal/admin only)
+
+A support/debugging tool at **`/admin/discovery-inspector`** (admin-gated) that shows, for any
+customer, **every** discovery (enabled + disabled) with: status (locked/unlocked), live trigger
+progress, evaluation result, trigger evidence, unlock scope, registry version, unlock history,
+queue status, and **why it's locked** (disabled / unsupported+reason / not-yet-met+progress /
+"met but no unlock recorded — event not yet fired"). Not customer-facing; no animations.
+
+- `src/lib/discovery/inspector.ts` — server-only; runs the evaluators for all 23 discoveries
+  against the target user's snapshot and joins unlock + queue state.
+- `GET /api/discovery/inspect?userId=` — admin-gated endpoint.
+- SQL: `admin_discovery_state(uuid)` (DEFINER, admin-gated) returns snapshot + unlocks + queue
+  with discovery codes joined; the snapshot logic is shared via internal
+  `_hidden_discovery_snapshot(uuid)`. Admins also get RLS read on the unlock + queue tables.

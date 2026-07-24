@@ -2111,7 +2111,9 @@ export type Database = {
         }
         Returns: undefined
       }
+      _hidden_discovery_snapshot: { Args: { p_user: string }; Returns: Json }
       ack_coach_welcome: { Args: never; Returns: undefined }
+      admin_discovery_state: { Args: { p_user_id: string }; Returns: Json }
       admin_set_coach_access: {
         Args: {
           p_enabled: boolean
@@ -2251,6 +2253,10 @@ export type Database = {
         }[]
       }
       get_hidden_discovery_snapshot: { Args: never; Returns: Json }
+      get_hidden_discovery_snapshot_admin: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       get_inventory_alert_status: {
         Args: {
           p_product_code: Database["public"]["Enums"]["product_code"]

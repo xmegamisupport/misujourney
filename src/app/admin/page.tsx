@@ -52,6 +52,18 @@ export default function AdminDashboardPage() {
         <ProgressCard label="90 天计划完成率" percent={o.plan90CompletionRate} icon="📆" barColor="bg-violet-500" trackColor="bg-violet-100" />
       </div>
 
+      <Link
+        href="/admin/discovery-inspector"
+        className="flex items-center gap-4 rounded-2xl border border-violet-100 bg-white p-4 shadow-sm transition hover:border-violet-200"
+      >
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-2xl">🔍</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-slate-800">Discovery Inspector</p>
+          <p className="text-xs text-slate-400">内部调试工具 · 查看每个成就为何解锁/未解锁</p>
+        </div>
+        <span className="text-slate-300">→</span>
+      </Link>
+
       <div>
         <p className="mb-2 text-sm font-semibold text-slate-700">内容管理快捷入口</p>
         <div className="grid grid-cols-2 gap-3">
