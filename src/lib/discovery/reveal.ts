@@ -61,6 +61,9 @@ export interface Ambient {
   ring: string;
 }
 
+const DEFAULT_AMBIENT: Ambient = { from: "#f8fafc", to: "#ecfdf5", glow: "#6ee7b7", ring: "#34d399" };
+
+// Category-level ambience (Phase 5). A mood per family — never a rank.
 const AMBIENTS: Record<string, Ambient> = {
   early: { from: "#fff7ed", to: "#ffe4e6", glow: "#fdba74", ring: "#fb923c" },
   water: { from: "#ecfeff", to: "#e0f2fe", glow: "#7dd3fc", ring: "#38bdf8" },
@@ -72,6 +75,18 @@ const AMBIENTS: Record<string, Ambient> = {
   comeback: { from: "#fff1f2", to: "#ffe4e6", glow: "#fda4af", ring: "#fb7185" },
 };
 
-export function ambientFor(category: string): Ambient {
-  return AMBIENTS[category] ?? { from: "#f8fafc", to: "#ecfdf5", glow: "#6ee7b7", ring: "#34d399" };
+/**
+ * Per-DISCOVERY visual identity overrides, keyed by discovery code. Empty today.
+ * Phase 5 ships category-level ambience, but the resolver already falls through
+ * to a per-discovery override — so "each Discovery its own world" (Design Bible
+ * Principle 10) becomes a data change here, not a refactor. A full identity may
+ * later carry its own background, illustration, and animation: extend `Ambient`
+ * and this map together, and the reveal/collection will pick it up automatically.
+ */
+const IDENTITY: Record<string, Partial<Ambient>> = {};
+
+export function ambientFor(category: string, code?: string): Ambient {
+  const base = AMBIENTS[category] ?? DEFAULT_AMBIENT;
+  const override = code ? IDENTITY[code] : undefined;
+  return override ? { ...base, ...override } : base;
 }

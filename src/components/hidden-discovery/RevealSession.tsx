@@ -15,7 +15,8 @@ export function RevealSession({ items, onDone }: { items: RevealItem[]; onDone: 
   const trackRef = useRef<HTMLDivElement>(null);
 
   const multi = items.length > 1;
-  const ambient = ambientFor(items[Math.min(active, items.length - 1)]?.category ?? "");
+  const current = items[Math.min(active, items.length - 1)];
+  const ambient = ambientFor(current?.category ?? "", current?.code);
 
   function onScroll() {
     const el = trackRef.current;

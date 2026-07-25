@@ -166,6 +166,15 @@ the persistence behind the change, never the appearance of the result.
 9. **Calm & premium, never game-like.**
    No XP bars, no confetti-cannon casino energy, no leaderboards. Soft, warm, quiet pride.
 
+10. **Handcrafted, not generated.**
+    Even at 30, 50, or 100 Discoveries, each must feel *made for its one moment* — not the same
+    template with the text swapped. This governs copy, colour, background, light, animation, and
+    ambient feeling alike. When a choice would scale more easily by making everything uniform,
+    prefer the one that keeps each Discovery singular. A user leafing through the Collection
+    should feel like they're turning the pages of a keepsake album — never flipping identical
+    cards. *(Copy follows [`DISCOVERY_WRITING_GUIDELINES.md`](./DISCOVERY_WRITING_GUIDELINES.md);
+    visuals are architected for per-Discovery identity — see the Roadmap.)*
+
 ---
 
 ## 4. Anatomy of a Discovery (registry schema)

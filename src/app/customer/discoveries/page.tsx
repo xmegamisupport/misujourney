@@ -37,7 +37,7 @@ export default function DiscoveryCollectionPage() {
       ) : (
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {items.map((it) => {
-            const a = ambientFor(it.category);
+            const a = ambientFor(it.category, it.code);
             return (
               <article
                 key={it.code}

@@ -66,6 +66,27 @@ from the registry.
 
 ---
 
+## Phase 6 — Experience Polish *(next)*
+
+Not more features — turning Hidden Discovery from a *function* into an experience users reopen
+just to revisit. Guided by Design Bible Principle 10 ("handcrafted, not generated").
+
+- **Writing standard (done)** — [`DISCOVERY_WRITING_GUIDELINES.md`](./DISCOVERY_WRITING_GUIDELINES.md)
+  is now binding for all copy, so the whole Collection sounds like one voice with many tones.
+- **Discovery Tone Library** — each Discovery authored with a deliberate tone (warm / moved /
+  gentle-humor / mentor / friend), recorded in the Registry, so no two feel identical.
+- **Per-Discovery visual identity** — evolve beyond category ambience to each Discovery's own
+  colour, background, light, and animation. *Architecture is already in place:* the reveal +
+  collection resolve visuals through `ambientFor(category, code)` with a per-`code` override
+  map (`src/lib/discovery/reveal.ts`) — bespoke identity is a data change, not a refactor. A
+  full identity will extend the `Ambient` shape to carry background + illustration + animation.
+- **Collection experience** — decide what opening the Collection *feels* like: album vs museum
+  vs keepsake vs life journal. To be chosen at the start of Phase 6.
+- **Enable-time copy pass** — every disabled Discovery must be brought to the writing standard
+  *before* it is enabled (part of enabling, not a separate task).
+
+---
+
 ## Future — Expansion
 
 Directional, not committed. Pulled forward as the framework proves itself.
@@ -106,3 +127,4 @@ Per the Design Bible, these are permanent non-goals, not "later":
 | 2026-07-24 | 1.0.0 | Framework established: Design Bible + registry scaffold + roadmap. `discoveries[]` intentionally empty. |
 | 2026-07-24 | 1.1.0 | First official Discovery collection: 23 discoveries across Early / Water / Food / Reflection / Calendar / Achievement / Milestone. Added `epic` rarity, `surprise`/`proud`/`celebration` celebration types, `water`/`food`/`reflection` categories, planned signals (`meal`/`meal_balanced`/`reflection`), and the `futureNotes` field. 5 are live now; 18 ship as `enabled:false` specs awaiting their trigger/signal. No engine or UI changes. |
 | 2026-07-24 | 1.2.0 | Fairness-rule clarification (Design Bible §2.3): rewarding **body type / natural advantage** (low BMI, naturally thin, starting weight) is forbidden; rewarding **effort-based achievement** is encouraged — including the 突破5/7/10kg weight-loss milestones, confirmed as **Achievement → Universal Milestone**. Added to the authoring checklist (§9.1) and anti-patterns (§11); weight-milestone notes updated to "endorsed." |
+| 2026-07-25 | 1.3.0 | Phase 5 customer experience + polish groundwork: recognition copy for the 5 live discoveries; new binding **Writing Guidelines**; Design Bible Principle 10 ("handcrafted, not generated"); Phase 6 direction (Tone Library, per-Discovery visual identity, Collection feel). Visual resolver made per-Discovery-ready (`ambientFor(category, code)`). |
