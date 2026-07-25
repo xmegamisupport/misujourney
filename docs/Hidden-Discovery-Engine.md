@@ -245,3 +245,24 @@ re-runs the evaluators server-side (read-only). Not customer-facing; no animatio
 - SQL: `admin_discovery_state(uuid)` (DEFINER, admin-gated) returns snapshot + unlocks + queue
   with discovery codes joined; the snapshot logic is shared via internal
   `_hidden_discovery_snapshot(uuid)`. Admins also get RLS read on the unlock + queue tables.
+
+---
+
+## 13. Customer experience (Phase 5)
+
+The customer-facing layer, governed by the Product Constitution (recognition, not
+achievement; invisible until discovered; no rarity; the two growth systems never merge).
+
+- **Reveal Session** — `DiscoveryRevealGate` (mounted on the dashboard) calls `get_ready_reveals()`;
+  if anything is waiting it idles ~3s, then opens `RevealSession`. One discovery shows directly;
+  several are swiped under "✨ N Hidden Discoveries Found". One **Continue** →
+  `acknowledge_discovery_reveals(queueIds)` → queue rows become `acknowledged`, the unlocks get a
+  `revealed_at`, and the session clears. Emotion only — name, message, ambient animation.
+- **Collection** — `/customer/discoveries` reads `get_my_discovery_collection()`: discovered
+  moments only (name · recognition message · discover date). No locked gallery, no teasers, no
+  rarity. A discovery is invisible until it has been revealed.
+- **Separation** — the old clue/teaser UI was removed from Glowing You; Glowing You is now only
+  Healthy Habits. Rarity remains stored internally (engine/Console) but is never returned to the
+  customer client (the reveal/collection RPCs omit it).
+- Client: `src/lib/discovery/reveal.ts`, `src/components/hidden-discovery/*`, and a per-category
+  **ambient palette** (a mood, never a rank).

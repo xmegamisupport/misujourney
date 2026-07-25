@@ -2113,6 +2113,10 @@ export type Database = {
       }
       _hidden_discovery_snapshot: { Args: { p_user: string }; Returns: Json }
       ack_coach_welcome: { Args: never; Returns: undefined }
+      acknowledge_discovery_reveals: {
+        Args: { p_queue_ids: string[] }
+        Returns: number
+      }
       admin_discovery_state: { Args: { p_user_id: string }; Returns: Json }
       admin_set_coach_access: {
         Args: {
@@ -2289,6 +2293,7 @@ export type Database = {
         }[]
       }
       get_my_discoveries: { Args: never; Returns: Json }
+      get_my_discovery_collection: { Args: never; Returns: Json }
       get_my_journey_points: { Args: never; Returns: Json }
       get_my_learning_history: {
         Args: never
@@ -2328,6 +2333,7 @@ export type Database = {
           total_today: number
         }[]
       }
+      get_ready_reveals: { Args: never; Returns: Json }
       init_customer_inventory: {
         Args: {
           p_boxes_dx_plus: number

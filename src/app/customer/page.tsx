@@ -29,6 +29,7 @@ import { selectMisuMessage } from "@/lib/misu-voice/engine";
 import { MisuVoiceCard } from "@/components/customer/MisuVoiceCard";
 import { useJourneyPoints } from "@/lib/journey-points/hooks";
 import { JourneyPointsToast } from "@/components/customer/JourneyPointsToast";
+import { DiscoveryRevealGate } from "@/components/hidden-discovery/DiscoveryRevealGate";
 
 const waterPresets = [100, 200, 300];
 /** Only used for the brief window before the real per-customer target
@@ -248,6 +249,8 @@ export default function CustomerDashboardPage() {
 
       <CoachContactSheet open={coachSheetOpen} onClose={() => setCoachSheetOpen(false)} />
       <JourneyPointsToast awards={newAwards} onDone={clearAwards} />
+      {/* Quietly reveals any discoveries the system noticed since last visit. */}
+      <DiscoveryRevealGate />
 
       {/* Weight — no longer "what is my weight today?" but "what does today's
           weight mean?". The number, the progress it has produced, and MISU's

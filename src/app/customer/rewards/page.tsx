@@ -8,24 +8,20 @@ import { GrowthCard } from "@/components/health-collection/GrowthCard";
 import { BadgeCard } from "@/components/health-collection/BadgeCard";
 import { BadgeDetailSheet } from "@/components/health-collection/BadgeDetailSheet";
 import { UpgradePopup } from "@/components/health-collection/UpgradePopup";
-import { SecretSection } from "@/components/health-collection/SecretSection";
-import { DiscoveryReveal } from "@/components/health-collection/DiscoveryReveal";
-import { useDiscoveries } from "@/lib/discovery/hooks";
 
 /**
- * 🌸 Glowing You — the most rewarding page in MISU Journey.
+ * 🌸 Glowing You — the Healthy Habits (growth) system.
  *
- * Emotion before information, and discovery before explanation: every visit
- * opens on a celebratory Growth Card; tapping into 我的旅程 reveals a single
- * scrolling page — the six healthy habits you're building, then the Secret
- * Achievements still waiting to be discovered. The overview only teases; all
- * detail lives one tap deeper.
+ * Emotion before information: every visit opens on a celebratory Growth Card;
+ * tapping into 我的旅程 reveals the healthy habits you're building. This page is
+ * ONLY Healthy Habits — Hidden Discovery is a separate system (a permanent
+ * Collection at /customer/discoveries) and the two intentionally never share a
+ * screen: Habits are about growth, Discovery is about recognition.
  */
 export default function GlowingYouPage() {
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
   const { badges, loading, summary, message, upgrade, dismissUpgrade } = useHealthCollection(customerId);
-  const { state: discovery, revealed, dismissReveal } = useDiscoveries(customerId);
   const [view, setView] = useState<"growth" | "journey">("growth");
   const [selected, setSelected] = useState<BadgeView | null>(null);
 
@@ -65,7 +61,7 @@ export default function GlowingYouPage() {
         </div>
       </header>
 
-      {/* Healthy Habits — the foundation, always first */}
+      {/* Healthy Habits — the growth system */}
       <section className="mt-5">
         <h2 className="mb-3 text-base font-bold text-slate-800">健康习惯</h2>
         <div className="grid grid-cols-3 gap-2.5">
@@ -75,12 +71,8 @@ export default function GlowingYouPage() {
         </div>
       </section>
 
-      {/* Secret Achievements — the surprises still waiting */}
-      <SecretSection clues={discovery.clues} discovered={discovery.discovered} />
-
       <BadgeDetailSheet badge={selected} onClose={() => setSelected(null)} />
       {upgrade && <UpgradePopup upgrade={upgrade} onDismiss={dismissUpgrade} />}
-      {revealed && <DiscoveryReveal discovery={revealed} onClose={dismissReveal} />}
     </div>
   );
 }
