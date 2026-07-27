@@ -4,24 +4,26 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useHealthCollection } from "@/lib/health-collection/hooks";
 import { todayDateStr } from "@/lib/inventory/engine";
-import { cn } from "@/lib/utils";
 import type { BadgeView } from "@/lib/health-collection/types";
 import { GrowthCard } from "@/components/health-collection/GrowthCard";
 import { BadgeCard } from "@/components/health-collection/BadgeCard";
 import { BadgeDetailSheet } from "@/components/health-collection/BadgeDetailSheet";
 import { UpgradePopup } from "@/components/health-collection/UpgradePopup";
 import { DiscoveryMoment } from "@/components/hidden-discovery/DiscoveryMoment";
-import { getDiscoveryGallery, ambientFor, type GalleryItem } from "@/lib/discovery/reveal";
+import {
+  getDiscoveryGallery,
+  ambientFor,
+  type GalleryItem,
+  type DiscoveredItem,
+  type MysteryItem,
+} from "@/lib/discovery/reveal";
 
 const greetingKey = () => `misu-greeting-seen:${todayDateStr()}`;
 const noSubscribe = () => () => {};
 
-/** One gallery tile. Discovered = full-colour, name + date. A mystery = the same
- *  face at low opacity, name only — "this moment hasn't arrived yet", never
- *  "you failed to complete this". */
-function GalleryTile({ item, onClick }: { item: GalleryItem; onClick: () => void }) {
-  const disc = item.discovered;
-  const a = disc ? ambientFor(item.category ?? "", item.code) : null;
+/** A discovered moment: full-colour ambient, its name, the day it was found. */
+function DiscoveredTile({ item, onClick }: { item: DiscoveredItem; onClick: () => void }) {
+  const a = ambientFor(item.category ?? "", item.code);
   return (
     <button
       type="button"
@@ -30,18 +32,35 @@ function GalleryTile({ item, onClick }: { item: GalleryItem; onClick: () => void
     >
       <span
         className="flex h-14 w-14 items-center justify-center rounded-full text-2xl"
-        style={
-          disc
-            ? { background: `linear-gradient(140deg, ${a!.from}, ${a!.to})`, boxShadow: `0 8px 22px -12px ${a!.ring}` }
-            : { background: "#f8fafc" }
-        }
+        style={{ background: `linear-gradient(140deg, ${a.from}, ${a.to})`, boxShadow: `0 8px 22px -12px ${a.ring}` }}
       >
-        <span style={{ opacity: disc ? 1 : 0.35 }}>{item.icon}</span>
+        {item.icon}
       </span>
-      <span className={cn("text-[11px] font-medium leading-tight", disc ? "text-slate-700" : "text-slate-400")}>
-        {item.name}
+      <span className="text-[11px] font-medium leading-tight text-slate-700">{item.name}</span>
+      <span className="text-[9px] tracking-wide text-slate-400">{item.discoveredAt?.slice(0, 10)}</span>
+    </button>
+  );
+}
+
+/** A Mystery Discovery: masked face (❔ ????????) + one rotating curiosity hint.
+ *  Never a name, icon, condition, or progress — only enough to make you wonder. */
+function MysteryTile({ item, onClick }: { item: MysteryItem; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-1.5 rounded-2xl p-2 text-center transition active:scale-95"
+    >
+      <span
+        className="flex h-14 w-14 items-center justify-center rounded-full text-2xl"
+        style={{ background: "#f8fafc", border: "1px dashed #e2e8f0" }}
+      >
+        <span className="opacity-40">❔</span>
       </span>
-      {disc && <span className="text-[9px] tracking-wide text-slate-400">{item.discoveredAt?.slice(0, 10)}</span>}
+      <span className="text-[11px] font-medium leading-tight tracking-widest text-slate-300">??????</span>
+      <span className="line-clamp-2 max-w-[7rem] font-serif text-[10px] italic leading-snug text-slate-400">
+        {item.hint}
+      </span>
     </button>
   );
 }
@@ -80,8 +99,8 @@ export default function GlowingYouPage() {
   }, []);
 
   const view = override ?? (seenToday ? "journey" : "greeting");
-  const discovered = gallery.filter((g) => g.discovered);
-  const mysteries = gallery.filter((g) => !g.discovered);
+  const discovered = gallery.filter((g): g is DiscoveredItem => g.discovered);
+  const mysteries = gallery.filter((g): g is MysteryItem => !g.discovered);
 
   function seeGreetingDone() {
     try {
@@ -137,7 +156,7 @@ export default function GlowingYouPage() {
           <h2 className="mb-3 text-base font-bold text-slate-800">🌟 已发现的时刻</h2>
           <div className="grid grid-cols-3 gap-2.5">
             {discovered.map((it) => (
-              <GalleryTile key={it.code} item={it} onClick={() => setMoment(it)} />
+              <DiscoveredTile key={it.code} item={it} onClick={() => setMoment(it)} />
             ))}
           </div>
         </section>
@@ -146,10 +165,10 @@ export default function GlowingYouPage() {
       {mysteries.length > 0 && (
         <section className="mt-7">
           <h2 className="text-base font-bold text-slate-800">✨ 等待被发现</h2>
-          <p className="mb-3 mt-0.5 text-xs text-slate-400">旅程里，还藏着一些等你遇见的时刻。</p>
+          <p className="mb-3 mt-0.5 text-xs text-slate-400">旅程里，还藏着一些谜一样的时刻，等你亲手揭开。</p>
           <div className="grid grid-cols-3 gap-2.5">
             {mysteries.map((it) => (
-              <GalleryTile key={it.code} item={it} onClick={() => setMoment(it)} />
+              <MysteryTile key={it.mysteryId} item={it} onClick={() => setMoment(it)} />
             ))}
           </div>
         </section>

@@ -2,14 +2,15 @@
 
 import { ambientFor, type Ambient, type GalleryItem } from "@/lib/discovery/reveal";
 
-// Undiscovered moments reveal no atmosphere — calm, neutral, waiting.
+// Mystery moments reveal no atmosphere — calm, neutral, waiting.
 const NEUTRAL: Ambient = { from: "#f8fafc", to: "#eef2f7", glow: "#cbd5e1", ring: "#94a3b8" };
 
 /**
  * A single Discovery, viewed up close — like standing before one piece in a
  * gallery. A discovered moment opens fully: its atmosphere, its recognition
- * message, its date. An undiscovered one stays a quiet mystery: just its face
- * and name, with no hint of how it is earned.
+ * message, its date. A Mystery Discovery stays hidden on purpose: a masked face
+ * (❔ ????????) and one curiosity hint — enough to make you wonder, never enough
+ * to guess. The reveal only happens when the moment is truly earned.
  */
 export function DiscoveryMoment({ item, onClose }: { item: GalleryItem; onClose: () => void }) {
   const discovered = item.discovered;
@@ -26,27 +27,38 @@ export function DiscoveryMoment({ item, onClose }: { item: GalleryItem; onClose:
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-[30%] h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl dm-glow"
-        style={{ background: a.glow, opacity: discovered ? 0.5 : 0.35 }}
+        style={{ background: a.glow, opacity: discovered ? 0.5 : 0.3 }}
       />
 
       <div className="z-10 flex flex-col items-center text-center">
-        <span
-          className="dm-in mb-7 flex h-28 w-28 items-center justify-center rounded-full text-6xl"
-          style={{ background: "rgba(255,255,255,0.68)", boxShadow: `0 22px 60px -20px ${a.ring}`, opacity: discovered ? 1 : 0.85 }}
-        >
-          <span className="dm-float">{item.icon}</span>
-        </span>
-        <p className="dm-in mb-4 text-2xl font-bold text-slate-800">{item.name}</p>
-
         {discovered ? (
           <>
+            <span
+              className="dm-in mb-7 flex h-28 w-28 items-center justify-center rounded-full text-6xl"
+              style={{ background: "rgba(255,255,255,0.68)", boxShadow: `0 22px 60px -20px ${a.ring}` }}
+            >
+              <span className="dm-float">{item.icon}</span>
+            </span>
+            <p className="dm-in mb-4 text-2xl font-bold text-slate-800">{item.name}</p>
             <p className="dm-in max-w-sm font-serif text-[16px] leading-loose text-slate-600">{item.message}</p>
             <p className="dm-in mt-6 text-xs tracking-widest text-slate-400">发现于 {item.discoveredAt?.slice(0, 10)}</p>
           </>
         ) : (
-          <p className="dm-in max-w-xs font-serif text-[15px] leading-loose text-slate-400">
-            这个时刻，还在你的旅程里，等着某一天与你相遇。
-          </p>
+          <>
+            <span
+              className="dm-in mb-7 flex h-28 w-28 items-center justify-center rounded-full text-6xl"
+              style={{ background: "rgba(255,255,255,0.6)", border: "1px dashed #cbd5e1" }}
+            >
+              <span className="dm-float opacity-45">❔</span>
+            </span>
+            <p className="dm-in mb-5 text-2xl font-bold tracking-widest text-slate-300">??????</p>
+            <p className="dm-in max-w-xs font-serif text-[16px] italic leading-loose text-slate-500">
+              「{item.hint}」
+            </p>
+            <p className="dm-in mt-6 max-w-[15rem] text-xs leading-relaxed text-slate-400">
+              这是一个还没被揭开的时刻。它会在某一天，悄悄来到你身边。
+            </p>
+          </>
         )}
       </div>
 

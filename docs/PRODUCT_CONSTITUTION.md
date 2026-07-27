@@ -26,18 +26,31 @@ they live **together** on Glowing You — the user's complete growth space — w
 navigation. Living together is not blending: Habits stay a progress system, Discovery stays a
 collection of moments. Never let Discovery inherit Habits' mechanics (levels, XP, completion).
 
-### Principle 3 — Visible mystery, never a spoiler *(updated 2026-07-28)*
-Earlier we made undiscovered discoveries fully invisible. After testing the real UI, **visible
-mystery creates stronger curiosity**, so undiscovered discoveries now DO appear — but only as an
-**icon and a name**. Never reveal an unlock condition, progress, rarity, percentage, remaining
-count, or hint; never a lock icon, silhouette, question mark, or "coming soon". A user simply sees
-🦋 and its name and wonders *"I wonder how I'll discover this"* — never *"complete 7 days."* The
-face is shown; the path is not.
+### Principle 3 — A Mystery Discovery, never a spoiler *(updated 2026-07-28, Mystery Mode)*
+Undiscovered discoveries appear, but as **mysteries** — never their real face. Showing the icon and
+name (an earlier version of this principle) gave the answer away: 🐦 "早起鸟" instantly reads as
+"weigh in early." So an undiscovered discovery now shows only:
 
-**Curiosity Mode:** show only a small, **daily-rotating** handful (3–5) of mysteries — never the
-full set. The rotation is deterministic per (user, day), so it's stable if the page is reopened
-today and fresh tomorrow. This keeps the total count hidden and makes the world feel alive:
-*"I don't remember seeing this one yesterday."*
+- a **masked badge** — `❔`
+- a **masked name** — `??????`
+- **one curiosity hint** — e.g. *"有人总在世界醒来之前，就已经完成了什么。"*
+
+Never the real name, icon, category, unlock condition, progress, rarity, percentage, or remaining
+count; never a lock, silhouette, or "coming soon". The server never even sends a mystery's
+name/icon/code to the client — the client cannot leak what it never receives.
+
+**Hint rules.** A hint's only job is to make the user *wonder* — never to let them guess. It must
+create curiosity ("what could this possibly be?"), never reveal the condition ("oh, that's the water
+one"). Each mystery carries several hints; the one shown **rotates daily**, so the same mystery can
+feel different on different days. Hints live in the Registry (`mysteryHints`) and follow
+[`DISCOVERY_WRITING_GUIDELINES.md`](./DISCOVERY_WRITING_GUIDELINES.md).
+
+**Curiosity Mode.** Show only a small, **daily-rotating** handful (3–5) of mysteries — never the
+full set. Both which mysteries show *and* which hint each one shows are deterministic per (user,
+day): stable if reopened today, fresh tomorrow. This keeps the total count hidden and makes the
+world feel alive: *"I don't remember seeing this one yesterday."* The goal is never to tell users
+what they can unlock — it is to make them wonder. Discovery is solving little mysteries along the
+journey, not checking off achievements.
 
 ### Principle 4 — One-time, permanent, no rank
 Every discovery unlocks once, is collected forever, never repeats, never upgrades. No rarity, no

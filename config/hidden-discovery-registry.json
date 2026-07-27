@@ -1,11 +1,11 @@
 {
   "$meta": {
     "name": "MISU Hidden Discovery Registry",
-    "version": "1.3.0",
-    "updated": "2026-07-24",
+    "version": "1.4.0",
+    "updated": "2026-07-28",
     "governedBy": "docs/Hidden-Discovery-Design-Bible.md",
     "roadmap": "docs/Hidden-Discovery-Roadmap.md",
-    "description": "Single source of truth for every Hidden Discovery. No discovery logic is hardcoded in application code; the engine dispatches on trigger type and reads content from this registry (or a seed derived from it). v1.1 populates the first official Discovery collection. A discovery is `enabled: true` only when BOTH its trigger type AND its signal are already live in the engine; everything else is a complete spec shipped as `enabled: false` with a `futureNotes` activation note, so nothing unwinnable is ever teased."
+    "description": "Single source of truth for every Hidden Discovery. No discovery logic is hardcoded in application code; the engine dispatches on trigger type and reads content from this registry (or a seed derived from it). A discovery is `enabled: true` only when BOTH its trigger type AND its signal are already live in the engine; everything else is a complete spec shipped as `enabled: false` with a `futureNotes` activation note, so nothing unwinnable is ever teased. v1.4 reframes undiscovered discoveries as MYSTERY DISCOVERIES: they appear only as a masked badge (❔ ????????) with one daily-rotating curiosity hint drawn from `mysteryHints` — never the real name, icon, category, or unlock condition. A hint's only job is to make the user wonder, never to let them guess."
   },
 
   "signals": [
@@ -106,19 +106,18 @@
 
   "discoverySchema": {
     "id":              "string — stable, permanent, kebab-case slug. Never reused or renamed.",
-    "name":            "string — the title shown on reveal. Warm, human, emotion-first.",
+    "name":            "string — the title shown on reveal. Warm, human, emotion-first. NEVER shown while undiscovered.",
     "category":        "enum — one of categories[].key.",
     "habit":           "enum(signal key) | null — the related habit domain, for clue biasing only.",
     "trigger":         "object — { type: one of triggerTypes[].key, params: per trigger paramsSchema }.",
     "celebrationType": "enum — one of celebrationTypes[].key.",
     "description":     "string — the warm line shown once discovered. No statistics.",
     "rarity":          "enum — one of rarities[].key. Emotional weight, not probability.",
-    "icon":            "string — emoji or asset reference.",
-    "enabled":         "boolean — false = complete spec that is never evaluated or assigned until its trigger/signal is live.",
+    "icon":            "string — emoji or asset reference. NEVER shown while undiscovered (a mystery shows ❔).",
+    "enabled":         "boolean — false = complete spec that is never evaluated, assigned, or teased until its trigger/signal is live.",
     "version":         "string(semver) — registry version this discovery was introduced/last changed in.",
     "futureNotes":     "string — author/roadmap notes (never shown to users): activation conditions, future variants. (optional)",
-    "hints":           "array of { stage: integer>=1, text: string } — evolving clue, vague to less vague. Never states the exact condition. (optional)",
-    "hintAdvanceDays": "integer — days before a clue advances one stage. (optional, per-discovery pacing)",
+    "mysteryHints":    "array of string — curiosity hints shown WHILE UNDISCOVERED. One is shown at a time, rotating deterministically per (user, day). Each must create wonder WITHOUT revealing the unlock condition, name, icon, or category. Rule of thumb: the reader should think 'what could this possibly be?', never 'oh, that's the water one'. Two or more recommended so the mystery feels alive across days.",
     "priority":        "integer — reveal ordering when several are earned at once; lower reveals first. (optional)"
   },
 
@@ -134,13 +133,9 @@
     "rarity": "common",
     "icon": "",
     "enabled": false,
-    "version": "1.1.0",
+    "version": "1.4.0",
     "futureNotes": "",
-    "hints": [
-      { "stage": 1, "text": "" },
-      { "stage": 2, "text": "" }
-    ],
-    "hintAdvanceDays": 10,
+    "mysteryHints": ["", ""],
     "priority": 100
   },
 
@@ -158,11 +153,11 @@
       "enabled": true,
       "version": "1.1.0",
       "futureNotes": "Consider a time-based variant (completed before noon) once daily-completion timestamps are aggregated.",
-      "hints": [
-        { "stage": 1, "text": "和「今天」有关。" },
-        { "stage": 2, "text": "早一点，就不一样。" }
+      "mysteryHints": [
+        "有些人，天一亮就已经在路上了。",
+        "这一天还没来得及催你，你就先动身了。",
+        "抢在世界之前，已经有人出发。"
       ],
-      "hintAdvanceDays": 7,
       "priority": 12
     },
     {
@@ -178,11 +173,11 @@
       "enabled": true,
       "version": "1.1.0",
       "futureNotes": "",
-      "hints": [
-        { "stage": 1, "text": "和清晨有关。" },
-        { "stage": 2, "text": "太阳升起之前……" }
+      "mysteryHints": [
+        "有人总在世界醒来之前，就已经完成了什么。",
+        "清晨最安静的那一刻，藏着一个秘密。",
+        "天光未亮，却已经有人开始。"
       ],
-      "hintAdvanceDays": 9,
       "priority": 14
     },
     {
@@ -198,11 +193,11 @@
       "enabled": true,
       "version": "1.1.0",
       "futureNotes": "",
-      "hints": [
-        { "stage": 1, "text": "需要一点坚持。" },
-        { "stage": 2, "text": "和水，也和「不间断」有关。" }
+      "mysteryHints": [
+        "有些习惯，会在没人察觉的时候，悄悄改变你。",
+        "日复一日，从不间断——这本身就是一种温柔。",
+        "坚持到某个程度，它就不再需要努力。"
       ],
-      "hintAdvanceDays": 10,
       "priority": 32
     },
     {
@@ -218,11 +213,11 @@
       "enabled": true,
       "version": "1.1.0",
       "futureNotes": "Canonical 100-water discovery. The Milestone category intentionally does NOT repeat a 100-water entry, to avoid double-counting the same signal.",
-      "hints": [
-        { "stage": 1, "text": "和水有关。" },
-        { "stage": 2, "text": "日积月累，才见分晓。" }
+      "mysteryHints": [
+        "有些数字，要很久很久以后才会出现。",
+        "一次微不足道，很多次之后，就是另一回事了。",
+        "点点滴滴，终会汇成一件了不起的事。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 62
     },
     {
@@ -238,11 +233,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when the TIME a user reaches their water goal is tracked; the engine currently knows the day a goal was met, not the hour.",
-      "hints": [
-        { "stage": 1, "text": "和水有关。" },
-        { "stage": 2, "text": "在一天结束之前……" }
+      "mysteryHints": [
+        "太阳还没落，有人就已经轻松下来。",
+        "把该做的提前做完，是一种奢侈的自由。"
       ],
-      "hintAdvanceDays": 10,
       "priority": 34
     },
     {
@@ -258,11 +252,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when balanced-meal (211 plate) events are aggregated as a discovery signal (`meal_balanced`).",
-      "hints": [
-        { "stage": 1, "text": "和吃有关。" },
-        { "stage": 2, "text": "第一次，就挑得刚刚好。" }
+      "mysteryHints": [
+        "第一次做对一件事的感觉，总是格外清晰。",
+        "有人似乎天生懂得，怎么对自己好一点。"
       ],
-      "hintAdvanceDays": 8,
       "priority": 24
     },
     {
@@ -278,11 +271,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when per-day meal logging is aggregated (`meal` signal). Consider a same-day 'complete meals' variant.",
-      "hints": [
-        { "stage": 1, "text": "和吃饭有关。" },
-        { "stage": 2, "text": "一餐都别落下。" }
+      "mysteryHints": [
+        "认真的人，连小事都不肯将就。",
+        "一天都没有落下，需要一点温柔的固执。"
       ],
-      "hintAdvanceDays": 10,
       "priority": 36
     },
     {
@@ -298,11 +290,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when meal events are aggregated as a discovery signal (`meal`).",
-      "hints": [
-        { "stage": 1, "text": "和吃有关。" },
-        { "stage": 2, "text": "一餐一餐，累积成百。" }
+      "mysteryHints": [
+        "重复很多很多次之后，人会变得不一样。",
+        "有些改变，要到很久以后才看得见。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 64
     },
     {
@@ -318,11 +309,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when an on-time evening reflection / day-close signal (`reflection`) is aggregated.",
-      "hints": [
-        { "stage": 1, "text": "和「今天」有关。" },
-        { "stage": 2, "text": "别把它留到明天。" }
+      "mysteryHints": [
+        "有人从不把今天的事，留到明天。",
+        "在一天结束之前，把它好好收起来。"
       ],
-      "hintAdvanceDays": 8,
       "priority": 26
     },
     {
@@ -338,11 +328,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when the engine supports comeback detection (returning after an inactivity gap). Conceptually a Comeback moment; filed under Reflection per the V1 taxonomy.",
-      "hints": [
-        { "stage": 1, "text": "和「回来」有关。" },
-        { "stage": 2, "text": "停下之后，重新开始。" }
+      "mysteryHints": [
+        "离开过的人，回来时脚步格外坚定。",
+        "停下，从来不代表结束。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 40
     },
     {
@@ -358,11 +347,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when weekday-based calendar conditions are supported (the engine currently matches specific MM-DD dates and time-of-day, not weekdays).",
-      "hints": [
-        { "stage": 1, "text": "和某一天有关。" },
-        { "stage": 2, "text": "别人休息的那天……" }
+      "mysteryHints": [
+        "别人休息的那天，总有人还记得自己。",
+        "有些日子里的坚持，格外珍贵。"
       ],
-      "hintAdvanceDays": 10,
       "priority": 42
     },
     {
@@ -378,11 +366,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when goal_achievement triggers are implemented and the user's personal phase goals are exposed to the engine.",
-      "hints": [
-        { "stage": 1, "text": "和你定下的目标有关。" },
-        { "stage": 2, "text": "第一步，走完了。" }
+      "mysteryHints": [
+        "说到做到的人，会先兑现给自己。",
+        "你亲手定下的那件事，正在等一个结果。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 66
     },
     {
@@ -398,11 +385,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when goal_achievement triggers are implemented and personal phase goals are exposed to the engine.",
-      "hints": [
-        { "stage": 1, "text": "和你定下的目标有关。" },
-        { "stage": 2, "text": "又完成了一个。" }
+      "mysteryHints": [
+        "走过一次的路，第二次会更笃定。",
+        "坚持，正在悄悄变成习惯。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 67
     },
     {
@@ -418,11 +404,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Universal Milestone (Design Bible §2.3). Losing 5kg is an effort-based achievement, not a body-type reward — every user earns it through the same effort regardless of starting body. Endorsed. Activates when cumulative weight-change verification is available.",
-      "hints": [
-        { "stage": 1, "text": "和你的坚持有关。" },
-        { "stage": 2, "text": "一点一点的改变，累积起来了。" }
+      "mysteryHints": [
+        "有些改变，是无数个平凡日子换来的。",
+        "看得见的变化背后，藏着看不见的努力。"
       ],
-      "hintAdvanceDays": 14,
       "priority": 68
     },
     {
@@ -438,11 +423,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Universal Milestone (Design Bible §2.3). Effort-based achievement, not a body-type reward. Endorsed. Activates when cumulative weight-change verification is available.",
-      "hints": [
-        { "stage": 1, "text": "和你的坚持有关。" },
-        { "stage": 2, "text": "又向前了一步。" }
+      "mysteryHints": [
+        "不走捷径的人，才走得最稳。",
+        "每天比昨天多认真一点，就会走到这里。"
       ],
-      "hintAdvanceDays": 14,
       "priority": 69
     },
     {
@@ -458,11 +442,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Universal Milestone (Design Bible §2.3). Effort-based achievement, not a body-type reward. Endorsed. Activates when cumulative weight-change verification is available.",
-      "hints": [
-        { "stage": 1, "text": "和你的坚持有关。" },
-        { "stage": 2, "text": "一段很长的路，快走完了。" }
+      "mysteryHints": [
+        "很长很长的一段路，总有人默默走完。",
+        "了不起的事，往往是一天天堆出来的。"
       ],
-      "hintAdvanceDays": 14,
       "priority": 70
     },
     {
@@ -478,11 +461,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when journey_completion triggers are implemented. 30-day Journey = Kickstart Journey (official naming).",
-      "hints": [
-        { "stage": 1, "text": "和你的旅程有关。" },
-        { "stage": 2, "text": "第一段路，走完了。" }
+      "mysteryHints": [
+        "最难的从来是开始，而有人已经跨过。",
+        "第一段路的尽头，藏着一枚印记。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 72
     },
     {
@@ -498,11 +480,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when journey_completion triggers are implemented. 60-day Journey = Momentum Journey (official naming).",
-      "hints": [
-        { "stage": 1, "text": "和你的旅程有关。" },
-        { "stage": 2, "text": "越走，越稳。" }
+      "mysteryHints": [
+        "走着走着，有人就不再只是坚持，而是享受。",
+        "越往前，越轻盈。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 73
     },
     {
@@ -518,11 +499,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when journey_completion triggers are implemented. 90-day Journey = Transformation Journey (official naming).",
-      "hints": [
-        { "stage": 1, "text": "和你的旅程有关。" },
-        { "stage": 2, "text": "最长的那一段。" }
+      "mysteryHints": [
+        "最长的那段路走完时，人已经不一样了。",
+        "有人用很长的时间，把自己活成了另一个模样。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 74
     },
     {
@@ -538,11 +518,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when 'starting a new chapter/journey' is exposed as a trigger to the engine.",
-      "hints": [
-        { "stage": 1, "text": "和「下一段」有关。" },
-        { "stage": 2, "text": "一段结束，另一段开始。" }
+      "mysteryHints": [
+        "满足于此已经很好，但有人想要更多。",
+        "一扇门合上，另一扇正被推开。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 50
     },
     {
@@ -558,11 +537,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when 'starting a new journey' is exposed as a trigger to the engine.",
-      "hints": [
-        { "stage": 1, "text": "和「再一次」有关。" },
-        { "stage": 2, "text": "重新出发。" }
+      "mysteryHints": [
+        "愿意重新出发的人，最勇敢。",
+        "有人一次又一次，从头开始。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 52
     },
     {
@@ -578,11 +556,11 @@
       "enabled": true,
       "version": "1.1.0",
       "futureNotes": "",
-      "hints": [
-        { "stage": 1, "text": "和清晨、和记录有关。" },
-        { "stage": 2, "text": "一百次面对自己。" }
+      "mysteryHints": [
+        "有人愿意一次又一次，诚实地面对自己。",
+        "很多个清晨累积起来，会成为一件了不起的事。",
+        "重复了很多很多次之后的清晨，会有光。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 60
     },
     {
@@ -598,11 +576,10 @@
       "enabled": false,
       "version": "1.1.0",
       "futureNotes": "Activates when balanced-meal events are aggregated (`meal_balanced`). The 100-water milestone lives in Water Moment as 第一百杯 to avoid duplication.",
-      "hints": [
-        { "stage": 1, "text": "和吃有关。" },
-        { "stage": 2, "text": "一百次的好好吃饭。" }
+      "mysteryHints": [
+        "把「对自己好」重复一百次，会发生什么？",
+        "有些本能，是一次次选择，慢慢养成的。"
       ],
-      "hintAdvanceDays": 12,
       "priority": 61
     }
   ]

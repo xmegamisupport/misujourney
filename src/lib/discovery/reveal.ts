@@ -34,23 +34,36 @@ export async function acknowledgeReveals(queueIds: string[]): Promise<void> {
   await supabase.rpc("acknowledge_discovery_reveals", { p_queue_ids: queueIds });
 }
 
-/** One tile in the overview gallery — discovered (full) OR a visible mystery. */
-export interface GalleryItem {
+/** A discovered moment — its full identity is earned, so it's all here. */
+export interface DiscoveredItem {
+  discovered: true;
   code: string;
   name: string;
   icon: string;
-  discovered: boolean;
-  /** null for undiscovered — no atmosphere is revealed until you earn it. */
   category: string | null;
-  /** null for undiscovered — the recognition message is never spoiled. */
   message: string | null;
   discoveredAt: string | null;
 }
 
 /**
- * The Glowing You gallery: every enabled discovery. Discovered ones carry their
- * full moment; undiscovered ones are visible mysteries (icon + name only) —
- * never a condition, progress, rarity, count, or hint.
+ * A Mystery Discovery — undiscovered. The server sends NOTHING that could give it
+ * away: no code, name, icon, or category — only an opaque per-day id and a single
+ * curiosity hint that rotates daily. The face is hidden (UI shows ❔ ????????);
+ * the hint's only job is to make the user wonder, never to let them guess.
+ */
+export interface MysteryItem {
+  discovered: false;
+  mysteryId: string;
+  hint: string;
+}
+
+export type GalleryItem = DiscoveredItem | MysteryItem;
+
+/**
+ * The Glowing You gallery: everything discovered (full), plus a small,
+ * daily-rotating handful of Mystery Discoveries (masked + one hint). The full
+ * mystery set and its total count never reach the client — curiosity, not a
+ * checklist.
  */
 export async function getDiscoveryGallery(): Promise<GalleryItem[]> {
   const supabase = createClient();

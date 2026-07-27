@@ -1,9 +1,9 @@
 # Hidden Discovery — Writing Guidelines
 
 > **Status:** Standard (binding for all Discovery copy)
-> **Last updated:** 2026-07-25
-> **Governed by:** [`Hidden-Discovery-Design-Bible.md`](./Hidden-Discovery-Design-Bible.md) · Product Constitution (Phase 5)
-> **Applies to:** every Discovery's `name` and `description` (the recognition message) — existing, enabled, disabled, and all future ones.
+> **Last updated:** 2026-07-28
+> **Governed by:** [`Hidden-Discovery-Design-Bible.md`](./Hidden-Discovery-Design-Bible.md) · Product Constitution (Phase 5, Principle 3 Mystery Mode)
+> **Applies to:** every Discovery's `name` and `description` (the recognition message, §1–§5), and its `mysteryHints` (the curiosity hints shown while undiscovered, §7) — existing, enabled, disabled, and all future ones.
 
 Every Discovery is a **letter of recognition**. Not a report. Not an achievement description.
 Not a system notification. This document exists so the whole Collection sounds like it was
@@ -114,7 +114,47 @@ A reliable shape (not a rigid template — vary it):
 
 - The **5 live Discoveries** (`today-ahead`, `early-bird`, `watertight`, `hundredth-cup`,
   `hundred-mornings`) have been rewritten to this standard (Registry v1.3.0).
-- The **18 disabled Discoveries** keep their earlier copy for now; each must be brought to this
-  standard **before it is enabled**. Treat that as part of enabling, not a separate pass.
+- The **18 disabled Discoveries** keep their earlier `description` copy for now; each must be
+  brought to this standard **before it is enabled**. Treat that as part of enabling, not a
+  separate pass.
+- **`mysteryHints` for all 23** were authored to §7 in Registry v1.4.0.
 
-*One voice. Many tones. Every card written for its one moment.*
+---
+
+## 7. Mystery hints — the copy shown *before* discovery
+
+A recognition message is read *after* the moment is earned. A **mystery hint** is read *before* —
+while the discovery is still `❔ ??????`. It is a different craft with the opposite goal: a
+recognition message *tells* the person who they've become; a mystery hint must *withhold*.
+
+**The one job of a hint: make the reader wonder. Never let them guess.**
+
+> ✅ *"有人总在世界醒来之前，就已经完成了什么。"* → the reader thinks *"…what is this?"*
+> ❌ *"早起称重就能解锁。"* → the reader thinks *"oh, it's the early weigh-in one."*
+
+### Hint rules
+1. **Never name the condition.** No signal, number, threshold, time, weekday, streak, or goal.
+   Not "喝水", not "七天", not "早上七点". If a reader can reverse-engineer the trigger, rewrite it.
+2. **Never name the discovery.** No title, no icon meaning, no category. The face stays hidden.
+3. **Evoke, don't instruct.** A hint is a feeling or an image ("天光未亮，却已经有人开始"), never a
+   task ("试试早起"). No imperative verbs aimed at the user.
+4. **Third-person or universal voice, not "你".** Recognition speaks to 「你」; a mystery is *about
+   someone*, kept at a wondering distance — "有人…", "有些习惯…". This keeps it from feeling like a
+   to-do assigned to the reader.
+5. **Several per discovery, each able to stand alone.** The shown hint **rotates daily**, so 2–3
+   hints per discovery keep the mystery feeling alive. Each must work on its own — they are
+   alternatives, not a sequence, and never combine to reveal more than one does.
+6. **Short and atmospheric.** One line. Poetic is welcome; explanatory is not.
+7. **Curiosity, never pressure.** Never imply the reader is behind, missing out, or failing to
+   complete something. The feeling is *"what could this be?"*, never *"you haven't done this yet."*
+
+### Hint authoring checklist
+- [ ] Reading it, could a sharp user name the trigger? If yes → **rewrite**.
+- [ ] Does it name/imply the discovery's title, icon, or category? If yes → **rewrite**.
+- [ ] Is it an image/feeling, not an instruction? No imperative at the reader.
+- [ ] Voiced as "有人…/有些…", not "你…".
+- [ ] At least 2 hints, each standing on its own.
+- [ ] One line, atmospheric, no numbers or mechanics.
+- [ ] Creates wonder, applies zero pressure.
+
+*One voice. Many tones. Every card written for its one moment — and every mystery worth wondering about.*
