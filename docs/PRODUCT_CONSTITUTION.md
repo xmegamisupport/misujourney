@@ -34,6 +34,11 @@ count, or hint; never a lock icon, silhouette, question mark, or "coming soon". 
 🦋 and its name and wonders *"I wonder how I'll discover this"* — never *"complete 7 days."* The
 face is shown; the path is not.
 
+**Curiosity Mode:** show only a small, **daily-rotating** handful (3–5) of mysteries — never the
+full set. The rotation is deterministic per (user, day), so it's stable if the page is reopened
+today and fresh tomorrow. This keeps the total count hidden and makes the world feel alive:
+*"I don't remember seeing this one yesterday."*
+
 ### Principle 4 — One-time, permanent, no rank
 Every discovery unlocks once, is collected forever, never repeats, never upgrades. No rarity, no
 levels, no XP, no ranking. Every discovery carries equal emotional value; its importance comes

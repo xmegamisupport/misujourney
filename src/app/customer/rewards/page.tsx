@@ -16,6 +16,36 @@ import { getDiscoveryGallery, ambientFor, type GalleryItem } from "@/lib/discove
 const greetingKey = () => `misu-greeting-seen:${todayDateStr()}`;
 const noSubscribe = () => () => {};
 
+/** One gallery tile. Discovered = full-colour, name + date. A mystery = the same
+ *  face at low opacity, name only — "this moment hasn't arrived yet", never
+ *  "you failed to complete this". */
+function GalleryTile({ item, onClick }: { item: GalleryItem; onClick: () => void }) {
+  const disc = item.discovered;
+  const a = disc ? ambientFor(item.category ?? "", item.code) : null;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-1.5 rounded-2xl p-2 text-center transition active:scale-95"
+    >
+      <span
+        className="flex h-14 w-14 items-center justify-center rounded-full text-2xl"
+        style={
+          disc
+            ? { background: `linear-gradient(140deg, ${a!.from}, ${a!.to})`, boxShadow: `0 8px 22px -12px ${a!.ring}` }
+            : { background: "#f8fafc" }
+        }
+      >
+        <span style={{ opacity: disc ? 1 : 0.35 }}>{item.icon}</span>
+      </span>
+      <span className={cn("text-[11px] font-medium leading-tight", disc ? "text-slate-700" : "text-slate-400")}>
+        {item.name}
+      </span>
+      {disc && <span className="text-[9px] tracking-wide text-slate-400">{item.discoveredAt?.slice(0, 10)}</span>}
+    </button>
+  );
+}
+
 /**
  * 🌸 Glowing You — the user's complete growth space, on one page.
  *
@@ -50,6 +80,8 @@ export default function GlowingYouPage() {
   }, []);
 
   const view = override ?? (seenToday ? "journey" : "greeting");
+  const discovered = gallery.filter((g) => g.discovered);
+  const mysteries = gallery.filter((g) => !g.discovered);
 
   function seeGreetingDone() {
     try {
@@ -98,38 +130,27 @@ export default function GlowingYouPage() {
         </div>
       </section>
 
-      {/* Hidden Discovery — life moments. A gallery to browse, not read. */}
-      {gallery.length > 0 && (
+      {/* Hidden Discovery — browse, don't read. Two groups: what you've found,
+          and a rotating few still waiting. Curiosity, never a checklist. */}
+      {discovered.length > 0 && (
         <section className="mt-7">
-          <h2 className="mb-3 text-base font-bold text-slate-800">✨ 我的发现</h2>
+          <h2 className="mb-3 text-base font-bold text-slate-800">🌟 已发现的时刻</h2>
           <div className="grid grid-cols-3 gap-2.5">
-            {gallery.map((it) => {
-              const disc = it.discovered;
-              const a = disc ? ambientFor(it.category ?? "", it.code) : null;
-              return (
-                <button
-                  key={it.code}
-                  type="button"
-                  onClick={() => setMoment(it)}
-                  className="flex flex-col items-center gap-1.5 rounded-2xl p-2 text-center transition active:scale-95"
-                >
-                  <span
-                    className="flex h-14 w-14 items-center justify-center rounded-full text-2xl"
-                    style={
-                      disc
-                        ? { background: `linear-gradient(140deg, ${a!.from}, ${a!.to})`, boxShadow: `0 8px 22px -12px ${a!.ring}` }
-                        : { background: "#f1f5f9" }
-                    }
-                  >
-                    <span style={{ opacity: disc ? 1 : 0.5 }}>{it.icon}</span>
-                  </span>
-                  <span className={cn("text-[11px] font-medium leading-tight", disc ? "text-slate-700" : "text-slate-400")}>
-                    {it.name}
-                  </span>
-                  {disc && <span className="text-[9px] tracking-wide text-slate-400">{it.discoveredAt?.slice(0, 10)}</span>}
-                </button>
-              );
-            })}
+            {discovered.map((it) => (
+              <GalleryTile key={it.code} item={it} onClick={() => setMoment(it)} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {mysteries.length > 0 && (
+        <section className="mt-7">
+          <h2 className="text-base font-bold text-slate-800">✨ 等待被发现</h2>
+          <p className="mb-3 mt-0.5 text-xs text-slate-400">旅程里，还藏着一些等你遇见的时刻。</p>
+          <div className="grid grid-cols-3 gap-2.5">
+            {mysteries.map((it) => (
+              <GalleryTile key={it.code} item={it} onClick={() => setMoment(it)} />
+            ))}
           </div>
         </section>
       )}
