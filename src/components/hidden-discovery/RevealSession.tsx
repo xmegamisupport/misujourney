@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { acknowledgeReveals, ambientFor, type RevealItem } from "@/lib/discovery/reveal";
 
 /**
@@ -13,6 +14,7 @@ export function RevealSession({ items, onDone }: { items: RevealItem[]; onDone: 
   const [active, setActive] = useState(0);
   const [busy, setBusy] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const multi = items.length > 1;
   const current = items[Math.min(active, items.length - 1)];
@@ -34,6 +36,8 @@ export function RevealSession({ items, onDone }: { items: RevealItem[]; onDone: 
       // swallow — the session still closes; the queue self-heals next visit
     }
     onDone();
+    // Guide the user to where these moments now live, inside Glowing You.
+    router.push("/customer/discoveries");
   }
 
   return (

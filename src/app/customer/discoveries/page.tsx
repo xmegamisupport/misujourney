@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { getDiscoveryCollection, ambientFor, type CollectionItem } from "@/lib/discovery/reveal";
 
 /**
@@ -17,9 +18,18 @@ export default function DiscoveryCollectionPage() {
 
   return (
     <div className="px-4 pb-16 md:px-8">
-      <header className="pt-2">
-        <h1 className="text-lg font-bold text-slate-900">✨ 我的发现</h1>
-        <p className="mt-0.5 text-xs text-slate-400">这里收藏着，你旅程中被看见的时刻。</p>
+      <header className="flex items-center gap-2 pt-2">
+        <Link
+          href="/customer/rewards"
+          aria-label="返回 Glowing You"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+        >
+          ‹
+        </Link>
+        <div>
+          <h1 className="text-lg font-bold text-slate-900">✨ 我的发现</h1>
+          <p className="mt-0.5 text-xs text-slate-400">这里收藏着，你旅程中被看见的时刻。</p>
+        </div>
       </header>
 
       {items === null ? (

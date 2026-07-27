@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useHealthCollection } from "@/lib/health-collection/hooks";
 import type { BadgeView } from "@/lib/health-collection/types";
@@ -10,13 +11,14 @@ import { BadgeDetailSheet } from "@/components/health-collection/BadgeDetailShee
 import { UpgradePopup } from "@/components/health-collection/UpgradePopup";
 
 /**
- * 🌸 Glowing You — the Healthy Habits (growth) system.
+ * 🌸 Glowing You — the growth hub.
  *
  * Emotion before information: every visit opens on a celebratory Growth Card;
- * tapping into 我的旅程 reveals the healthy habits you're building. This page is
- * ONLY Healthy Habits — Hidden Discovery is a separate system (a permanent
- * Collection at /customer/discoveries) and the two intentionally never share a
- * screen: Habits are about growth, Discovery is about recognition.
+ * tapping into 我的旅程 reveals the healthy habits you're building. Glowing You
+ * is also the single entry point to Hidden Discovery — a link here opens the
+ * permanent Discovery Collection, which stays its own distinct screen. Habits
+ * (growth) and Discovery (recognition) remain separate experiences; they just
+ * share this one doorway. Hidden Discovery has no nav tab of its own.
  */
 export default function GlowingYouPage() {
   const { user } = useAuthUser();
@@ -70,6 +72,20 @@ export default function GlowingYouPage() {
           ))}
         </div>
       </section>
+
+      {/* The one doorway into Hidden Discovery — a distinct recognition system.
+          No teasing: this only points to what has already been discovered. */}
+      <Link
+        href="/customer/discoveries"
+        className="mt-6 flex items-center gap-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-indigo-50/70 to-white p-4 shadow-sm transition hover:border-indigo-200"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-2xl shadow-sm">✨</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-slate-800">我的发现</p>
+          <p className="text-xs text-slate-400">你旅程中，被看见的那些时刻。</p>
+        </div>
+        <span className="text-slate-300">›</span>
+      </Link>
 
       <BadgeDetailSheet badge={selected} onClose={() => setSelected(null)} />
       {upgrade && <UpgradePopup upgrade={upgrade} onDismiss={dismissUpgrade} />}

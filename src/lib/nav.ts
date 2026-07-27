@@ -20,11 +20,10 @@ export const customerNav: NavItem[] = [
   // rewards). It points at /customer/rewards; the Living Garden at
   // /customer/journey is intentionally NOT linked here (feature paused), so it
   // stays in the codebase but is not customer-facing.
+  // Hidden Discovery has NO nav tab of its own: new discoveries announce
+  // themselves with a reveal popup, and the permanent Collection is entered
+  // from inside Glowing You (its own distinct screen at /customer/discoveries).
   { href: "/customer/rewards", label: "Glowing You", icon: "🌸", key: "rewards" },
-  // Hidden Discovery lives entirely on its own — a permanent Collection of
-  // discovered moments, never merged with the Healthy Habits (Glowing You)
-  // growth system. Recognition, not progression.
-  { href: "/customer/discoveries", label: "发现", icon: "✨", key: "discoveries" },
   { href: "/customer/progress", label: "成长", icon: "📈", key: "progress" },
   { href: "/customer/profile", label: "我的", icon: "👤", key: "profile" },
 ];
