@@ -100,6 +100,15 @@ around completion: no "3 / 23", no "18 left", no progress toward "all discoverie
 create is *"there are still many meaningful moments waiting for me,"* never *"I have 18
 achievements left."* Curiosity, not completion.
 
+### Principle 12 — The core unit is a Moment (Habit → Moment → Discovery) *(added 2026-07-28)*
+A Discovery is not the atom of this system — a **Moment** is. The hierarchy is **Habit → Moment →
+Discovery**: a *Habit* is the daily behaviour, a *Moment* is a meaningful milestone within it, and a
+*Discovery* is the emotional recognition we present for that moment. Every habit holds many moments;
+every moment is celebrated by one Discovery. All future content is authored from this model — the
+question is always *"what meaningful Moments exist within this Habit?"*, never *"what badge should we
+add?"* Beginning from a habit's moments produces a human journey; beginning from badges produces a
+checklist. This is the foundation beneath every other principle here. (Design Bible §1.0.)
+
 ---
 
 *Can users view their discoveries? — solved. The question now: **will users enjoy coming back to

@@ -2,7 +2,7 @@
 
 > **Status:** Architecture v1 (framework only, no content)
 > **Owner:** Product (CPO)
-> **Last updated:** 2026-07-24
+> **Last updated:** 2026-07-28
 > **Governs:** `config/hidden-discovery-registry.json`, the Discovery engine, and every future Discovery.
 > **Companion docs:** [`Hidden-Discovery-Roadmap.md`](./Hidden-Discovery-Roadmap.md)
 
@@ -32,6 +32,36 @@ Surprise, warmth, and being *seen* — never grinding, never FOMO.
 ---
 
 ## 1. Philosophy
+
+### 1.0 The core model — Habit → Moment → Discovery *(added 2026-07-28)*
+
+The core unit of this system is **not the Discovery. It is the Moment.**
+
+```
+Habit  →  Moment  →  Discovery
+```
+
+- **Habit** — the daily *behaviour* the user is building (hydration, weigh-in, learning, showing
+  up). Owned by the Habit system.
+- **Moment** — a *meaningful milestone within* that habit: the first time it ever happened, the
+  seventh day unbroken, the hundredth cup, the day they came back. **A single habit contains many
+  moments.**
+- **Discovery** — the **emotional recognition** we present *for* a moment: its name, its warm
+  line, its reveal. The Discovery is the *face* of the Moment, never the moment itself.
+
+So: **every Habit contains many meaningful Moments, and every Moment is celebrated through one
+Hidden Discovery.** This is the permanent foundation for all future content. One registry entry
+(§4) expresses exactly one Moment (the milestone its `trigger` detects) and the Discovery that
+recognises it (`name`, `description`, reveal).
+
+**The authoring question — always ask this, never the other:**
+
+> ✅ *"What meaningful **Moments** exist within this Habit?"*
+> ❌ *"What **badge** should we add?"*
+
+Begin at the habit, find the moments worth remembering inside it, then give each moment a Discovery.
+Starting from "we need more badges" produces a checklist; starting from a habit's moments produces a
+human journey. This ordering governs every future content decision.
 
 **Moments, not metrics.**
 Habits are made of numbers that grow. Discoveries are made of moments worth remembering.
@@ -179,8 +209,10 @@ the persistence behind the change, never the appearance of the result.
 
 ## 4. Anatomy of a Discovery (registry schema)
 
-Every Discovery is one object in `config/hidden-discovery-registry.json → discoveries[]`.
-The canonical field set:
+Every Discovery is one object in `config/hidden-discovery-registry.json → discoveries[]`. Each
+object expresses **one Moment and the Discovery that recognises it** (§1.0): the `trigger` defines
+the *Moment* (the milestone within a habit); `name` / `description` / `icon` / reveal are the
+*Discovery* (its emotional face). The canonical field set:
 
 | Field | Type | Required | Meaning |
 |---|---|---|---|
@@ -366,6 +398,8 @@ The whole point of this architecture is that **growth is data, not code.**
 
 Before appending a discovery to the registry, confirm **all**:
 
+- [ ] It was found by asking **"what meaningful Moment lives in this habit?"** — authored from a
+      habit's moments, not from "what badge should we add?" (§1.0). Habit → Moment → Discovery.
 - [ ] It is a **moment**, not a metric. (Passes the §2.1 Non-Overlap test.)
 - [ ] It rewards **effort, not body type**. (Passes the §2.3 fairness rule — it celebrates what the user *did*, never a natural body condition or starting advantage.)
 - [ ] It does **not** duplicate anything the Habit system already tracks.
