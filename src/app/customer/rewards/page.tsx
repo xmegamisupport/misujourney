@@ -1,31 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useHealthCollection } from "@/lib/health-collection/hooks";
+import { todayDateStr } from "@/lib/inventory/engine";
 import type { BadgeView } from "@/lib/health-collection/types";
 import { GrowthCard } from "@/components/health-collection/GrowthCard";
 import { BadgeCard } from "@/components/health-collection/BadgeCard";
 import { BadgeDetailSheet } from "@/components/health-collection/BadgeDetailSheet";
 import { UpgradePopup } from "@/components/health-collection/UpgradePopup";
 
+const greetingKey = () => `misu-greeting-seen:${todayDateStr()}`;
+// We only read the flag once per mount; no need to react to writes.
+const noSubscribe = () => () => {};
+
 /**
  * 🌸 Glowing You — the growth hub.
  *
- * Emotion before information: every visit opens on a celebratory Growth Card;
- * tapping into 我的旅程 reveals the healthy habits you're building. Glowing You
- * is also the single entry point to Hidden Discovery — a link here opens the
- * permanent Discovery Collection, which stays its own distinct screen. Habits
- * (growth) and Discovery (recognition) remain separate experiences; they just
- * share this one doorway. Hidden Discovery has no nav tab of its own.
+ * The Greeting Card is a DAILY RITUAL: it opens once on the first visit each day,
+ * then later visits go straight into 我的旅程. A quiet "今日寄语" button re-opens
+ * today's greeting on demand. Glowing You is also the single doorway to Hidden
+ * Discovery — a link opens the permanent Collection (its own distinct screen).
+ * Habits (growth) and Discovery (recognition) stay separate experiences.
  */
 export default function GlowingYouPage() {
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
   const { badges, loading, summary, message, upgrade, dismissUpgrade } = useHealthCollection(customerId);
-  const [view, setView] = useState<"growth" | "journey">("growth");
+
+  // Was today's greeting already seen? (localStorage, SSR-safe via external store.)
+  const seenToday = useSyncExternalStore(
+    noSubscribe,
+    () => localStorage.getItem(greetingKey()) != null,
+    () => false,
+  );
+  // Manual override: user finished the greeting, or tapped 今日寄语 to reopen it.
+  const [override, setOverride] = useState<"greeting" | "journey" | null>(null);
   const [selected, setSelected] = useState<BadgeView | null>(null);
+
+  const view = override ?? (seenToday ? "journey" : "greeting");
+
+  function seeGreetingDone() {
+    try {
+      localStorage.setItem(greetingKey(), "1");
+    } catch {
+      // private mode etc. — worst case the greeting shows again; harmless
+    }
+    setOverride("journey");
+  }
 
   if (loading) {
     return (
@@ -35,32 +58,24 @@ export default function GlowingYouPage() {
     );
   }
 
-  if (view === "growth") {
-    return (
-      <GrowthCard
-        summary={summary}
-        message={message}
-        onView={() => setView("journey")}
-        onLater={() => setView("journey")}
-      />
-    );
+  if (view === "greeting") {
+    return <GrowthCard summary={summary} message={message} onView={seeGreetingDone} onLater={seeGreetingDone} />;
   }
 
   return (
     <div className="px-4 pb-12 md:px-8">
-      <header className="flex items-center gap-2 pt-1">
-        <button
-          type="button"
-          onClick={() => setView("growth")}
-          aria-label="返回"
-          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-        >
-          ‹
-        </button>
+      <header className="flex items-center justify-between gap-2 pt-1">
         <div>
           <h1 className="text-lg font-bold text-slate-900">🌸 我的旅程</h1>
           <p className="text-xs text-slate-400">每一个习惯，都在让你更闪耀一点。</p>
         </div>
+        <button
+          type="button"
+          onClick={() => setOverride("greeting")}
+          className="shrink-0 rounded-full border border-rose-100 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-500 transition hover:bg-rose-100"
+        >
+          ✨ 今日寄语
+        </button>
       </header>
 
       {/* Healthy Habits — the growth system */}
@@ -82,7 +97,7 @@ export default function GlowingYouPage() {
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-2xl shadow-sm">✨</span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-slate-800">我的发现</p>
-          <p className="text-xs text-slate-400">你旅程中，被看见的那些时刻。</p>
+          <p className="text-xs text-slate-400">这里收藏着，旅程中被看见的时刻。</p>
         </div>
         <span className="text-slate-300">›</span>
       </Link>
