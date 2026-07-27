@@ -36,8 +36,8 @@ export function RevealSession({ items, onDone }: { items: RevealItem[]; onDone: 
       // swallow — the session still closes; the queue self-heals next visit
     }
     onDone();
-    // Guide the user to where these moments now live, inside Glowing You.
-    router.push("/customer/discoveries");
+    // Guide the user into Glowing You, where these moments now live.
+    router.push("/customer/rewards");
   }
 
   return (

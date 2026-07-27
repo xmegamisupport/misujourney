@@ -2235,6 +2235,7 @@ export type Database = {
         Returns: string
       }
       customer_local_date: { Args: { p_customer_id: string }; Returns: string }
+      demo_seed_discoveries: { Args: never; Returns: number }
       discovery_longest_streak: { Args: { p_dates: string[] }; Returns: number }
       evaluate_discoveries: { Args: never; Returns: Json }
       generate_journey_nutrition_target: {
@@ -2294,6 +2295,7 @@ export type Database = {
       }
       get_my_discoveries: { Args: never; Returns: Json }
       get_my_discovery_collection: { Args: never; Returns: Json }
+      get_my_discovery_gallery: { Args: never; Returns: Json }
       get_my_journey_points: { Args: never; Returns: Json }
       get_my_learning_history: {
         Args: never

@@ -1,43 +1,53 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
-import Link from "next/link";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useHealthCollection } from "@/lib/health-collection/hooks";
 import { todayDateStr } from "@/lib/inventory/engine";
+import { cn } from "@/lib/utils";
 import type { BadgeView } from "@/lib/health-collection/types";
 import { GrowthCard } from "@/components/health-collection/GrowthCard";
 import { BadgeCard } from "@/components/health-collection/BadgeCard";
 import { BadgeDetailSheet } from "@/components/health-collection/BadgeDetailSheet";
 import { UpgradePopup } from "@/components/health-collection/UpgradePopup";
+import { DiscoveryMoment } from "@/components/hidden-discovery/DiscoveryMoment";
+import { getDiscoveryGallery, ambientFor, type GalleryItem } from "@/lib/discovery/reveal";
 
 const greetingKey = () => `misu-greeting-seen:${todayDateStr()}`;
-// We only read the flag once per mount; no need to react to writes.
 const noSubscribe = () => () => {};
 
 /**
- * 🌸 Glowing You — the growth hub.
+ * 🌸 Glowing You — the user's complete growth space, on one page.
  *
- * The Greeting Card is a DAILY RITUAL: it opens once on the first visit each day,
- * then later visits go straight into 我的旅程. A quiet "今日寄语" button re-opens
- * today's greeting on demand. Glowing You is also the single doorway to Hidden
- * Discovery — a link opens the permanent Collection (its own distinct screen).
- * Habits (growth) and Discovery (recognition) stay separate experiences.
+ * Healthy Habits (daily growth) and Hidden Discovery (life moments) live
+ * together here — no extra navigation. The Discovery section is a lightweight
+ * gallery for BROWSING: each tile is only an icon, a name, and (if discovered)
+ * a date — the emotional writing lives one tap deeper, in the moment itself.
+ * Undiscovered discoveries appear as visible mysteries (icon + name), never
+ * with a condition, progress, rarity, count, or hint. Collection, not checklist.
+ *
+ * The Greeting Card is a daily ritual (once per day; re-openable via 今日寄语).
  */
 export default function GlowingYouPage() {
   const { user } = useAuthUser();
   const customerId = user?.id ?? "";
   const { badges, loading, summary, message, upgrade, dismissUpgrade } = useHealthCollection(customerId);
 
-  // Was today's greeting already seen? (localStorage, SSR-safe via external store.)
   const seenToday = useSyncExternalStore(
     noSubscribe,
     () => localStorage.getItem(greetingKey()) != null,
     () => false,
   );
-  // Manual override: user finished the greeting, or tapped 今日寄语 to reopen it.
   const [override, setOverride] = useState<"greeting" | "journey" | null>(null);
   const [selected, setSelected] = useState<BadgeView | null>(null);
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [moment, setMoment] = useState<GalleryItem | null>(null);
+
+  useEffect(() => {
+    getDiscoveryGallery()
+      .then(setGallery)
+      .catch(() => setGallery([]));
+  }, []);
 
   const view = override ?? (seenToday ? "journey" : "greeting");
 
@@ -45,7 +55,7 @@ export default function GlowingYouPage() {
     try {
       localStorage.setItem(greetingKey(), "1");
     } catch {
-      // private mode etc. — worst case the greeting shows again; harmless
+      // private mode — worst case the greeting shows again; harmless
     }
     setOverride("journey");
   }
@@ -78,7 +88,7 @@ export default function GlowingYouPage() {
         </button>
       </header>
 
-      {/* Healthy Habits — the growth system */}
+      {/* Healthy Habits — daily growth */}
       <section className="mt-5">
         <h2 className="mb-3 text-base font-bold text-slate-800">健康习惯</h2>
         <div className="grid grid-cols-3 gap-2.5">
@@ -88,22 +98,45 @@ export default function GlowingYouPage() {
         </div>
       </section>
 
-      {/* The one doorway into Hidden Discovery — a distinct recognition system.
-          No teasing: this only points to what has already been discovered. */}
-      <Link
-        href="/customer/discoveries"
-        className="mt-6 flex items-center gap-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-indigo-50/70 to-white p-4 shadow-sm transition hover:border-indigo-200"
-      >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-2xl shadow-sm">✨</span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-slate-800">我的发现</p>
-          <p className="text-xs text-slate-400">这里收藏着，旅程中被看见的时刻。</p>
-        </div>
-        <span className="text-slate-300">›</span>
-      </Link>
+      {/* Hidden Discovery — life moments. A gallery to browse, not read. */}
+      {gallery.length > 0 && (
+        <section className="mt-7">
+          <h2 className="mb-3 text-base font-bold text-slate-800">✨ 我的发现</h2>
+          <div className="grid grid-cols-3 gap-2.5">
+            {gallery.map((it) => {
+              const disc = it.discovered;
+              const a = disc ? ambientFor(it.category ?? "", it.code) : null;
+              return (
+                <button
+                  key={it.code}
+                  type="button"
+                  onClick={() => setMoment(it)}
+                  className="flex flex-col items-center gap-1.5 rounded-2xl p-2 text-center transition active:scale-95"
+                >
+                  <span
+                    className="flex h-14 w-14 items-center justify-center rounded-full text-2xl"
+                    style={
+                      disc
+                        ? { background: `linear-gradient(140deg, ${a!.from}, ${a!.to})`, boxShadow: `0 8px 22px -12px ${a!.ring}` }
+                        : { background: "#f1f5f9" }
+                    }
+                  >
+                    <span style={{ opacity: disc ? 1 : 0.5 }}>{it.icon}</span>
+                  </span>
+                  <span className={cn("text-[11px] font-medium leading-tight", disc ? "text-slate-700" : "text-slate-400")}>
+                    {it.name}
+                  </span>
+                  {disc && <span className="text-[9px] tracking-wide text-slate-400">{it.discoveredAt?.slice(0, 10)}</span>}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <BadgeDetailSheet badge={selected} onClose={() => setSelected(null)} />
       {upgrade && <UpgradePopup upgrade={upgrade} onDismiss={dismissUpgrade} />}
+      {moment && <DiscoveryMoment item={moment} onClose={() => setMoment(null)} />}
     </div>
   );
 }

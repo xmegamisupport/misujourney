@@ -19,17 +19,20 @@ Hidden Discovery is not a badge collection, reward system, or gamification mecha
 recognizes meaningful growth the user may not even realize happened. The feeling is always
 *"the system noticed something beautiful about me"* — never *"congratulations, another task done."*
 
-### Principle 2 — Two systems, never merged
+### Principle 2 — Two systems, one space *(updated 2026-07-28)*
 Healthy Habits = **growth** (levels, XP, progress, daily streaks). Hidden Discovery =
-**recognition** (one-time, permanent, no progression). They are different emotional systems and
-never share a screen. They may share a single doorway (the Collection is entered from Glowing
-You), but each remains its own experience.
+**recognition** (one-time, permanent, no progression). They are different emotional systems, but
+they live **together** on Glowing You — the user's complete growth space — with no extra
+navigation. Living together is not blending: Habits stay a progress system, Discovery stays a
+collection of moments. Never let Discovery inherit Habits' mechanics (levels, XP, completion).
 
-### Principle 3 — Invisible until discovered
-A discovery does not exist to the user until the system decides *"we noticed something worth
-celebrating."* Never show question marks, locked cards, silhouettes, "coming soon", unknown
-discoveries, or a remaining-count. **The entrance exists; the hidden content does not.** The user
-should never know what discoveries still await — that surprise is the point of the word "Hidden".
+### Principle 3 — Visible mystery, never a spoiler *(updated 2026-07-28)*
+Earlier we made undiscovered discoveries fully invisible. After testing the real UI, **visible
+mystery creates stronger curiosity**, so undiscovered discoveries now DO appear — but only as an
+**icon and a name**. Never reveal an unlock condition, progress, rarity, percentage, remaining
+count, or hint; never a lock icon, silhouette, question mark, or "coming soon". A user simply sees
+🦋 and its name and wonders *"I wonder how I'll discover this"* — never *"complete 7 days."* The
+face is shown; the path is not.
 
 ### Principle 4 — One-time, permanent, no rank
 Every discovery unlocks once, is collected forever, never repeats, never upgrades. No rarity, no
@@ -65,6 +68,19 @@ like a **personal museum / memory album / gallery of meaningful moments**. Openi
 later, a user should *want* to slowly browse, tap each discovery, reread its message, and remember
 their journey. The page encourages reflection, not the display of information. First feeling on
 open: *"these are my memories"* — never *"these are database records."*
+
+### Principle 10 — Overview browses; detail remembers *(progressive disclosure)*
+The overview (the Glowing You gallery) is for **browsing** — scannable in seconds: each discovery
+is only an icon, a name, and a date (if discovered). No recognition paragraph, no celebration
+copy, no reading on the overview. The full emotional experience — animation, recognition message,
+celebration — lives **one tap deeper**, in each discovery's own moment. The overview is for
+finding; the detail is for remembering.
+
+### Principle 11 — A collection, not a checklist
+Hidden Discovery is a collection to be curious about, not a checklist to complete. Never frame it
+around completion: no "3 / 23", no "18 left", no progress toward "all discoveries". The feeling to
+create is *"there are still many meaningful moments waiting for me,"* never *"I have 18
+achievements left."* Curiosity, not completion.
 
 ---
 

@@ -19,16 +19,6 @@ export interface RevealItem {
   category: string;
 }
 
-/** A permanently-collected discovery. */
-export interface CollectionItem {
-  code: string;
-  name: string;
-  icon: string;
-  message: string;
-  category: string;
-  discoveredAt: string;
-}
-
 /** Discoveries unlocked but not yet revealed to this user. */
 export async function getReadyReveals(): Promise<RevealItem[]> {
   const supabase = createClient();
@@ -44,12 +34,29 @@ export async function acknowledgeReveals(queueIds: string[]): Promise<void> {
   await supabase.rpc("acknowledge_discovery_reveals", { p_queue_ids: queueIds });
 }
 
-/** The permanent Collection, newest first. */
-export async function getDiscoveryCollection(): Promise<CollectionItem[]> {
+/** One tile in the overview gallery — discovered (full) OR a visible mystery. */
+export interface GalleryItem {
+  code: string;
+  name: string;
+  icon: string;
+  discovered: boolean;
+  /** null for undiscovered — no atmosphere is revealed until you earn it. */
+  category: string | null;
+  /** null for undiscovered — the recognition message is never spoiled. */
+  message: string | null;
+  discoveredAt: string | null;
+}
+
+/**
+ * The Glowing You gallery: every enabled discovery. Discovered ones carry their
+ * full moment; undiscovered ones are visible mysteries (icon + name only) —
+ * never a condition, progress, rarity, count, or hint.
+ */
+export async function getDiscoveryGallery(): Promise<GalleryItem[]> {
   const supabase = createClient();
-  const { data, error } = await supabase.rpc("get_my_discovery_collection");
+  const { data, error } = await supabase.rpc("get_my_discovery_gallery");
   if (error || !Array.isArray(data)) return [];
-  return data as unknown as CollectionItem[];
+  return data as unknown as GalleryItem[];
 }
 
 /** Soft ambient palette per category — gives each Discovery its own little
