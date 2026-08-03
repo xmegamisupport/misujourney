@@ -28,16 +28,18 @@ function DiscoveredTile({ item, onClick }: { item: DiscoveredItem; onClick: () =
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center gap-1.5 rounded-2xl p-2 text-center transition active:scale-95"
+      className="group flex flex-col items-center gap-1.5 rounded-2xl p-1.5 text-center"
     >
       <span
-        className="flex h-14 w-14 items-center justify-center rounded-full text-2xl"
-        style={{ background: `linear-gradient(140deg, ${a.from}, ${a.to})`, boxShadow: `0 8px 22px -12px ${a.ring}` }}
+        className="flex h-16 w-16 items-center justify-center rounded-full text-[26px] transition-transform duration-500 ease-soft group-hover:-translate-y-0.5 group-active:scale-95"
+        style={{ background: `linear-gradient(140deg, ${a.from}, ${a.to})`, boxShadow: `0 10px 24px -12px ${a.ring}` }}
       >
         {item.icon}
       </span>
-      <span className="text-[11px] font-medium leading-tight text-slate-700">{item.name}</span>
-      <span className="text-[9px] tracking-wide text-slate-400">{item.discoveredAt?.slice(0, 10)}</span>
+      <span className="text-[11px] font-semibold leading-tight text-ink">{item.name}</span>
+      <span className="text-[9px] font-medium tracking-wide text-ink-faint tabular-nums">
+        {item.discoveredAt?.slice(0, 10)}
+      </span>
     </button>
   );
 }
@@ -49,18 +51,13 @@ function MysteryTile({ item, onClick }: { item: MysteryItem; onClick: () => void
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center gap-1.5 rounded-2xl p-2 text-center transition active:scale-95"
+      className="group flex flex-col items-center gap-1.5 rounded-2xl p-1.5 text-center"
     >
-      <span
-        className="flex h-14 w-14 items-center justify-center rounded-full text-2xl"
-        style={{ background: "#f8fafc", border: "1px dashed #e2e8f0" }}
-      >
+      <span className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-line bg-line-soft text-[26px] transition-transform duration-500 ease-soft group-hover:-translate-y-0.5 group-active:scale-95">
         <span className="opacity-40">❔</span>
       </span>
-      <span className="text-[11px] font-medium leading-tight tracking-widest text-slate-300">??????</span>
-      <span className="line-clamp-2 max-w-[7rem] font-serif text-[10px] italic leading-snug text-slate-400">
-        {item.hint}
-      </span>
+      <span className="text-[11px] font-semibold tracking-[0.2em] text-ink-faint">??????</span>
+      <span className="line-clamp-2 max-w-[7.5rem] text-[10px] italic leading-snug text-ink-soft">{item.hint}</span>
     </button>
   );
 }
@@ -114,7 +111,7 @@ export default function GlowingYouPage() {
   if (loading) {
     return (
       <div className="flex min-h-[calc(100vh-9rem)] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-tint border-t-brand" />
       </div>
     );
   }
@@ -124,55 +121,66 @@ export default function GlowingYouPage() {
   }
 
   return (
-    <div className="px-4 pb-12 md:px-8">
-      <header className="flex items-center justify-between gap-2 pt-1">
-        <div>
-          <h1 className="text-lg font-bold text-slate-900">🌸 我的旅程</h1>
-          <p className="text-xs text-slate-400">每一个习惯，都在让你更闪耀一点。</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setOverride("greeting")}
-          className="shrink-0 rounded-full border border-rose-100 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-500 transition hover:bg-rose-100"
-        >
-          ✨ 今日寄语
-        </button>
-      </header>
+    <div className="relative min-h-[calc(100vh-4rem)] px-4 pb-28 pt-2">
+      {/* A whisper of brand pink at the crown — atmosphere, not a wash. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(90%_100%_at_20%_0%,#fce9ef_0%,transparent_72%)]"
+      />
 
-      {/* Healthy Habits — daily growth */}
-      <section className="mt-5">
-        <h2 className="mb-3 text-base font-bold text-slate-800">健康习惯</h2>
-        <div className="grid grid-cols-3 gap-2.5">
-          {badges.map((b) => (
-            <BadgeCard key={b.def.id} badge={b} onClick={() => setSelected(b)} />
-          ))}
-        </div>
-      </section>
+      <div className="relative">
+        <header className="misu-rise flex items-start justify-between gap-3 pt-1">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-deep">Glowing You</p>
+            <h1 className="mt-0.5 text-xl font-bold tracking-tight text-ink">我的旅程</h1>
+            <p className="mt-0.5 text-xs text-ink-soft">每一个习惯，都在让你更闪耀一点。</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOverride("greeting")}
+            className="shrink-0 rounded-full border border-brand-soft/60 bg-brand-tint px-3.5 py-1.5 text-xs font-semibold text-brand-deep transition duration-500 ease-soft hover:-translate-y-0.5 active:scale-95"
+          >
+            ✨ 今日寄语
+          </button>
+        </header>
 
-      {/* Hidden Discovery — browse, don't read. Two groups: what you've found,
-          and a rotating few still waiting. Curiosity, never a checklist. */}
-      {discovered.length > 0 && (
-        <section className="mt-7">
-          <h2 className="mb-3 text-base font-bold text-slate-800">🌟 已发现的时刻</h2>
+        {/* Healthy Habits — daily growth */}
+        <section className="misu-rise mt-6" style={{ animationDelay: "60ms" }}>
+          <h2 className="mb-3 flex items-baseline gap-2 text-[15px] font-bold text-ink">
+            健康习惯 <span className="text-[11px] font-medium text-ink-faint">· 成长</span>
+          </h2>
           <div className="grid grid-cols-3 gap-2.5">
-            {discovered.map((it) => (
-              <DiscoveredTile key={it.code} item={it} onClick={() => setMoment(it)} />
+            {badges.map((b) => (
+              <BadgeCard key={b.def.id} badge={b} onClick={() => setSelected(b)} />
             ))}
           </div>
         </section>
-      )}
 
-      {mysteries.length > 0 && (
-        <section className="mt-7">
-          <h2 className="text-base font-bold text-slate-800">✨ 等待被发现</h2>
-          <p className="mb-3 mt-0.5 text-xs text-slate-400">旅程里，还藏着一些谜一样的时刻，等你亲手揭开。</p>
-          <div className="grid grid-cols-3 gap-2.5">
-            {mysteries.map((it) => (
-              <MysteryTile key={it.mysteryId} item={it} onClick={() => setMoment(it)} />
-            ))}
-          </div>
-        </section>
-      )}
+        {/* Hidden Discovery — browse, don't read. Two groups: what you've found,
+            and a rotating few still waiting. Curiosity, never a checklist. */}
+        {discovered.length > 0 && (
+          <section className="misu-rise mt-8" style={{ animationDelay: "120ms" }}>
+            <h2 className="mb-3 text-[15px] font-bold text-ink">🌟 已发现的时刻</h2>
+            <div className="grid grid-cols-3 gap-1.5">
+              {discovered.map((it) => (
+                <DiscoveredTile key={it.code} item={it} onClick={() => setMoment(it)} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {mysteries.length > 0 && (
+          <section className="misu-rise mt-8" style={{ animationDelay: "180ms" }}>
+            <h2 className="text-[15px] font-bold text-ink">✨ 等待被发现</h2>
+            <p className="mb-3 mt-0.5 text-xs text-ink-soft">旅程里，还藏着一些谜一样的时刻，等你亲手揭开。</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {mysteries.map((it) => (
+                <MysteryTile key={it.mysteryId} item={it} onClick={() => setMoment(it)} />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
 
       <BadgeDetailSheet badge={selected} onClose={() => setSelected(null)} />
       {upgrade && <UpgradePopup upgrade={upgrade} onDismiss={dismissUpgrade} />}

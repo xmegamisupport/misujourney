@@ -18,15 +18,15 @@ export function BadgeCard({ badge, onClick }: { badge: BadgeView; onClick: () =>
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center rounded-2xl px-1 py-3 text-center transition active:scale-[0.96]"
+      className="group flex flex-col items-center gap-2 rounded-lg border border-line bg-surface px-1 py-3.5 text-center shadow-elev1 transition duration-500 ease-soft hover:-translate-y-0.5 active:scale-[0.97]"
     >
       <span
         className="rounded-full"
         style={{ boxShadow: started ? `0 6px 22px -8px ${color}88` : "none" }}
       >
-        <BadgeRing percent={badge.ringPercent} color={color} icon={badgeIcon(badge.def, badge.levelKey)} size={66} stroke={5} muted={!started} />
+        <BadgeRing percent={badge.ringPercent} color={color} icon={badgeIcon(badge.def, badge.levelKey)} size={62} stroke={5} muted={!started} />
       </span>
-      <p className={`mt-2 text-[12px] font-semibold leading-tight ${started ? "text-slate-700" : "text-slate-400"}`}>
+      <p className={`text-[12px] font-semibold leading-tight ${started ? "text-ink" : "text-ink-faint"}`}>
         {badge.def.habitName}
       </p>
     </button>

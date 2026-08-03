@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #1f2933;
+  --background: #fbfafb;
+  --foreground: #232228;
 }
 
 @theme inline {
@@ -10,6 +10,46 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   MISU Journey — Design Tokens · "精致柔和" (premium soft) · brand pink
+   The one place the visual language is defined. Components consume these as
+   Tailwind utilities (bg-brand, text-ink, border-line, rounded-card,
+   shadow-elev1, ease-soft) and as CSS vars for gradients/inline styles.
+   ───────────────────────────────────────────────────────────────────────── */
+@theme {
+  /* Surfaces & ink — warm-neutral, never dead grey */
+  --color-canvas: #fbfafb;
+  --color-surface: #ffffff;
+  --color-ink: #232228;
+  --color-ink-soft: #7b7b7b;
+  --color-ink-faint: #aeaeb2;
+  --color-line: #e4e4e4;
+  --color-line-soft: #efeef0;
+
+  /* Brand pink — action, progress, identity. Used precisely, never flooded. */
+  --color-brand: #ee4d81;
+  --color-brand-deep: #d23b6c;
+  --color-brand-tint: #fce9ef;
+  --color-brand-soft: #f8bbcb;
+
+  /* Semantic (kept separate from the accent) */
+  --color-amber: #d9a24b;
+  --color-amber-tint: #f7ecd6;
+
+  /* Radii — squircle scale */
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-card: 28px;
+
+  /* Elevation — soft, diffused, near-colourless. No harsh black drop shadows. */
+  --shadow-elev1: 0 1px 2px rgba(35, 34, 40, 0.04), 0 6px 16px -10px rgba(35, 34, 40, 0.14);
+  --shadow-elev2: 0 2px 6px rgba(35, 34, 40, 0.05), 0 18px 38px -16px rgba(35, 34, 40, 0.18);
+  --shadow-brand: 0 10px 24px -12px rgba(238, 77, 129, 0.55);
+
+  /* Motion — weighted easing, never linear */
+  --ease-soft: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 body {
@@ -55,10 +95,27 @@ body {
   animation: journey-points-pop 2.1s ease-out forwards;
 }
 
+/* A gentle upward settle for content entering a view. */
+@keyframes misu-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.misu-rise {
+  animation: misu-rise 0.7s var(--ease-soft) both;
+}
+
 /* Someone who has asked their device for less motion still gets the reward —
    it simply appears and leaves instead of travelling. */
 @media (prefers-reduced-motion: reduce) {
-  .journey-points-toast {
+  .journey-points-toast,
+  .misu-rise {
     animation: none;
   }
 }
