@@ -40,35 +40,35 @@ export default function CustomerProfilePage() {
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
       <PageHeader title="我的" />
 
-      <div className="flex items-center gap-4 rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-sky-50 p-5">
+      <div className="flex items-center gap-4 rounded-card border border-brand-soft/40 bg-gradient-to-br from-brand-tint to-[#f6f2f3] p-5 shadow-elev1">
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-sm">
           {journey?.avatar ?? "🙂"}
         </span>
         <div>
-          <p className="text-lg font-semibold text-slate-900">{journey?.name ?? ""}</p>
-          <p className="text-sm text-slate-500">
+          <p className="text-lg font-semibold text-ink">{journey?.name ?? ""}</p>
+          <p className="text-sm text-ink-soft">
             Day {journey?.currentDay ?? 1} / {journey?.planLength ?? 30}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-slate-100 bg-white p-3 text-center shadow-sm">
-          <p className="text-base font-semibold text-slate-900">{journey?.age ?? "—"}</p>
-          <p className="text-xs text-slate-400">年龄</p>
+        <div className="rounded-lg border border-line bg-surface p-3 text-center shadow-sm">
+          <p className="text-base font-semibold text-ink">{journey?.age ?? "—"}</p>
+          <p className="text-xs text-ink-faint">年龄</p>
         </div>
-        <div className="rounded-2xl border border-slate-100 bg-white p-3 text-center shadow-sm">
-          <p className="text-base font-semibold text-slate-900">{journey?.height ?? "—"}cm</p>
-          <p className="text-xs text-slate-400">身高</p>
+        <div className="rounded-lg border border-line bg-surface p-3 text-center shadow-sm">
+          <p className="text-base font-semibold text-ink">{journey?.height ?? "—"}cm</p>
+          <p className="text-xs text-ink-faint">身高</p>
         </div>
-        <div className="rounded-2xl border border-slate-100 bg-white p-3 text-center shadow-sm">
-          <p className="text-base font-semibold text-slate-900">{currentWeight ?? "—"}kg</p>
-          <p className="text-xs text-slate-400">当前体重</p>
+        <div className="rounded-lg border border-line bg-surface p-3 text-center shadow-sm">
+          <p className="text-base font-semibold text-ink">{currentWeight ?? "—"}kg</p>
+          <p className="text-xs text-ink-faint">当前体重</p>
         </div>
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-semibold text-slate-700">我的产品库存</p>
+        <p className="mb-2 text-sm font-semibold text-ink">我的产品库存</p>
         {hasInventory ? (
           <div className="grid grid-cols-2 gap-3">
             {inventoryProducts.map((productCode) => {
@@ -90,8 +90,8 @@ export default function CustomerProfilePage() {
           >
             <span className="text-2xl">📦</span>
             <div>
-              <p className="text-sm font-semibold text-slate-800">请先更新你的 MISU 产品库存</p>
-              <p className="text-xs text-slate-500">填写目前剩余包数，开始追踪库存 →</p>
+              <p className="text-sm font-semibold text-ink">请先更新你的 MISU 产品库存</p>
+              <p className="text-xs text-ink-soft">填写目前剩余包数，开始追踪库存 →</p>
             </div>
           </Link>
         )}
@@ -99,40 +99,40 @@ export default function CustomerProfilePage() {
 
       <JourneyCoachCard />
 
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-line bg-surface shadow-sm">
         {linkItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className="flex items-center gap-3 border-b border-slate-50 px-4 py-3.5 text-sm text-slate-700 last:border-b-0 hover:bg-slate-50"
+            className="flex items-center gap-3 border-b border-line-soft px-4 py-3.5 text-sm text-ink last:border-b-0 hover:bg-canvas"
           >
             <span className="text-lg">{item.icon}</span>
             <span className="flex-1">{item.label}</span>
-            <span className="text-slate-300">→</span>
+            <span className="text-ink-faint">→</span>
           </Link>
         ))}
       </div>
 
       <AccountSettingsSection />
 
-      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+      <div className="rounded-lg border border-line bg-surface p-4 shadow-sm">
         <LanguageSwitcher />
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-line bg-surface shadow-sm">
         {staticItems.map((item) => (
           <div
             key={item.label}
-            className="flex items-center gap-3 border-b border-slate-50 px-4 py-3.5 text-sm text-slate-700 last:border-b-0"
+            className="flex items-center gap-3 border-b border-line-soft px-4 py-3.5 text-sm text-ink last:border-b-0"
           >
             <span className="text-lg">{item.icon}</span>
             <span className="flex-1">{item.label}</span>
-            <span className="text-slate-300">→</span>
+            <span className="text-ink-faint">→</span>
           </div>
         ))}
       </div>
 
-      <SignOutButton className="rounded-xl border border-rose-100 bg-rose-50 py-3 text-center text-sm font-semibold text-rose-500 transition hover:bg-rose-100" />
+      <SignOutButton className="rounded-full border border-rose-100 bg-rose-50 py-3 text-center text-sm font-semibold text-rose-500 transition hover:bg-rose-100" />
     </div>
   );
 }
