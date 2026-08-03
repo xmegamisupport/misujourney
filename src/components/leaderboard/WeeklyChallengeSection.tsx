@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { getWeeklyChallenge, type WeeklyChallenge } from "@/lib/leaderboard/engine";
 import type { LeaderboardSectionDef } from "@/lib/leaderboard/registry";
 import { cn } from "@/lib/utils";
@@ -99,6 +100,23 @@ export function WeeklyChallengeSection({ def }: { def: LeaderboardSectionDef }) 
                 ))}
               </div>
             )}
+
+            {/* Call-to-action — the challenge is a GOAL, so it points at doing,
+                not at ranking. Completing daily tasks is how you complete it. */}
+            <div className="mt-4">
+              {data.meCompleted ? (
+                <div className="rounded-full bg-brand-tint py-2.5 text-center text-sm font-semibold text-brand-deep">
+                  🎉 你已完成本周挑战
+                </div>
+              ) : (
+                <Link
+                  href="/customer"
+                  className="flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-brand to-brand-deep py-2.5 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5"
+                >
+                  去完成今日 Journey →
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       )}

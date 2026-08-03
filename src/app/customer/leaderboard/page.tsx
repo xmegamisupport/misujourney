@@ -1,20 +1,20 @@
 "use client";
 
 import { LEADERBOARD_SECTIONS } from "@/lib/leaderboard/registry";
-import { LeaderboardSection } from "@/components/leaderboard/LeaderboardSection";
 import { WeeklyChallengeSection } from "@/components/leaderboard/WeeklyChallengeSection";
+import { LeaderboardTabs } from "@/components/leaderboard/LeaderboardTabs";
 
 /**
  * 🏆 Leaderboard — COMMUNITY motivation, separate from personal progress
- * (我的 → 我的进展). "Our journey": how I'm doing alongside everyone else, with a
- * reason to come back every week.
- *
- * The page is intentionally dumb: it renders whatever the registry declares.
- * Ranking boards use one generic component; the weekly challenge uses its own
- * participation-shaped component. Adding a future board (monthly, habit,
- * coach-team, special event…) is a registry entry (+ an RPC case) — this file
- * never changes.
+ * (我的 → 我的进展). Information hierarchy is deliberate:
+ *   1. GOAL first — the Weekly Challenge is always visible at the top. It tells
+ *      the user "what should I do this week?" and points at action.
+ *   2. RECOGNITION second — the ranking boards, in a single TABBED container
+ *      (one board at a time), so the page never becomes a long scroll of lists.
+ * Boards are registry-driven; tabs derive from it (see LeaderboardTabs).
  */
+const CHALLENGE = LEADERBOARD_SECTIONS.find((d) => d.kind === "challenge");
+
 export default function LeaderboardPage() {
   return (
     <div className="relative min-h-[calc(100vh-4rem)] px-4 pb-28 pt-2">
@@ -27,16 +27,20 @@ export default function LeaderboardPage() {
         <header className="misu-rise pt-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-deep">Leaderboard</p>
           <h1 className="mt-1 text-xl font-bold tracking-tight text-ink">排行榜</h1>
-          <p className="mt-0.5 text-xs text-ink-soft">我们的旅程 —— 每周，和大家一起，再往前一点。</p>
+          <p className="mt-0.5 text-xs text-ink-soft">我们的旅程 —— 先看这周一起做什么，再看大家走到了哪。</p>
         </header>
 
-        {LEADERBOARD_SECTIONS.map((def) =>
-          def.kind === "challenge" ? (
-            <WeeklyChallengeSection key={def.id} def={def} />
-          ) : (
-            <LeaderboardSection key={def.id} def={def} />
-          ),
-        )}
+        {/* 1 · GOAL — always visible, points at action */}
+        {CHALLENGE && <WeeklyChallengeSection def={CHALLENGE} />}
+
+        <div className="misu-rise flex items-center gap-3 px-1">
+          <span className="h-px flex-1 bg-line" />
+          <span className="shrink-0 text-[11px] font-semibold tracking-wide text-ink-faint">榜单 · 看看大家</span>
+          <span className="h-px flex-1 bg-line" />
+        </div>
+
+        {/* 2 · RECOGNITION — one board at a time, tabbed */}
+        <LeaderboardTabs />
 
         <p className="misu-rise px-2 text-center text-xs leading-relaxed text-ink-faint">
           排行榜是「我们」——和大家一起。想看自己的成长轨迹，在
