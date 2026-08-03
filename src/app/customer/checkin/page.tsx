@@ -78,7 +78,7 @@ export default function DailyCheckinPage() {
             setLegacyError(null);
           }}
         >
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <div className="rounded-card border border-line bg-surface p-4 shadow-elev1">
             <label className="flex flex-col gap-1.5 text-sm text-slate-600">
               MISU N+ 代餐剩余多少包？
               <input
@@ -88,11 +88,11 @@ export default function DailyCheckinPage() {
                 step={1}
                 value={legacyN}
                 onChange={(e) => setLegacyN(e.target.value)}
-                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                className="rounded-xl border border-line px-3.5 py-2.5 text-base outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-tint"
               />
             </label>
           </div>
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <div className="rounded-card border border-line bg-surface p-4 shadow-elev1">
             <label className="flex flex-col gap-1.5 text-sm text-slate-600">
               MISU DX+ 排毒剩余多少包？
               <input
@@ -102,7 +102,7 @@ export default function DailyCheckinPage() {
                 step={1}
                 value={legacyDX}
                 onChange={(e) => setLegacyDX(e.target.value)}
-                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                className="rounded-xl border border-line px-3.5 py-2.5 text-base outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-tint"
               />
             </label>
           </div>
@@ -112,7 +112,7 @@ export default function DailyCheckinPage() {
           <button
             type="submit"
             disabled={legacySubmitting}
-            className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-60"
+            className="rounded-full bg-gradient-to-br from-brand to-brand-deep py-3.5 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5 disabled:opacity-60"
           >
             {legacySubmitting ? "保存中..." : "保存并继续打卡"}
           </button>
@@ -220,12 +220,12 @@ function CheckInForm({
   if (justSubmitted && !editing) {
     return (
       <div className="flex flex-col items-center gap-4 px-4 py-20 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-3xl">✅</span>
-        <p className="text-lg font-semibold text-slate-900">今日打卡完成！</p>
-        <p className="text-sm text-slate-500">已连续打卡 {streakDays + 1} 天，继续保持 🌱</p>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-tint text-3xl shadow-elev1">✅</span>
+        <p className="text-lg font-semibold text-ink">今日打卡完成！</p>
+        <p className="text-sm text-ink-soft">已连续打卡 {streakDays + 1} 天，继续保持 🌱</p>
         <Link
           href="/customer"
-          className="mt-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+          className="mt-2 rounded-full bg-gradient-to-br from-brand to-brand-deep px-6 py-3 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5"
         >
           返回首页
         </Link>
@@ -256,7 +256,7 @@ function CheckInForm({
               setEditing(true);
               setError(null);
             }}
-            className="rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300"
+            className="rounded-full border border-line py-3 text-sm font-semibold text-ink-soft transition hover:border-ink-faint"
           >
             编辑打卡
           </button>
@@ -281,7 +281,7 @@ function CheckInForm({
 
         <Link
           href="/customer/checkin/history"
-          className="rounded-xl border border-slate-200 py-3 text-center text-sm font-semibold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-600"
+          className="rounded-full border border-line py-3 text-center text-sm font-semibold text-ink-soft transition hover:border-brand-soft hover:text-brand-deep"
         >
           查看晨重历史
         </Link>
@@ -315,7 +315,7 @@ function CheckInForm({
       <p className="-mt-2 text-sm text-slate-500">记录今天的晨重与昨晚睡眠</p>
 
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        <div className="rounded-card border border-line bg-surface p-4 shadow-elev1">
           <label className="flex flex-col gap-1.5 text-sm text-slate-600">
             今日体重 (kg)
             <input
@@ -323,7 +323,7 @@ function CheckInForm({
               step="0.1"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
-              className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              className="rounded-xl border border-line px-3.5 py-2.5 text-base outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-tint"
             />
           </label>
           {(lastWeight !== null || stageGoalLabel) && (
@@ -335,7 +335,7 @@ function CheckInForm({
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        <div className="rounded-card border border-line bg-surface p-4 shadow-elev1">
           <p className="mb-3 flex items-center gap-1.5 text-sm text-slate-600">
             <span>😴</span>睡眠时间
           </p>
@@ -346,7 +346,7 @@ function CheckInForm({
                 type="time"
                 value={bedtime}
                 onChange={(e) => setBedtime(e.target.value)}
-                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                className="rounded-xl border border-line px-3.5 py-2.5 text-base outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-tint"
               />
             </label>
             <label className="flex flex-col gap-1.5 text-xs text-slate-500">
@@ -355,7 +355,7 @@ function CheckInForm({
                 type="time"
                 value={wakeTime}
                 onChange={(e) => setWakeTime(e.target.value)}
-                className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-base outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                className="rounded-xl border border-line px-3.5 py-2.5 text-base outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-tint"
               />
             </label>
           </div>
@@ -366,7 +366,7 @@ function CheckInForm({
 
         <button
           type="submit"
-          className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600"
+          className="rounded-full bg-gradient-to-br from-brand to-brand-deep py-3.5 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5"
         >
           {editing ? "保存修改" : "完成打卡"}
         </button>

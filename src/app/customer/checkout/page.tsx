@@ -143,10 +143,10 @@ function EveningCheckoutForm() {
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
       <PageHeader title={isMakeUp ? `补充${formatMonthDay(targetDate)}回顾` : "🌙 今日回顾"} backHref="/customer" />
 
-      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="rounded-card border border-line bg-surface p-6 shadow-elev1">
         <div className="flex flex-col gap-6">
           <div>
-            <p className="mb-3 text-sm font-semibold text-slate-800">{isMakeUp ? "昨天排便几次？" : "今天排便几次？"}</p>
+            <p className="mb-3 text-sm font-semibold text-ink">{isMakeUp ? "昨天排便几次？" : "今天排便几次？"}</p>
             <div className="grid grid-cols-3 gap-2">
               {(Object.entries(BOWEL_MOVEMENT_LABELS) as [BowelMovementLevel, string][]).map(([value, label]) => (
                 <button
@@ -155,7 +155,7 @@ function EveningCheckoutForm() {
                   onClick={() => setBowelMovement(value)}
                   className={cn(
                     "rounded-xl border px-3 py-3 text-sm font-medium transition",
-                    bowelMovement === value ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-100 text-slate-500 hover:border-slate-200",
+                    bowelMovement === value ? "border-brand-soft bg-brand-tint text-brand-deep" : "border-line text-ink-soft hover:border-ink-faint",
                   )}
                 >
                   {label}
@@ -165,7 +165,7 @@ function EveningCheckoutForm() {
           </div>
 
           <div>
-            <p className="mb-3 text-sm font-semibold text-slate-800">
+            <p className="mb-3 text-sm font-semibold text-ink">
               {isMakeUp ? "昨天有没有特殊情况？" : "今天有没有特殊情况？"}<span className="font-normal text-slate-400">（可多选）</span>
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -176,7 +176,7 @@ function EveningCheckoutForm() {
                   onClick={() => toggleCondition(opt.value)}
                   className={cn(
                     "rounded-xl border px-3 py-2.5 text-sm font-medium transition",
-                    conditions.includes(opt.value) ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-100 text-slate-500 hover:border-slate-200",
+                    conditions.includes(opt.value) ? "border-brand-soft bg-brand-tint text-brand-deep" : "border-line text-ink-soft hover:border-ink-faint",
                   )}
                 >
                   {opt.label}
@@ -186,7 +186,7 @@ function EveningCheckoutForm() {
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-semibold text-slate-800">
+            <p className="mb-2 text-sm font-semibold text-ink">
               {isMakeUp ? "昨天备注" : "今日备注"}<span className="font-normal text-slate-400">（可选）</span>
             </p>
             <textarea
@@ -194,7 +194,7 @@ function EveningCheckoutForm() {
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="例如：今天吃比较多 / 今天身体不舒服 / 今天工作很忙"
-              className="w-full resize-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              className="w-full resize-none rounded-xl border border-line px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-tint"
             />
           </div>
 
@@ -204,7 +204,7 @@ function EveningCheckoutForm() {
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-60"
+            className="rounded-full bg-gradient-to-br from-brand to-brand-deep py-3.5 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5 disabled:opacity-60"
           >
             {submitting ? "提交中..." : "完成回顾"}
           </button>

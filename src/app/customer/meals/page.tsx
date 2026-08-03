@@ -52,7 +52,7 @@ export default function TodayMealsPage() {
           <NutritionCard label="纤维" value={addedTotals.fiber} target={nutritionTargets.dailyFiber} unit="g" icon="🥦" color="bg-emerald-400" />
         </div>
       ) : !nutritionTargetsLoading ? (
-        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-center text-sm text-slate-500">
+        <div className="rounded-card border border-line bg-canvas px-4 py-3 text-center text-sm text-ink-soft">
           完善身高/体重/年龄/性别/活动量资料后，将自动生成你的每日营养目标。
         </div>
       ) : null}
@@ -65,7 +65,7 @@ export default function TodayMealsPage() {
           const meals = addedMeals.filter((m) => m.type === type.key);
           return (
             <div key={type.key}>
-              <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+              <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-ink">
                 <span>{type.icon}</span>
                 {type.label}
               </p>
@@ -83,7 +83,7 @@ export default function TodayMealsPage() {
                   title={`还没有记录${type.label}`}
                   description="拍照上传，让 AI 帮你分析这一餐"
                   action={
-                    <Link href={`/customer/meals/add?type=${type.key}`} className="text-sm font-medium text-emerald-600">
+                    <Link href={`/customer/meals/add?type=${type.key}`} className="text-sm font-semibold text-brand">
                       记录 →
                     </Link>
                   }
@@ -112,28 +112,28 @@ function RecordedMeal({ meal }: { meal: MealEntry }) {
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-card border border-line bg-surface shadow-elev1">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 p-3.5 text-left transition hover:bg-slate-50/60"
+        className="flex w-full items-center gap-3 p-3.5 text-left transition hover:bg-canvas"
       >
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-50 text-2xl">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-tint text-2xl">
           {meal.photoPath ? <MealPhoto photoPath={meal.photoPath} alt={meal.name} /> : meal.photoEmoji}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-slate-800">{meal.name}</p>
-          <p className="text-xs text-slate-400">
+          <p className="truncate text-sm font-medium text-ink">{meal.name}</p>
+          <p className="text-xs text-ink-faint">
             {meal.time} · {meal.calories}kcal
           </p>
-          {items.length > 0 && <p className="mt-1 truncate text-xs font-medium text-emerald-600">{items.join(" · ")}</p>}
+          {items.length > 0 && <p className="mt-1 truncate text-xs font-medium text-brand">{items.join(" · ")}</p>}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-amber-500">
+          <span className="rounded-full bg-amber-tint px-2.5 py-1 text-xs font-semibold text-amber-500">
             {starString(meal.misuScore)}
           </span>
-          <span className="text-[11px] text-slate-400">{open ? "收起 ▲" : "查看 ▼"}</span>
+          <span className="text-[11px] text-ink-faint">{open ? "收起 ▲" : "查看 ▼"}</span>
         </div>
       </button>
 
@@ -153,7 +153,7 @@ function RecordedMeal({ meal }: { meal: MealEntry }) {
               { label: "纤维", value: meal.fiber },
             ].map((n) => (
               <div key={n.label} className="rounded-xl bg-slate-50 py-2">
-                <p className="text-sm font-semibold text-slate-700">{Math.round(n.value)}g</p>
+                <p className="text-sm font-semibold text-ink">{Math.round(n.value)}g</p>
                 <p className="mt-0.5 text-[11px] text-slate-400">{n.label}</p>
               </div>
             ))}
