@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fbfafb;
-  --foreground: #232228;
+  --background: #f0ece9;
+  --foreground: #34313a;
 }
 
 @theme inline {
@@ -19,14 +19,18 @@
    shadow-elev1, ease-soft) and as CSS vars for gradients/inline styles.
    ───────────────────────────────────────────────────────────────────────── */
 @theme {
-  /* Surfaces & ink — warm-neutral, never dead grey */
-  --color-canvas: #fbfafb;
+  /* Surfaces & ink — warm greige, aligned to the XMEGAMI parent brand
+     (bg #edeae8/#f0ece9, soft greys 7b7b7b/999/aaa, darkest ~444 — never
+     harsh black). White cards sit on the greige canvas and gain quiet depth. */
+  --color-canvas: #f0ece9;
   --color-surface: #ffffff;
-  --color-ink: #232228;
+  --color-ink: #34313a;
   --color-ink-soft: #7b7b7b;
-  --color-ink-faint: #aeaeb2;
-  --color-line: #e4e4e4;
-  --color-line-soft: #efeef0;
+  --color-ink-faint: #a8a8ad;
+  --color-line: #e5e0db;
+  --color-line-soft: #ebe6e2;
+  /* Translucent white for glassy pills/chips over the greige ground (XMEGAMI). */
+  --color-glass: rgba(255, 255, 255, 0.62);
 
   /* Brand pink — action, progress, identity. Used precisely, never flooded. */
   --color-brand: #ee4d81;
@@ -38,10 +42,11 @@
   --color-amber: #d9a24b;
   --color-amber-tint: #f7ecd6;
 
-  /* Radii — squircle scale */
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-card: 28px;
+  /* Radii — squircle scale (XMEGAMI cards sit ~16–20px; keep a touch rounder
+     for a mobile product surface without going bubbly) */
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-card: 24px;
 
   /* Elevation — soft, diffused, near-colourless. No harsh black drop shadows. */
   --shadow-elev1: 0 1px 2px rgba(35, 34, 40, 0.04), 0 6px 16px -10px rgba(35, 34, 40, 0.14);

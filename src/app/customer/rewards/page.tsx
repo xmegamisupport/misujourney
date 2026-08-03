@@ -5,6 +5,7 @@ import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useHealthCollection } from "@/lib/health-collection/hooks";
 import { todayDateStr } from "@/lib/inventory/engine";
 import type { BadgeView } from "@/lib/health-collection/types";
+import { Chip } from "@/components/ui/Chip";
 import { GrowthCard } from "@/components/health-collection/GrowthCard";
 import { BadgeCard } from "@/components/health-collection/BadgeCard";
 import { BadgeDetailSheet } from "@/components/health-collection/BadgeDetailSheet";
@@ -131,8 +132,8 @@ export default function GlowingYouPage() {
       <div className="relative">
         <header className="misu-rise flex items-start justify-between gap-3 pt-1">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-deep">Glowing You</p>
-            <h1 className="mt-0.5 text-xl font-bold tracking-tight text-ink">我的旅程</h1>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-deep">Glowing You</p>
+            <h1 className="mt-1 text-xl font-bold tracking-tight text-ink">我的旅程</h1>
             <p className="mt-0.5 text-xs text-ink-soft">每一个习惯，都在让你更闪耀一点。</p>
           </div>
           <button
@@ -146,8 +147,8 @@ export default function GlowingYouPage() {
 
         {/* Healthy Habits — daily growth */}
         <section className="misu-rise mt-6" style={{ animationDelay: "60ms" }}>
-          <h2 className="mb-3 flex items-baseline gap-2 text-[15px] font-bold text-ink">
-            健康习惯 <span className="text-[11px] font-medium text-ink-faint">· 成长</span>
+          <h2 className="mb-3 flex items-center gap-2 text-[15px] font-bold text-ink">
+            健康习惯 <Chip icon="🌱">成长</Chip>
           </h2>
           <div className="grid grid-cols-3 gap-2.5">
             {badges.map((b) => (

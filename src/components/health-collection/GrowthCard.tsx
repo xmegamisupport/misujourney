@@ -21,7 +21,7 @@ export function GrowthCard({
 }) {
   return (
     <div className="flex min-h-[calc(100vh-9rem)] items-center justify-center px-4 py-6">
-      <div className="misu-rise relative w-full max-w-sm overflow-hidden rounded-card border border-brand-soft/30 bg-gradient-to-b from-brand-tint via-surface to-[#f6f2f3] px-7 py-9 text-center shadow-elev2">
+      <div className="misu-rise relative w-full max-w-sm overflow-hidden rounded-card border border-white/70 bg-gradient-to-b from-brand-tint via-white to-[#f0ece9] px-7 py-9 text-center shadow-elev2">
         <div className="pointer-events-none absolute -top-20 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-brand-soft/40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 right-0 h-48 w-48 rounded-full bg-brand-tint blur-3xl" />
 
