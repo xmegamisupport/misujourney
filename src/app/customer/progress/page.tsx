@@ -38,8 +38,8 @@ export default function ProgressPage() {
       <PageHeader title="我的成长" subtitle={`Day ${currentDay} / ${planLength}`} />
 
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label="起始体重" value={startWeight ?? "—"} unit={startWeight !== null ? "kg" : undefined} accent="bg-slate-100 text-slate-500" />
-        <StatCard label="当前体重" value={currentWeight ?? "—"} unit={currentWeight !== null ? "kg" : undefined} accent="bg-emerald-50 text-emerald-600" />
+        <StatCard label="起始体重" value={startWeight ?? "—"} unit={startWeight !== null ? "kg" : undefined} accent="bg-line-soft text-ink-soft" />
+        <StatCard label="当前体重" value={currentWeight ?? "—"} unit={currentWeight !== null ? "kg" : undefined} accent="bg-brand-tint text-brand-deep" />
         <StatCard
           label="阶段目标"
           value={hasWeightGoal ? (currentGoal!.stageGoalWeightMin === currentGoal!.stageGoalWeightMax ? currentGoal!.stageGoalWeightMin : `${currentGoal!.stageGoalWeightMin}~${currentGoal!.stageGoalWeightMax}`) : "—"}
@@ -56,40 +56,40 @@ export default function ProgressPage() {
           sublabel={weightLost !== null && weightLost > 0 ? `已减重 ${weightLost}kg` : "刚刚开始，加油！"}
         />
       ) : (
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-500 shadow-sm">
+        <div className="rounded-lg border border-line bg-surface p-4 text-sm text-ink-soft shadow-elev1">
           目前专注在习惯养成，暂无体重目标。每一个阶段完成以后，再重新评估下一阶段目标。
         </div>
       )}
 
-      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-        <p className="mb-1 text-sm font-semibold text-slate-700">体重趋势</p>
+      <div className="rounded-lg border border-line bg-surface p-4 shadow-elev1">
+        <p className="mb-1 text-sm font-semibold text-ink">体重趋势</p>
         {weightTrendData.length > 0 ? (
-          <TrendChart data={weightTrendData} unit="kg" strokeClass="text-emerald-500" fillId="progress-weight" />
+          <TrendChart data={weightTrendData} unit="kg" strokeClass="text-brand" fillId="progress-weight" />
         ) : (
-          <p className="py-6 text-center text-sm text-slate-400">还没有体重记录，完成第一次打卡后开始记录趋势</p>
+          <p className="py-6 text-center text-sm text-ink-faint">还没有体重记录，完成第一次打卡后开始记录趋势</p>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="打卡率" value={`${checkinRate}%`} icon="✅" accent="bg-emerald-50 text-emerald-600" />
+        <StatCard label="打卡率" value={`${checkinRate}%`} icon="✅" accent="bg-brand-tint text-brand-deep" />
         <StatCard label="连续打卡" value={journey?.streakDays ?? 0} unit="天" icon="🔥" accent="bg-amber-50 text-amber-600" />
       </div>
 
-      <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
-        <p className="mb-1 text-sm font-semibold text-slate-700">🌱 本周小结</p>
-        <p className="text-sm leading-relaxed text-slate-600">
+      <div className="rounded-lg border border-brand-soft/40 bg-brand-tint p-4">
+        <p className="mb-1 text-sm font-semibold text-ink">🌱 本周小结</p>
+        <p className="text-sm leading-relaxed text-ink-soft">
           {weeklyInsight?.customerMessage ?? "继续记录几天，我们会帮你整理更有参考价值的趋势。"}
         </p>
       </div>
 
       <Link
         href="/customer/progress/body"
-        className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-emerald-200"
+        className="flex items-center gap-3 rounded-lg border border-line bg-surface p-4 shadow-elev1 transition duration-500 ease-soft hover:-translate-y-0.5 hover:border-brand-soft"
       >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">🧍</span>
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-tint text-xl">🧍</span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-800">身形记录</p>
-          <p className="text-xs text-slate-400">查看我的成长记录 →</p>
+          <p className="text-sm font-semibold text-ink">身形记录</p>
+          <p className="text-xs text-ink-faint">查看我的成长记录 →</p>
         </div>
       </Link>
     </div>
