@@ -29,10 +29,10 @@ export function UpgradePopup({ upgrade, onDismiss }: { upgrade: BadgeUpgrade; on
         @keyframes hcGlow { 0% { transform: scale(.6); opacity: 0 } 40% { opacity: .55 } 100% { transform: scale(1.5); opacity: 0 } }
         @media (prefers-reduced-motion: reduce){ .hc-anim { animation: none !important } }
       `}</style>
-      <div className="absolute inset-0 bg-slate-900/55 backdrop-blur-sm" onClick={onDismiss} />
-      <div className="relative flex w-full max-w-xs flex-col items-center rounded-3xl bg-white px-6 py-8 text-center shadow-2xl">
+      <div className="absolute inset-0 bg-ink/50 backdrop-blur-sm" onClick={onDismiss} />
+      <div className="relative flex w-full max-w-xs flex-col items-center rounded-card bg-surface px-6 py-8 text-center shadow-elev2">
         <p className="text-3xl">🎉</p>
-        <p className="mt-1 text-base font-bold text-slate-900">恭喜！</p>
+        <p className="mt-1 text-base font-bold text-ink">恭喜！</p>
 
         <div className="relative mt-4 flex items-center justify-center">
           <span className="hc-anim absolute h-32 w-32 rounded-full" style={{ background: level.color, animation: "hcGlow 1.1s ease-out forwards" }} />
@@ -41,26 +41,25 @@ export function UpgradePopup({ upgrade, onDismiss }: { upgrade: BadgeUpgrade; on
           </span>
         </div>
 
-        <p className="mt-4 text-sm text-slate-500">你的 {upgrade.title} 成长到</p>
+        <p className="mt-4 text-sm text-ink-soft">你的 {upgrade.title} 成长到</p>
         <p className="mt-1 text-2xl font-extrabold" style={{ color: level.color }}>
           {level.name}
         </p>
-        <p className="mt-3 text-xs leading-relaxed text-slate-400">
+        <p className="mt-3 text-xs leading-relaxed text-ink-faint">
           健康的习惯，在每天的重复里，慢慢变得强大。
         </p>
 
         <button
           type="button"
           onClick={onDismiss}
-          className="mt-6 w-full rounded-2xl py-3 text-sm font-semibold text-white transition active:scale-[0.99]"
-          style={{ backgroundColor: level.color }}
+          className="mt-6 w-full rounded-full bg-gradient-to-br from-brand to-brand-deep py-3 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5 active:scale-[0.99]"
         >
           继续保持
         </button>
         <button
           type="button"
           onClick={share}
-          className="mt-2 w-full rounded-2xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-[0.99]"
+          className="mt-2 w-full rounded-full border border-line py-2.5 text-sm font-medium text-ink-soft transition hover:bg-line-soft active:scale-[0.99]"
         >
           分享我的进步
         </button>

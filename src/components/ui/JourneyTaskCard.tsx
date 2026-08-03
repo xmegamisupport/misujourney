@@ -30,11 +30,11 @@ import { cn } from "@/lib/utils";
 export type JourneyTaskStatus = "completed" | "available" | "in_progress" | "locked" | "attention";
 
 const STATUS_STYLES: Record<JourneyTaskStatus, { card: string; iconWrap: string; label: string }> = {
-  completed: { card: "border-emerald-200 bg-emerald-50/60", iconWrap: "bg-white", label: "text-slate-500" },
-  available: { card: "border-slate-200 bg-white", iconWrap: "bg-slate-50", label: "text-slate-800" },
-  in_progress: { card: "border-sky-200 bg-white", iconWrap: "bg-sky-50", label: "text-slate-800" },
-  locked: { card: "border-amber-200 bg-amber-50/50", iconWrap: "bg-white", label: "text-slate-500" },
-  attention: { card: "border-rose-200 bg-rose-50/60", iconWrap: "bg-white", label: "text-slate-800" },
+  completed: { card: "border-emerald-200 bg-emerald-50/60", iconWrap: "bg-surface", label: "text-ink-soft" },
+  available: { card: "border-line bg-surface", iconWrap: "bg-canvas", label: "text-ink" },
+  in_progress: { card: "border-sky-200 bg-surface", iconWrap: "bg-sky-50", label: "text-ink" },
+  locked: { card: "border-amber-200 bg-amber-50/50", iconWrap: "bg-surface", label: "text-ink-soft" },
+  attention: { card: "border-rose-200 bg-rose-50/60", iconWrap: "bg-surface", label: "text-ink" },
 };
 
 interface JourneyTaskCardProps {
@@ -79,7 +79,7 @@ function StatusMark({ status, percent }: { status: JourneyTaskStatus; percent?: 
 }
 
 function NextBadge() {
-  return <span className="shrink-0 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white">NEXT</span>;
+  return <span className="shrink-0 rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold tracking-wide text-white">NEXT</span>;
 }
 
 export function JourneyTaskCard({
@@ -106,18 +106,18 @@ export function JourneyTaskCard({
   if (variant === "compact") {
     const done = status === "completed";
     const compactClass = cn(
-      "flex items-center gap-2 self-start rounded-2xl border px-3 py-2.5 text-left transition",
-      done ? "border-emerald-200 bg-emerald-50/60 active:bg-emerald-100/70" : "border-slate-200 bg-white active:bg-slate-50",
+      "flex items-center gap-2 self-start rounded-lg border px-3 py-2.5 text-left shadow-elev1 transition",
+      done ? "border-emerald-200 bg-emerald-50/60 active:bg-emerald-100/70" : "border-line bg-surface active:bg-canvas",
     );
     // Keeps the icon: it's the visual anchor that lets a finished task be
     // recognised without reading it. Same identity as the full card, less height.
     const inner = (
       <>
-        <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm shadow-sm", done ? "bg-white" : "bg-slate-50")}>
+        <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm shadow-sm", done ? "bg-surface" : "bg-canvas")}>
           {icon}
         </span>
-        <p className={cn("min-w-0 flex-1 truncate text-xs font-medium", done ? "text-emerald-800" : "text-slate-500")}>{label}</p>
-        {value && <span className={cn("shrink-0 text-[11px] font-medium", done ? "text-emerald-600/80" : "text-slate-400")}>{value}</span>}
+        <p className={cn("min-w-0 flex-1 truncate text-xs font-medium", done ? "text-emerald-800" : "text-ink-soft")}>{label}</p>
+        {value && <span className={cn("shrink-0 text-[11px] font-medium", done ? "text-emerald-600/80" : "text-ink-faint")}>{value}</span>}
         {done && <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-[10px] text-white">✓</span>}
       </>
     );
@@ -143,9 +143,9 @@ export function JourneyTaskCard({
   const tone: "muted" | "action" | "nav" = isAction ? "action" : valueTone;
 
   const shell = cn(
-    "block rounded-2xl border transition",
+    "block rounded-lg border shadow-elev1 transition duration-500 ease-soft",
     s.card,
-    isNext && "ring-2 ring-emerald-400/40 shadow-md",
+    isNext && "ring-2 ring-brand/35 shadow-elev2",
     variant === "tile" ? "flex h-full flex-col justify-between p-3.5" : "p-3.5",
   );
 
@@ -153,7 +153,7 @@ export function JourneyTaskCard({
     <p
       className={cn(
         "mt-0.5 truncate text-xs",
-        tone === "action" ? "font-semibold text-emerald-600" : tone === "nav" ? "font-medium text-slate-500" : "text-slate-400",
+        tone === "action" ? "font-semibold text-brand" : tone === "nav" ? "font-medium text-ink-soft" : "text-ink-faint",
       )}
     >
       {displayValue}

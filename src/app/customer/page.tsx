@@ -213,7 +213,7 @@ export default function CustomerDashboardPage() {
           align with the cards below. */}
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="truncate text-lg font-semibold text-slate-900">
+          <h1 className="truncate text-lg font-semibold text-ink">
             {greeting}，{journey?.name ?? ""}
           </h1>
           {/* Points share the context line with Day X rather than taking a card
@@ -221,15 +221,15 @@ export default function CustomerDashboardPage() {
               always be able to see them, but her weight — not her score — is
               what the first three seconds belong to. If real usage ever shows
               customers actively chasing points, promote it to a card then. */}
-          <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 text-xs font-medium text-slate-400">
+          <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 text-xs font-medium text-ink-faint">
             <span>
               Day {currentDay} / {planLength}
             </span>
             <span aria-hidden="true">·</span>
-            <span className="text-emerald-600">🌱 {points.total.toLocaleString()} pts</span>
-            {points.today > 0 && <span className="text-slate-400">今天 +{points.today}</span>}
+            <span className="text-brand-deep">🌱 {points.total.toLocaleString()} pts</span>
+            {points.today > 0 && <span className="text-ink-faint">今天 +{points.today}</span>}
           </p>
-          <p className="mt-1.5 text-xs font-medium text-emerald-600/90">Every Day Is A New Journey</p>
+          <p className="mt-1.5 text-xs font-medium tracking-wide text-brand/80">Every Day Is A New Journey</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <NotificationBell />
@@ -237,11 +237,11 @@ export default function CustomerDashboardPage() {
             type="button"
             onClick={() => setCoachSheetOpen(true)}
             aria-label="联系 Journey Coach"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-lg"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-tint text-lg shadow-elev1 transition duration-500 ease-soft hover:-translate-y-0.5"
           >
             🌿
           </button>
-          <Link href="/customer/profile" className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-xl">
+          <Link href="/customer/profile" className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-tint text-xl shadow-elev1 transition duration-500 ease-soft hover:-translate-y-0.5">
             {journey?.avatar ?? "🙂"}
           </Link>
         </div>
@@ -262,15 +262,15 @@ export default function CustomerDashboardPage() {
           speaks in that case (see the fallback below): today every real customer
           has zero weigh-ins, and silence is the one thing she must never do. */}
       {currentGoal && latestWeight !== null ? (
-        <Link href="/customer/progress" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-emerald-200">
+        <Link href="/customer/progress" className="rounded-card border border-line bg-surface p-4 shadow-elev1 transition duration-500 ease-soft hover:-translate-y-0.5 hover:border-brand-soft">
           {!hasWeightGoal ? (
             <>
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs text-slate-400">🎯 第一阶段目标</p>
-                  <p className="mt-0.5 truncate text-sm font-medium text-slate-700">专注习惯养成</p>
+                  <p className="text-xs text-ink-faint">🎯 第一阶段目标</p>
+                  <p className="mt-0.5 truncate text-sm font-medium text-ink">专注习惯养成</p>
                 </div>
-                <span className="shrink-0 text-xs font-medium text-slate-500">查看 →</span>
+                <span className="shrink-0 text-xs font-medium text-ink-soft">查看 →</span>
               </div>
               {misuMessage && <MisuVoiceCard message={misuMessage} />}
             </>
@@ -278,25 +278,25 @@ export default function CustomerDashboardPage() {
             <>
               <div className="flex items-center gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-slate-400">目前体重</p>
-                  <p className="mt-0.5 text-2xl font-bold leading-tight text-slate-900">
+                  <p className="text-xs text-ink-faint">目前体重</p>
+                  <p className="mt-0.5 text-2xl font-bold leading-tight text-ink">
                     {latestWeight !== null ? `${latestWeight}` : "—"}
-                    {latestWeight !== null && <span className="ml-0.5 text-sm font-medium text-slate-400">kg</span>}
+                    {latestWeight !== null && <span className="ml-0.5 text-sm font-medium text-ink-faint">kg</span>}
                   </p>
                 </div>
-                <div className="h-9 w-px shrink-0 bg-slate-100" />
+                <div className="h-9 w-px shrink-0 bg-line" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-slate-400">第一阶段</p>
-                  <p className="mt-0.5 truncate text-2xl font-bold leading-tight text-emerald-600">
-                    {stageProgress?.percent ?? 0}%<span className="ml-1 text-sm font-medium text-slate-400">完成</span>
+                  <p className="text-xs text-ink-faint">第一阶段</p>
+                  <p className="mt-0.5 truncate text-2xl font-bold leading-tight text-brand-deep">
+                    {stageProgress?.percent ?? 0}%<span className="ml-1 text-sm font-medium text-ink-faint">完成</span>
                   </p>
                 </div>
-                <span className="shrink-0 self-center text-xs font-medium text-slate-500">查看 →</span>
+                <span className="shrink-0 self-center text-xs font-medium text-ink-soft">查看 →</span>
               </div>
 
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-line-soft">
                 <div
-                  className="h-full rounded-full bg-emerald-400 transition-all"
+                  className="h-full rounded-full bg-brand transition-all"
                   style={{ width: `${stageProgress?.percent ?? 0}%` }}
                 />
               </div>
@@ -327,7 +327,7 @@ export default function CustomerDashboardPage() {
             variant="row"
             href={bodyProgressCtaHref(bodyProgressCta)}
             actionSlot={
-              <span className="shrink-0 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">
+              <span className="shrink-0 rounded-full bg-brand px-3 py-1.5 text-xs font-semibold text-white shadow-brand">
                 {BODY_PROGRESS_CTA_LABEL[bodyProgressCta.kind]}
               </span>
             }
@@ -336,9 +336,9 @@ export default function CustomerDashboardPage() {
 
       <div>
         <div className="mb-3 flex items-baseline justify-between gap-3">
-          <p className="text-base font-semibold text-slate-800">🌱 Today&apos;s Journey</p>
-          <p className="shrink-0 text-xs font-medium text-slate-500">
-            <span className="text-sm font-bold text-emerald-600">{todayTasksDone}</span> / {TODAY_JOURNEY_TASK_COUNT} 已完成
+          <p className="text-base font-semibold text-ink">🌱 Today&apos;s Journey</p>
+          <p className="shrink-0 text-xs font-medium text-ink-soft">
+            <span className="text-sm font-bold text-brand-deep">{todayTasksDone}</span> / {TODAY_JOURNEY_TASK_COUNT} 已完成
           </p>
         </div>
 
@@ -383,7 +383,7 @@ export default function CustomerDashboardPage() {
                 type="button"
                 disabled={skipping}
                 onClick={handleSkipMorning}
-                className="self-center text-[11px] font-medium text-slate-400 transition hover:text-slate-600 disabled:opacity-60"
+                className="self-center text-[11px] font-medium text-ink-faint transition hover:text-ink-soft disabled:opacity-60"
               >
                 {skipping ? "跳过中…" : (skipError ?? "今天先跳过")}
               </button>
@@ -425,7 +425,7 @@ export default function CustomerDashboardPage() {
                   <button
                     type="button"
                     onClick={() => setWaterSheetOpen((v) => !v)}
-                    className="flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 text-sm font-medium text-slate-500 transition hover:border-slate-300"
+                    className="flex min-h-[44px] items-center justify-center rounded-xl border border-line text-sm font-medium text-ink-soft transition hover:border-ink-faint"
                   >
                     {waterSheetOpen ? "收起" : "其他"}
                   </button>
@@ -439,7 +439,7 @@ export default function CustomerDashboardPage() {
                       value={customWater}
                       onChange={(e) => setCustomWater(e.target.value)}
                       placeholder="自定义 ml"
-                      className="w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                      className="w-0 flex-1 rounded-xl border border-line px-3 py-2.5 text-sm text-ink outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
                     />
                     <button
                       type="button"
@@ -490,14 +490,14 @@ export default function CustomerDashboardPage() {
       {needsCatchup && (
         <Link
           href={`/customer/checkout?date=${yesterday}`}
-          className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 transition hover:border-emerald-200"
+          className="flex items-center gap-3 rounded-lg border border-line bg-surface p-3.5 shadow-elev1 transition duration-500 ease-soft hover:-translate-y-0.5 hover:border-brand-soft"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-lg">🌙</span>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-canvas text-lg">🌙</span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-slate-800">补上昨天的回顾</p>
-            <p className="mt-0.5 text-xs text-slate-400">昨天的记录还可以补</p>
+            <p className="text-sm font-medium text-ink">补上昨天的回顾</p>
+            <p className="mt-0.5 text-xs text-ink-faint">昨天的记录还可以补</p>
           </div>
-          <span className="shrink-0 text-xs font-medium text-slate-500">前往 →</span>
+          <span className="shrink-0 text-xs font-medium text-ink-soft">前往 →</span>
         </Link>
       )}
     </div>

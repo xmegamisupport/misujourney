@@ -55,15 +55,15 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeView | null; 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white p-6 pb-8 shadow-xl sm:rounded-3xl">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200 sm:hidden" />
+      <div className="absolute inset-0 bg-ink/45 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-card bg-surface p-6 pb-8 shadow-elev2 sm:rounded-card">
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line sm:hidden" />
 
         {/* ① ring ② name ③ description */}
         <div className="flex flex-col items-center text-center">
           <BadgeRing percent={badge.ringPercent} color={color} icon={badgeIcon(badge.def, badge.levelKey)} size={128} stroke={9} />
-          <h2 className="mt-3 text-xl font-bold text-slate-900">{badge.def.habitName}</h2>
-          <p className="mt-2 max-w-xs whitespace-pre-line text-sm leading-relaxed text-slate-500">
+          <h2 className="mt-3 text-xl font-bold text-ink">{badge.def.habitName}</h2>
+          <p className="mt-2 max-w-xs whitespace-pre-line text-sm leading-relaxed text-ink-soft">
             {badge.def.description}
           </p>
         </div>
@@ -71,12 +71,12 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeView | null; 
         {/* ④ current progress (stage shown once) */}
         <div className="mt-6">
           <div className="mb-2 flex items-end justify-between">
-            <span className="text-lg font-bold" style={{ color: started ? color : "#94a3b8" }}>
+            <span className="text-lg font-bold" style={{ color: started ? color : "#aeaeb2" }}>
               {started ? level!.name : "开始培养"}
             </span>
-            <span className="text-sm font-semibold tabular-nums text-slate-400">{progressText}</span>
+            <span className="text-sm font-semibold tabular-nums text-ink-faint">{progressText}</span>
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-line-soft">
             <div
               className="h-full rounded-full"
               style={{ width: `${Math.round(badge.ringPercent * 100)}%`, backgroundColor: color, transition: "width .6s ease" }}
@@ -85,8 +85,8 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeView | null; 
         </div>
 
         {/* ⑤ motivation */}
-        <div className="mt-4 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3.5 text-center">
-          <p className="text-sm font-semibold leading-relaxed text-emerald-800">{motivation}</p>
+        <div className="mt-4 rounded-lg bg-brand-tint px-4 py-3.5 text-center">
+          <p className="text-sm font-semibold leading-relaxed text-brand-deep">{motivation}</p>
         </div>
 
         {/* ⑥ statistics */}
@@ -96,30 +96,30 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeView | null; 
         </div>
 
         {/* ⑦ rarity — encouragement, not competition */}
-        <p className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-center text-sm leading-relaxed text-rose-700">
+        <p className="mt-4 rounded-lg bg-brand-tint px-4 py-3 text-center text-sm leading-relaxed text-brand-deep">
           {rarity}
         </p>
 
         {/* ⑧ growth quote */}
-        <p className="mt-4 whitespace-pre-line px-2 text-center text-sm italic leading-relaxed text-slate-500">
+        <p className="mt-4 whitespace-pre-line px-2 text-center text-sm italic leading-relaxed text-ink-soft">
           「{badge.def.quote}」
         </p>
 
         {/* ⑨ started date */}
         {badge.firstDate && (
-          <p className="mt-4 text-center text-xs text-slate-400">📅 从 {formatDate(badge.firstDate)} 开始</p>
+          <p className="mt-4 text-center text-xs text-ink-faint">📅 从 {formatDate(badge.firstDate)} 开始</p>
         )}
 
         {/* optional: the full growth path, hidden by default */}
         <button
           type="button"
           onClick={() => setShowPath((s) => !s)}
-          className="mt-5 w-full text-center text-xs font-medium text-slate-400 transition hover:text-slate-600"
+          className="mt-5 w-full text-center text-xs font-medium text-ink-faint transition hover:text-ink-soft"
         >
           {showPath ? "收起成长路径 ▴" : "查看完整成长路径 ▾"}
         </button>
         {showPath && (
-          <div className="mt-3 space-y-1 rounded-2xl bg-slate-50/70 px-4 py-3">
+          <div className="mt-3 space-y-1 rounded-lg bg-line-soft px-4 py-3">
             {badge.levels.map((lv, i) => {
               const reached = i <= badge.levelIndex;
               const current = i === badge.levelIndex;
@@ -128,16 +128,16 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeView | null; 
                   <div className="flex items-center gap-2">
                     <span
                       className="flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white"
-                      style={{ backgroundColor: reached ? lv.color : "#e2e8f0" }}
+                      style={{ backgroundColor: reached ? lv.color : "#e4e4e4" }}
                     >
                       {i < badge.levelIndex ? "✓" : ""}
                     </span>
-                    <span className="text-sm font-semibold" style={{ color: reached ? lv.color : "#94a3b8" }}>
+                    <span className="text-sm font-semibold" style={{ color: reached ? lv.color : "#aeaeb2" }}>
                       {lv.name}
                     </span>
-                    {current && <span className="rounded-full bg-emerald-100 px-1.5 text-[10px] font-bold text-emerald-700">当前</span>}
+                    {current && <span className="rounded-full bg-brand-tint px-1.5 text-[10px] font-bold text-brand-deep">当前</span>}
                   </div>
-                  <span className="text-[11px] tabular-nums text-slate-400">{lv.threshold} {unit}</span>
+                  <span className="text-[11px] tabular-nums text-ink-faint">{lv.threshold} {unit}</span>
                 </div>
               );
             })}
@@ -147,7 +147,7 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeView | null; 
         <button
           type="button"
           onClick={onClose}
-          className="mt-6 w-full rounded-2xl bg-slate-900 py-3 text-sm font-semibold text-white transition active:scale-[0.99]"
+          className="mt-6 w-full rounded-full bg-gradient-to-br from-brand to-brand-deep py-3 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5 active:scale-[0.99]"
         >
           继续保持
         </button>
@@ -158,12 +158,12 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeView | null; 
 
 function Stat({ emoji, label, value, unit }: { emoji: string; label: string; value: string; unit: string }) {
   return (
-    <div className="flex-1 rounded-2xl bg-slate-50 px-4 py-3 text-center">
-      <p className="text-slate-900">
+    <div className="flex-1 rounded-lg border border-line bg-canvas px-4 py-3 text-center">
+      <p className="text-ink">
         <span className="text-2xl font-bold tabular-nums">{value}</span>
-        <span className="ml-1 text-sm font-medium text-slate-400">{unit}</span>
+        <span className="ml-1 text-sm font-medium text-ink-faint">{unit}</span>
       </p>
-      <p className="mt-0.5 text-[11px] text-slate-400">
+      <p className="mt-0.5 text-[11px] text-ink-faint">
         {emoji} {label}
       </p>
     </div>
