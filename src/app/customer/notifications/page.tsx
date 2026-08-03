@@ -32,8 +32,8 @@ export default function CustomerNotificationsPage() {
             <div
               key={n.id}
               className={cn(
-                "rounded-2xl border p-4 shadow-sm transition",
-                n.readAt ? "border-slate-100 bg-white" : "border-emerald-200 bg-emerald-50/40",
+                "rounded-lg border p-4 shadow-elev1 transition",
+                n.readAt ? "border-line bg-surface" : "border-brand-soft bg-brand-tint/50",
               )}
             >
               <div className="flex items-start gap-3">
@@ -42,21 +42,21 @@ export default function CustomerNotificationsPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-800">{n.title}</p>
-                    {!n.readAt && <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />}
+                    <p className="text-sm font-semibold text-ink">{n.title}</p>
+                    {!n.readAt && <span className="h-2 w-2 shrink-0 rounded-full bg-brand" />}
                   </div>
-                  <p className="mt-0.5 text-sm text-slate-600">{n.body}</p>
+                  <p className="mt-0.5 text-sm text-ink-soft">{n.body}</p>
                   {n.rejectReason && (
                     <p className="mt-1 rounded-lg border border-rose-100 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-600">原因：{n.rejectReason}</p>
                   )}
-                  <p className="mt-1.5 text-xs text-slate-400">{formatDateTime(n.createdAt)}</p>
+                  <p className="mt-1.5 text-xs text-ink-faint">{formatDateTime(n.createdAt)}</p>
 
                   <div className="mt-3 flex items-center gap-2">
                     {n.actionHref && n.actionLabel && (
                       <a
                         href={n.actionHref}
                         onClick={() => handleMarkRead(n)}
-                        className="rounded-full bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
+                        className="rounded-full bg-gradient-to-br from-brand to-brand-deep px-3.5 py-1.5 text-xs font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5"
                       >
                         {n.actionLabel}
                       </a>
@@ -65,7 +65,7 @@ export default function CustomerNotificationsPage() {
                       <button
                         type="button"
                         onClick={() => handleMarkRead(n)}
-                        className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
+                        className="rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink-soft transition hover:bg-canvas"
                       >
                         标为已读
                       </button>

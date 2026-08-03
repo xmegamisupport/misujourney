@@ -29,30 +29,30 @@ export default function HealthyPicksPage() {
     <div className="flex flex-col gap-6 px-4 pb-8 md:px-8">
       <PageHeader title="🥗 好物 Healthy Picks" subtitle="外面的世界，也可以吃得好一点" />
 
-      <div className="rounded-3xl border border-emerald-100 bg-emerald-50/50 px-5 py-8 text-center">
+      <div className="rounded-card border border-brand-soft/40 bg-gradient-to-br from-brand-tint to-[#f0ece9] px-5 py-8 text-center shadow-elev1">
         <p className="text-3xl">🥗</p>
-        <p className="mt-3 text-base font-semibold text-slate-800">即将推出</p>
-        <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-slate-500">
+        <p className="mt-3 text-base font-semibold text-ink">即将推出</p>
+        <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-ink-soft">
           这里不是用来记录你吃了什么，而是帮你在超市、便利店和餐厅里，更容易找到值得吃的东西。
         </p>
       </div>
 
       <div>
-        <p className="mb-3 text-sm font-semibold text-slate-700">我们正在准备</p>
+        <p className="mb-3 text-sm font-semibold text-ink">我们正在准备</p>
         <div className="grid grid-cols-2 gap-2">
           {COMING.map((item) => (
             <div
               key={item.label}
-              className="flex items-center gap-2.5 rounded-2xl border border-slate-100 bg-white px-3.5 py-3"
+              className="flex items-center gap-2.5 rounded-lg border border-line bg-surface px-3.5 py-3 shadow-elev1"
             >
               <span className="text-lg">{item.icon}</span>
-              <span className="min-w-0 truncate text-xs font-medium text-slate-600">{item.label}</span>
+              <span className="min-w-0 truncate text-xs font-medium text-ink-soft">{item.label}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <p className="px-2 text-center text-xs leading-relaxed text-slate-400">
+      <p className="px-2 text-center text-xs leading-relaxed text-ink-faint">
         想先看到哪一个？告诉你的 Journey Coach。
       </p>
     </div>
