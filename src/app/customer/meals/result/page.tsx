@@ -133,23 +133,23 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
       <PageHeader title="211 餐盘分析" subtitle="Smart Meal Check" backHref="/customer/meals" />
 
       {/* Card 1 — 照片 + 已辨识食物（不显示克数） */}
-      <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-3xl border border-line bg-surface shadow-elev1">
         {scored.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={scored.photo} alt="这一餐的照片" className="h-40 w-full object-cover" />
         ) : (
-          <div className="flex items-center justify-center bg-emerald-50 py-8 text-6xl">🍽️</div>
+          <div className="flex items-center justify-center bg-brand-tint py-8 text-6xl">🍽️</div>
         )}
         <div className="p-5">
-          <p className="mb-2 text-sm font-semibold text-slate-700">已辨识食物</p>
+          <p className="mb-2 text-sm font-semibold text-ink">已辨识食物</p>
           <div className="flex flex-col gap-1.5">
             {scored.misuTags.map((t) => (
-              <p key={t.productCode} className="text-sm text-slate-600">
+              <p key={t.productCode} className="text-sm text-ink-soft">
                 {PRODUCT_ICONS[t.productCode]} {PRODUCT_LABELS[t.productCode]}（× {t.quantity}）
               </p>
             ))}
             {scored.foodItems.map((f) => (
-              <p key={f.id} className="text-sm text-slate-600">
+              <p key={f.id} className="text-sm text-ink-soft">
                 {FOOD_CATEGORY_META[f.category].emoji} {f.name}（{f.portion?.portionLabel ?? ""}）
               </p>
             ))}
@@ -158,16 +158,16 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
       </div>
 
       {/* Card 2 — 餐盘平衡度：星级 + 一句话，取代百分比 */}
-      <div className="rounded-2xl border border-slate-100 bg-white p-5 text-center shadow-sm">
-        <p className="mb-2 text-sm font-semibold text-slate-700">餐盘平衡度</p>
+      <div className="rounded-2xl border border-line bg-surface p-5 text-center shadow-elev1">
+        <p className="mb-2 text-sm font-semibold text-ink">餐盘平衡度</p>
         <p className="text-3xl leading-none text-amber-400">{starString(scored.misuScore)}</p>
         <p className={cn("mt-2 text-base font-semibold", tier.colorClass)}>{tier.label}</p>
-        <p className="mt-1 text-sm text-slate-500">{tier.message}</p>
+        <p className="mt-1 text-sm text-ink-soft">{tier.message}</p>
       </div>
 
       {/* Card 3 — 211 餐盘检查：状态 + 行动建议，取代百分比 */}
-      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-        <p className="mb-1 text-sm font-semibold text-slate-700">211 餐盘检查</p>
+      <div className="rounded-2xl border border-line bg-surface p-4 shadow-elev1">
+        <p className="mb-1 text-sm font-semibold text-ink">211 餐盘检查</p>
         <div className="flex flex-col divide-y divide-slate-100">
           {groupChecks.map((check) => (
             <div key={check.group} className="flex items-center justify-between gap-3 py-3 first:pt-2 last:pb-0">
@@ -179,7 +179,7 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
                 <p className={cn("text-sm font-semibold", STATUS_COLOR[check.status])}>
                   {STATUS_ICON[check.status]} {check.statusLabel}
                 </p>
-                <p className="mt-0.5 text-xs text-slate-500">{check.action}</p>
+                <p className="mt-0.5 text-xs text-ink-soft">{check.action}</p>
               </div>
             </div>
           ))}
@@ -194,7 +194,7 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
           </p>
           <ul className="flex flex-col gap-1.5">
             {scored.goodPoints.slice(0, 3).map((point) => (
-              <li key={point} className="flex items-start gap-2 text-sm text-slate-600">
+              <li key={point} className="flex items-start gap-2 text-sm text-ink-soft">
                 <span className="mt-0.5 text-emerald-500">•</span>
                 {point}
               </li>
@@ -220,13 +220,13 @@ function MealResultView({ scored }: { scored: MealScoredDraft }) {
           type="button"
           disabled={submitting || !user}
           onClick={handleComplete}
-          className="rounded-xl bg-emerald-500 py-3.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-60"
+          className="rounded-full bg-gradient-to-br from-brand to-brand-deep py-3.5 text-center text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5 disabled:opacity-60"
         >
           {submitting ? "记录中..." : "完成记录"}
         </button>
         <Link
           href={`/customer/meals/add?type=${scored.mealType}`}
-          className="rounded-xl border border-slate-200 py-3 text-center text-sm font-medium text-slate-600 transition hover:border-slate-300"
+          className="rounded-full border border-line py-3 text-center text-sm font-medium text-ink-soft transition hover:border-brand-soft hover:text-brand-deep"
         >
           重新拍照
         </Link>

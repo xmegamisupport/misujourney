@@ -68,7 +68,7 @@ function AddMealForm() {
           title="今天的 Journey 还没开始"
           description="请先回到首页完成或跳过晨重，再来记录这一餐。"
           action={
-            <Link href="/customer" className="text-sm font-medium text-emerald-600">
+            <Link href="/customer" className="text-sm font-semibold text-brand">
               返回首页 →
             </Link>
           }
@@ -152,9 +152,9 @@ function AddMealForm() {
   if (analyzing) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 px-4 py-24 text-center">
-        <div className="h-14 w-14 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-500" />
-        <p className="text-base font-semibold text-slate-800">AI 分析中…</p>
-        <p className="text-sm text-slate-400">正在识别 MISU 产品与其他食物，请稍候</p>
+        <div className="h-14 w-14 animate-spin rounded-full border-4 border-brand-tint border-t-brand" />
+        <p className="text-base font-semibold text-ink">AI 分析中…</p>
+        <p className="text-sm text-ink-faint">正在识别 MISU 产品与其他食物，请稍候</p>
       </div>
     );
   }
@@ -171,11 +171,11 @@ function AddMealForm() {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="flex aspect-square w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-3xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 text-emerald-600 transition hover:border-emerald-300"
+          className="flex aspect-square w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-card border-2 border-dashed border-brand-soft bg-brand-tint/50 text-brand-deep transition duration-500 ease-soft hover:border-brand"
         >
           {compressing ? (
             <>
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-100 border-t-emerald-500" />
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-tint border-t-brand" />
               <span className="text-sm font-medium">处理照片中…</span>
             </>
           ) : photo ? (
@@ -194,9 +194,9 @@ function AddMealForm() {
       {/* Kept as a worked example rather than a rule: the AI reads the whole
           plate at once, and a customer who photographs items one at a time gets
           five weaker analyses instead of one good one. */}
-      <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-        <p className="text-sm font-medium text-slate-600">请把这一餐全部一起拍进去</p>
-        <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+      <div className="rounded-card border border-line bg-canvas px-4 py-3">
+        <p className="text-sm font-medium text-ink-soft">请把这一餐全部一起拍进去</p>
+        <p className="mt-1.5 text-xs leading-relaxed text-ink-faint">
           例如：
           <br />
           MISU · 鸡蛋 · 牛奶 · 水果 · 白饭
@@ -213,7 +213,7 @@ function AddMealForm() {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600"
+          className="rounded-full bg-gradient-to-br from-brand to-brand-deep py-3.5 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5"
         >
           📷 重新拍照
         </button>
@@ -222,7 +222,7 @@ function AddMealForm() {
           type="button"
           disabled={!photo || compressing}
           onClick={handleAnalyze}
-          className="rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+          className="rounded-full bg-gradient-to-br from-brand to-brand-deep py-3.5 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:from-line disabled:to-line disabled:text-ink-faint disabled:shadow-none"
         >
           开始 AI 分析
         </button>

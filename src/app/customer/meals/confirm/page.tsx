@@ -176,9 +176,9 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
   if (submitting) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 px-4 py-24 text-center">
-        <div className="h-14 w-14 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-500" />
-        <p className="text-base font-semibold text-slate-800">分析 211 餐盘…</p>
-        <p className="text-sm text-slate-400">正在根据确认后的份量计算营养与建议</p>
+        <div className="h-14 w-14 animate-spin rounded-full border-4 border-brand-tint border-t-brand" />
+        <p className="text-base font-semibold text-ink">分析 211 餐盘…</p>
+        <p className="text-sm text-ink-faint">正在根据确认后的份量计算营养与建议</p>
       </div>
     );
   }
@@ -199,8 +199,8 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
       {misuTags.length > 0 && (
         <div className="flex flex-col gap-2">
           {misuTags.map((tag) => (
-            <div key={tag.productCode} className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3">
-              <div className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+            <div key={tag.productCode} className="flex items-center justify-between gap-3 rounded-2xl border border-brand-soft bg-brand-tint/60 p-3">
+              <div className="flex items-center gap-1.5 text-sm font-medium text-brand-deep">
                 <span>{PRODUCT_ICONS[tag.productCode]}</span>
                 {PRODUCT_LABELS[tag.productCode]}
               </div>
@@ -208,15 +208,15 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
                 <button
                   type="button"
                   onClick={() => updateMisuQuantity(tag.productCode, tag.quantity - 1)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-base text-slate-500"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-line text-base text-ink-soft"
                 >
                   −
                 </button>
-                <span className="w-5 text-center text-sm font-semibold text-slate-800">{tag.quantity}</span>
+                <span className="w-5 text-center text-sm font-semibold text-ink">{tag.quantity}</span>
                 <button
                   type="button"
                   onClick={() => updateMisuQuantity(tag.productCode, tag.quantity + 1)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-base text-emerald-600"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-brand-soft bg-brand-tint text-base text-brand"
                 >
                   +
                 </button>
@@ -230,7 +230,7 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
         <button
           type="button"
           onClick={() => setAddMisuOpen(true)}
-          className="rounded-2xl border border-dashed border-emerald-200 py-2.5 text-center text-sm font-medium text-emerald-600 transition hover:bg-emerald-50"
+          className="rounded-2xl border border-dashed border-brand-soft py-2.5 text-center text-sm font-medium text-brand transition hover:bg-brand-tint"
         >
           + 添加 MISU 产品
         </button>
@@ -245,7 +245,7 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
                 updateMisuQuantity(code, 1);
                 setAddMisuOpen(false);
               }}
-              className="flex-1 rounded-2xl border border-emerald-200 bg-emerald-50/60 py-2.5 text-center text-sm font-medium text-emerald-700 transition hover:border-emerald-300"
+              className="flex-1 rounded-2xl border border-brand-soft bg-brand-tint/60 py-2.5 text-center text-sm font-medium text-brand-deep transition hover:border-brand-soft"
             >
               {PRODUCT_ICONS[code]} {PRODUCT_LABELS[code]}
             </button>
@@ -253,7 +253,7 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
           <button
             type="button"
             onClick={() => setAddMisuOpen(false)}
-            className="rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-500"
+            className="rounded-2xl border border-line px-4 py-2.5 text-sm text-ink-soft"
           >
             取消
           </button>
@@ -263,19 +263,19 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
       {foodItems.length > 0 && (
         <div className="flex flex-col gap-3">
           {foodItems.map((item) => (
-            <div key={item.id} className="flex flex-col gap-2.5 rounded-2xl border border-slate-100 bg-white p-3.5">
+            <div key={item.id} className="flex flex-col gap-2.5 rounded-2xl border border-line bg-white p-3.5">
               <div className="flex items-center gap-2">
                 <span className="text-base">{FOOD_CATEGORY_META[item.category].emoji}</span>
                 <input
                   value={item.name}
                   onChange={(e) => renameFoodItem(item.id, e.target.value)}
-                  className="min-w-0 flex-1 rounded-lg border border-transparent px-1.5 py-1 text-sm font-medium text-slate-800 outline-none transition focus:border-emerald-300 focus:bg-emerald-50/40"
+                  className="min-w-0 flex-1 rounded-lg border border-transparent px-1.5 py-1 text-sm font-medium text-ink outline-none transition focus:border-brand-soft focus:bg-brand-tint/40"
                 />
                 <button
                   type="button"
                   onClick={() => removeFoodItem(item.id)}
                   aria-label={`删除${item.name}`}
-                  className="shrink-0 rounded-full px-2 py-1 text-xs text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
+                  className="shrink-0 rounded-full px-2 py-1 text-xs text-ink-faint transition hover:bg-rose-50 hover:text-rose-500"
                 >
                   删除
                 </button>
@@ -284,18 +284,18 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
                   life-style picker would only be able to make it worse. Show
                   one or the other, never both. */}
               {item.portion?.isCustom ? (
-                <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-2.5">
+                <div className="flex items-center gap-2 rounded-xl border border-brand-tint bg-brand-tint/50 px-3 py-2.5">
                   <span className="text-sm">📋</span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium text-emerald-700">
+                    <p className="truncate text-xs font-medium text-brand-deep">
                       {item.portion.portionLabel} · {item.portion.calories} kcal
                     </p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">来自包装上的营养标签</p>
+                    <p className="mt-0.5 text-[11px] text-ink-soft">来自包装上的营养标签</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setFoodPortion(item.id, undefined)}
-                    className="shrink-0 text-[11px] font-medium text-slate-400"
+                    className="shrink-0 text-[11px] font-medium text-ink-faint"
                   >
                     改回估算
                   </button>
@@ -306,7 +306,7 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
                   <button
                     type="button"
                     onClick={() => setLabelItemId(item.id)}
-                    className="rounded-xl border border-dashed border-emerald-200 py-2 text-center text-xs font-medium text-emerald-600 transition hover:bg-emerald-50/60"
+                    className="rounded-xl border border-dashed border-brand-soft py-2 text-center text-xs font-medium text-brand transition hover:bg-brand-tint/60"
                   >
                     📷 有包装？拍营养标签更准
                   </button>
@@ -342,23 +342,23 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
         <button
           type="button"
           onClick={() => setAddFoodOpen(true)}
-          className="rounded-2xl border border-dashed border-slate-200 py-2.5 text-center text-sm font-medium text-slate-500 transition hover:bg-slate-50"
+          className="rounded-2xl border border-dashed border-line py-2.5 text-center text-sm font-medium text-ink-soft transition hover:bg-canvas"
         >
           + 新增食物
         </button>
       ) : (
-        <div className="flex flex-col gap-2 rounded-2xl border border-slate-100 bg-white p-3.5">
+        <div className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-3.5">
           <input
             autoFocus
             value={addFoodName}
             onChange={(e) => setAddFoodName(e.target.value)}
             placeholder="食物名称，例如 地瓜叶"
-            className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+            className="rounded-xl border border-line px-3.5 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-tint"
           />
           <select
             value={addFoodCategory}
             onChange={(e) => setAddFoodCategory(e.target.value as FoodCategory)}
-            className="rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+            className="rounded-xl border border-line px-3.5 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-tint"
           >
             {FOOD_CATEGORY_OPTIONS.map((cat) => (
               <option key={cat} value={cat}>
@@ -370,14 +370,14 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
             <button
               type="button"
               onClick={addFoodItem}
-              className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
+              className="flex-1 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white transition hover:bg-brand"
             >
               添加
             </button>
             <button
               type="button"
               onClick={() => setAddFoodOpen(false)}
-              className="rounded-xl border border-slate-200 px-4 text-sm text-slate-500"
+              className="rounded-xl border border-line px-4 text-sm text-ink-soft"
             >
               取消
             </button>
@@ -387,12 +387,12 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
 
       {error && <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
 
-      <div className="fixed inset-x-0 bottom-16 z-30 mx-auto max-w-lg border-t border-slate-100 bg-white/95 px-4 py-3 backdrop-blur md:bottom-0 md:static md:rounded-2xl md:border md:shadow-sm">
+      <div className="fixed inset-x-0 bottom-16 z-30 mx-auto max-w-lg border-t border-line bg-white/95 px-4 py-3 backdrop-blur md:bottom-0 md:static md:rounded-2xl md:border md:shadow-sm">
         <button
           type="button"
           disabled={!hasAnyItem}
           onClick={handleConfirm}
-          className="w-full rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+          className="w-full rounded-xl bg-brand py-3 text-sm font-semibold text-white transition hover:bg-brand disabled:cursor-not-allowed disabled:bg-line disabled:text-ink-faint"
         >
           确认，生成 211 分析
         </button>
