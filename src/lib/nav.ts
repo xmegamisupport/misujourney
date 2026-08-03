@@ -23,7 +23,12 @@ export const customerNav: NavItem[] = [
   // Hidden Discovery has NO nav tab of its own: new discoveries announce with a
   // reveal popup, and the discovery gallery lives inside Glowing You itself.
   { href: "/customer/rewards", label: "Glowing You", icon: "🌸", key: "rewards" },
-  { href: "/customer/progress", label: "成长", icon: "📈", key: "progress" },
+  // Leaderboard — COMMUNITY motivation ("our journey"), NOT personal progress.
+  // Personal growth history has exactly one entry point: 我的 → 我的进展
+  // (/customer/progress). The old 成长 nav tab pointed at that same page and was
+  // a duplicate, so it was removed — Leaderboard now owns this slot and is the
+  // home for all competitive/community features (rankings, weekly challenge).
+  { href: "/customer/leaderboard", label: "排行榜", icon: "🏆", key: "leaderboard" },
   { href: "/customer/profile", label: "我的", icon: "👤", key: "profile" },
 ];
 
@@ -119,16 +124,16 @@ interface RoleTheme {
 
 export const roleTheme: Record<Role, RoleTheme> = {
   customer: {
-    gradient: "from-emerald-50 via-white to-sky-50",
-    chip: "bg-emerald-100 text-emerald-700",
-    activeText: "text-emerald-600",
-    activeBg: "bg-emerald-50",
-    ring: "ring-emerald-400",
-    solidBg: "bg-emerald-500",
-    solidBgHover: "hover:bg-emerald-600",
-    softBg: "bg-emerald-50",
-    softText: "text-emerald-700",
-    border: "border-emerald-100",
+    gradient: "from-brand-tint via-white to-[#f0ece9]",
+    chip: "bg-brand-tint text-brand-deep",
+    activeText: "text-brand-deep",
+    activeBg: "bg-brand-tint",
+    ring: "ring-brand",
+    solidBg: "bg-brand",
+    solidBgHover: "hover:bg-brand-deep",
+    softBg: "bg-brand-tint",
+    softText: "text-brand-deep",
+    border: "border-brand-soft/40",
   },
   coach: {
     gradient: "from-sky-50 via-white to-emerald-50",
