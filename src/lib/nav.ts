@@ -92,7 +92,7 @@ export function hasPrefixAccess(prefix: string, role: string, isCoach: boolean):
 
 export const roleIcon: Record<Role, string> = {
   customer: "/icons/customer.png",
-  coach: "/icons/coach.png",
+  coach: "/assets/coach-badge.webp",
   admin: "/icons/admin.png",
 };
 

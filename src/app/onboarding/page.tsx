@@ -452,7 +452,7 @@ function StepBasicInfo({ draft, update, referralCoach }: { draft: WizardDraft; u
 
       {referralCoach && (
         <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg"><Avatar value={referralCoach.avatar} fallback="🌿" /></span>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white"><Avatar value="coach" /></span>
           <p className="text-sm text-slate-700">
             你的专属 Coach：<span className="font-semibold text-emerald-700">{referralCoach.name}</span>
           </p>

@@ -26,7 +26,7 @@ export default function CoachAccountPage() {
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">教练信息</p>
 
         <div className="flex items-center gap-4 rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 to-emerald-50 p-5">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-sm"><Avatar value={coach?.avatar} fallback="🌿" /></span>
+          <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm"><Avatar value="coach" /></span>
           <div>
             <p className="text-lg font-semibold text-slate-900">{coach?.name ?? ""}</p>
             <p className="text-sm text-slate-500">MISU Journey Coach</p>

@@ -35,7 +35,7 @@ export default function CoachReferralPage() {
 
       <div className="flex flex-col items-center gap-3 rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 to-emerald-50 p-6 text-center">
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-sm">
-          <Avatar value={coach?.avatar} fallback="🌿" />
+          <Avatar value="coach" />
         </span>
         <p className="text-sm text-slate-500">你的专属 Referral Code</p>
         <p className="text-2xl font-semibold tracking-widest text-slate-900">{coach?.referralCode ?? "—"}</p>

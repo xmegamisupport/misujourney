@@ -40,7 +40,7 @@ export function CoachContactSheet({ open, onClose }: CoachContactSheetProps) {
         {!loading && coachContact && (
           <div className="mb-5 flex flex-col items-center gap-2">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-3xl">
-              <Avatar value={coachContact.avatar} fallback="🌿" />
+              <Avatar value="coach" />
             </span>
             <p className="text-base font-semibold text-slate-900">{coachContact.name}</p>
           </div>

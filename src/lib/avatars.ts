@@ -30,7 +30,14 @@ export const AVATAR_LIST: AvatarDef[] = [
   { id: "sleepy", name: "Sleepy", nameZh: "睡觉", file: "/assets/avatars/09-sleepy.webp" },
 ];
 
-export const AVATARS: Record<string, AvatarDef> = Object.fromEntries(AVATAR_LIST.map((a) => [a.id, a]));
+/** The unified Coach identity badge — resolvable by <Avatar>, but NOT in the
+ *  customer picker (kept out of AVATAR_LIST on purpose). */
+export const COACH_AVATAR_ID = "coach";
+
+export const AVATARS: Record<string, AvatarDef> = {
+  ...Object.fromEntries(AVATAR_LIST.map((a) => [a.id, a])),
+  [COACH_AVATAR_ID]: { id: COACH_AVATAR_ID, name: "Coach", nameZh: "教练", file: "/assets/coach-badge.webp" },
+};
 
 /** The branded default assigned to new customers. */
 export const DEFAULT_AVATAR_ID = "smile";

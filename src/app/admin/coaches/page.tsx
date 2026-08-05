@@ -58,7 +58,7 @@ export default function CoachManagementPage() {
                 <div className="flex items-center gap-4">
                   <Link href={`/admin/coaches/${coach.id}`} className="flex min-w-0 flex-1 items-center gap-4">
                     <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-50 text-2xl">
-                      <Avatar value={coach.avatar} fallback="🌿" />
+                      <Avatar value="coach" />
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-800 hover:text-violet-600">{coach.name}</p>

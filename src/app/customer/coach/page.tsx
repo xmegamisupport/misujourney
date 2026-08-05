@@ -16,7 +16,7 @@ export default function CustomerCoachProfilePage() {
 
       <div className="flex flex-col items-center gap-2 rounded-card border border-brand-soft/40 bg-gradient-to-br from-brand-tint to-[#f1f4f7] p-6 text-center shadow-elev1">
         <span className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-4xl shadow-elev1">
-          <Avatar value={coach.avatar} fallback="🌿" />
+          <Avatar value="coach" />
         </span>
         <p className="text-lg font-semibold text-ink">{coach.name}</p>
         <p className="text-sm text-ink-soft">{coach.title}</p>
