@@ -26,46 +26,41 @@ export function WeeklyChallengeSection({ def }: { def: LeaderboardSectionDef }) 
 
   return (
     <section className="misu-rise">
-      <div className="mb-3 flex items-start gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-tint text-xl shadow-elev1">
-          {ch?.icon ?? def.icon}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h2 className="text-[15px] font-bold text-ink">{def.title}</h2>
-            {data?.meCompleted && (
-              <span className="shrink-0 rounded-full bg-brand-tint px-2 py-0.5 text-[10px] font-bold text-brand-deep">已完成 ✓</span>
-            )}
-          </div>
-          <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">{def.description}</p>
-        </div>
-      </div>
-
       {data == null ? (
-        <div className="flex justify-center rounded-card border border-line bg-surface py-8 shadow-elev1">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-tint border-t-brand" />
+        <div className="flex justify-center rounded-card border border-line bg-surface py-6 shadow-elev1">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-tint border-t-brand" />
         </div>
       ) : ch == null ? (
-        <div className="rounded-card border border-line bg-surface p-6 text-center text-sm text-ink-soft shadow-elev1">
+        <div className="rounded-card border border-line bg-surface p-5 text-center text-sm text-ink-soft shadow-elev1">
           本周暂时没有挑战，下周见 🌱
         </div>
       ) : (
+        // One compact card — no duplicate header. Eyebrow → challenge → progress → companions → CTA.
         <div className="overflow-hidden rounded-card border border-line bg-surface shadow-elev1">
-          <div className="bg-gradient-to-br from-brand-tint to-[#f0ece9] p-5">
-            <p className="text-base font-bold text-ink">
+          <div className="bg-gradient-to-br from-brand-tint to-[#f0ece9] px-4 pb-3.5 pt-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-deep">
+                {def.icon} {def.title}
+              </span>
+              {data.meCompleted && (
+                <span className="shrink-0 rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-bold text-brand-deep">已完成 ✓</span>
+              )}
+            </div>
+
+            <p className="mt-1.5 text-[15px] font-bold leading-snug text-ink">
               {ch.icon} {ch.title}
             </p>
-            <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{ch.description}</p>
+            <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-ink-soft">{ch.description}</p>
 
             {/* Day progress — the challenge's own timeline, not a head-count. */}
-            <div className="mt-4">
-              <div className="mb-1.5 flex items-center justify-between text-xs font-medium">
+            <div className="mt-3">
+              <div className="mb-1 flex items-center justify-between text-[11px] font-medium">
                 <span className="text-ink-soft">本周进度</span>
                 <span className="tabular-nums text-brand-deep">
                   Day {dp.day} / {dp.total}
                 </span>
               </div>
-              <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/70">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-white/70">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-brand to-brand-deep transition-all"
                   style={{ width: `${pct}%` }}
@@ -77,15 +72,15 @@ export function WeeklyChallengeSection({ def }: { def: LeaderboardSectionDef }) 
             <TogetherStrip travelers={data.travelers} />
           </div>
 
-          <div className="p-4">
+          <div className="px-4 py-3">
             {data.meCompleted ? (
-              <div className="rounded-full bg-brand-tint py-2.5 text-center text-sm font-semibold text-brand-deep">
+              <div className="rounded-full bg-brand-tint py-2 text-center text-sm font-semibold text-brand-deep">
                 🎉 你已完成本周挑战
               </div>
             ) : (
               <Link
                 href="/customer"
-                className="flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-brand to-brand-deep py-2.5 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5"
+                className="flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-brand to-brand-deep py-2 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5"
               >
                 去完成今天的 Journey →
               </Link>
@@ -174,9 +169,9 @@ function TogetherStrip({ travelers }: { travelers: Traveler[] }) {
   if (slots.length === 0) return null;
 
   return (
-    <div className="mt-4">
-      <p className="mb-2.5 text-xs font-semibold text-ink">🌱 一起坚持</p>
-      <div className="flex flex-wrap gap-2">
+    <div className="mt-3">
+      <p className="mb-2 text-[11px] font-semibold text-ink">🌱 一起坚持</p>
+      <div className="flex flex-wrap gap-1.5">
         {slots.map((s, i) => (
           <span
             key={i}
