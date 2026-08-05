@@ -237,9 +237,10 @@ export default function CustomerDashboardPage() {
             type="button"
             onClick={() => setCoachSheetOpen(true)}
             aria-label="联系 Journey Coach"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-tint text-lg shadow-elev1 transition duration-500 ease-soft hover:-translate-y-0.5"
+            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full shadow-elev1 transition duration-500 ease-soft hover:-translate-y-0.5"
           >
-            🌿
+            {/* eslint-disable-next-line @next/next/no-img-element -- small local static badge */}
+            <img src="/assets/coach-badge.webp" alt="Journey Coach" draggable={false} className="h-full w-full object-cover" />
           </button>
         </div>
       </header>
