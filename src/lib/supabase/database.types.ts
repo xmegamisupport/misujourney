@@ -926,6 +926,7 @@ export type Database = {
           hint_advance_days: number
           icon: string
           id: string
+          mystery_hints: Json
           name: string
           rarity: string
           registry_version: string | null
@@ -944,6 +945,7 @@ export type Database = {
           hint_advance_days?: number
           icon: string
           id?: string
+          mystery_hints?: Json
           name: string
           rarity?: string
           registry_version?: string | null
@@ -962,6 +964,7 @@ export type Database = {
           hint_advance_days?: number
           icon?: string
           id?: string
+          mystery_hints?: Json
           name?: string
           rarity?: string
           registry_version?: string | null
@@ -1533,6 +1536,56 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_settings: {
+        Row: {
+          key: string
+          label: string | null
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          label?: string | null
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          label?: string | null
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      leaderboard_snapshots: {
+        Row: {
+          board_type: string
+          customer_id: string
+          rank: number
+          taken_on: string
+        }
+        Insert: {
+          board_type: string
+          customer_id: string
+          rank: number
+          taken_on: string
+        }
+        Update: {
+          board_type?: string
+          customer_id?: string
+          rank?: number
+          taken_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leaderboard_snapshots_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meals: {
         Row: {
           ai_advice: string
@@ -1775,6 +1828,7 @@ export type Database = {
           activity_level: Database["public"]["Enums"]["activity_level"] | null
           age: number | null
           avatar: string | null
+          avatar_locked: boolean
           baseline_bedtime: string | null
           baseline_bowel_habit: string | null
           baseline_data_completed_at: string | null
@@ -1813,6 +1867,7 @@ export type Database = {
           activity_level?: Database["public"]["Enums"]["activity_level"] | null
           age?: number | null
           avatar?: string | null
+          avatar_locked?: boolean
           baseline_bedtime?: string | null
           baseline_bowel_habit?: string | null
           baseline_data_completed_at?: string | null
@@ -1851,6 +1906,7 @@ export type Database = {
           activity_level?: Database["public"]["Enums"]["activity_level"] | null
           age?: number | null
           avatar?: string | null
+          avatar_locked?: boolean
           baseline_bedtime?: string | null
           baseline_bowel_habit?: string | null
           baseline_data_completed_at?: string | null
@@ -2055,6 +2111,72 @@ export type Database = {
           },
         ]
       }
+      weekly_challenge_completions: {
+        Row: {
+          challenge_id: string
+          completed_at: string
+          customer_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string
+          customer_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string
+          customer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_challenge_completions_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_challenge_completions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_challenges: {
+        Row: {
+          created_at: string
+          description: string
+          goal_params: Json
+          goal_type: string
+          icon: string
+          id: string
+          title: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          goal_params?: Json
+          goal_type: string
+          icon?: string
+          id?: string
+          title: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          goal_params?: Json
+          goal_type?: string
+          icon?: string
+          id?: string
+          title?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       weight_goal_rules: {
         Row: {
           created_at: string
@@ -2257,6 +2379,7 @@ export type Database = {
           name: string
         }[]
       }
+      get_current_weekly_challenge: { Args: never; Returns: Json }
       get_hidden_discovery_snapshot: { Args: never; Returns: Json }
       get_hidden_discovery_snapshot_admin: {
         Args: { p_user_id: string }
@@ -2268,6 +2391,11 @@ export type Database = {
           p_remaining: number
         }
         Returns: string
+      }
+      get_journey_leaderboard: { Args: { p_limit?: number }; Returns: Json }
+      get_leaderboard: {
+        Args: { p_limit?: number; p_type: string }
+        Returns: Json
       }
       get_my_coach_applications: {
         Args: never
@@ -2468,6 +2596,7 @@ export type Database = {
         Args: { p_content_ids: string[]; p_day_number: number }
         Returns: undefined
       }
+      set_my_avatar: { Args: { p_avatar: string }; Returns: boolean }
       skip_morning_checkin: {
         Args: { p_customer_id: string; p_date: string }
         Returns: Json

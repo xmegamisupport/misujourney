@@ -18,6 +18,7 @@ import type { DailyCheckIn } from "@/lib/inventory/types";
 export interface JourneySummary {
   name: string;
   avatar: string;
+  avatarLocked: boolean;
   age: number | null;
   height: number | null;
   currentDay: number;
@@ -69,7 +70,7 @@ export function useJourneySummary(customerId: string): { data: JourneySummary | 
     const supabase = createClient();
 
     Promise.all([
-      supabase.from("profiles").select("name, avatar, age, height, start_date, start_weight").eq("id", customerId).single(),
+      supabase.from("profiles").select("name, avatar, avatar_locked, age, height, start_date, start_weight").eq("id", customerId).single(),
       getCurrentGoalPlan(customerId),
       getCurrentCustomerGoal(customerId),
       getCheckInsForCustomer(customerId),
@@ -82,6 +83,7 @@ export function useJourneySummary(customerId: string): { data: JourneySummary | 
         setData({
           name: profile?.name ?? "",
           avatar: profile?.avatar ?? DEFAULT_AVATAR,
+          avatarLocked: (profile as { avatar_locked?: boolean } | null)?.avatar_locked ?? false,
           age: profile?.age ?? null,
           height: profile?.height === null || profile?.height === undefined ? null : Number(profile.height),
           currentDay,

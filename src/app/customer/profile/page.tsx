@@ -43,6 +43,9 @@ export default function CustomerProfilePage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
   const avatar = avatarOverride ?? journey?.avatar ?? null;
+  // Avatar is a one-time choice: pickable only while unlocked and not yet picked
+  // this session. A future Hidden-Discovery unlock re-opens it (avatar_locked → false).
+  const canPick = !(journey?.avatarLocked ?? true) && avatarOverride === null;
 
   async function handlePick(id: string) {
     setAvatarOverride(id); // optimistic
@@ -59,26 +62,38 @@ export default function CustomerProfilePage() {
       <PageHeader title="我的" />
 
       <div className="flex items-center gap-4 rounded-card border border-brand-soft/40 bg-gradient-to-br from-brand-tint to-[#f6f2f3] p-5 shadow-elev1">
-        <button
-          type="button"
-          onClick={() => setPickerOpen(true)}
-          className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-3xl shadow-sm ring-1 ring-brand-soft/40 transition hover:ring-brand-soft"
-          aria-label="更换头像"
-        >
-          <Avatar value={avatar} />
-          <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] text-white shadow-sm">
-            ✎
+        {canPick ? (
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-brand-soft/40 transition hover:ring-brand-soft"
+            aria-label="选择你的头像"
+          >
+            <Avatar value={avatar} />
+            <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-brand-soft/70 bg-white shadow-elev1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ee4d81" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+            </span>
+          </button>
+        ) : (
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm">
+            <Avatar value={avatar} />
           </span>
-        </button>
+        )}
         <div>
           <p className="text-lg font-semibold text-ink">{journey?.name ?? ""}</p>
           <p className="text-sm text-ink-soft">
             Day {journey?.currentDay ?? 1} / {journey?.planLength ?? 30}
           </p>
+          <p className="mt-0.5 text-[11px] text-ink-faint">
+            {canPick ? "点头像选择你的 Fabibee（仅一次）" : "🔒 解锁隐藏发现，可换新装"}
+          </p>
         </div>
       </div>
 
-      {pickerOpen && <AvatarPicker current={avatar} onPick={handlePick} onClose={() => setPickerOpen(false)} />}
+      {canPick && pickerOpen && <AvatarPicker current={avatar} onPick={handlePick} onClose={() => setPickerOpen(false)} />}
 
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-lg border border-line bg-surface p-3 text-center shadow-sm">

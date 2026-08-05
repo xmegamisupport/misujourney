@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { SignOutButton } from "@/components/SignOutButton";
 import { Avatar } from "@/components/ui/Avatar";
+import { AVATAR_LIST, DEFAULT_AVATAR_ID } from "@/lib/avatars";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import {
   calculateBMI,
@@ -37,6 +39,7 @@ interface WizardDraft {
   gender: "female" | "male";
   phone: string;
   referralCode: string;
+  avatar: string;
   height: string;
   currentWeight: string;
   dietType: DietType | "";
@@ -54,6 +57,7 @@ const EMPTY_DRAFT: WizardDraft = {
   gender: "female",
   phone: "",
   referralCode: "",
+  avatar: DEFAULT_AVATAR_ID,
   height: "",
   currentWeight: "",
   dietType: "",
@@ -304,6 +308,12 @@ function OnboardingWizard({ customerId, defaultName, defaultPhone, defaultReferr
       setError(submitResult.error ?? "提交失败，请重试");
       return;
     }
+    try {
+      // One-time set: persists + locks the chosen avatar (see set_my_avatar RPC).
+      await createClient().rpc("set_my_avatar" as never, { p_avatar: draft.avatar } as never);
+    } catch {
+      /* already locked or offline — non-fatal, avatar just keeps its prior value */
+    }
     window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
     setResult(submitResult.data);
   }
@@ -415,6 +425,31 @@ function StepBasicInfo({ draft, update, referralCoach }: { draft: WizardDraft; u
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-base font-semibold text-slate-900">Step 1 · 填写基础资料</h2>
+
+      <div>
+        <p className="text-sm font-medium text-slate-700">选择你的 Fabibee 头像</p>
+        <p className="mb-2.5 text-xs text-slate-400">选定后会一直陪着你 —— 之后只有解锁隐藏发现才能更换。</p>
+        <div className="grid grid-cols-5 gap-2">
+          {AVATAR_LIST.map((a) => {
+            const active = draft.avatar === a.id;
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => update("avatar", a.id)}
+                aria-pressed={active}
+                className={cn(
+                  "flex aspect-square items-center justify-center rounded-full bg-slate-50 transition",
+                  active ? "ring-2 ring-emerald-500 ring-offset-1" : "ring-1 ring-slate-200",
+                )}
+              >
+                <Avatar value={a.id} />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {referralCoach && (
         <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg"><Avatar value={referralCoach.avatar} fallback="🌿" /></span>
