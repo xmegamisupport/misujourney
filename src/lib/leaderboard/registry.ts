@@ -21,6 +21,8 @@ export interface LeaderboardSectionDef {
   title: string;
   /** Short label for the tab pill (ranking boards). Falls back to `title`. */
   short?: string;
+  /** One-line grey caption under the tabs telling the user what this board ranks. */
+  caption?: string;
   description: string;
   /** Suffix shown after a row's value, e.g. "pts". Growth prefixes a "+". */
   unit?: string;
@@ -36,6 +38,7 @@ export const LEADERBOARD_SECTIONS: LeaderboardSectionDef[] = [
     icon: "🏆",
     title: "本周积分榜",
     short: "积分榜",
+    caption: "积分榜 · 这周 Journey Point 的积分累积排行",
     description: "这一周，谁贡献了最多 Journey Points。每周一，大家一起重新开始。",
     unit: "pts",
     accent: "gold",
@@ -46,6 +49,7 @@ export const LEADERBOARD_SECTIONS: LeaderboardSectionDef[] = [
     icon: "📈",
     title: "本周成长榜",
     short: "成长榜",
+    caption: "成长榜 · 这周比上周进步最多的排行",
     description: "比上周进步最多的人 —— 这是「突破」，不是「高分」。稳稳进步，也能登顶。",
     unit: "pts",
     signed: true,
@@ -57,6 +61,7 @@ export const LEADERBOARD_SECTIONS: LeaderboardSectionDef[] = [
     icon: "⭐",
     title: "新星榜",
     short: "新星榜",
+    caption: "新星榜 · 新加入旅程的伙伴积分排行",
     description: "刚加入不久的新旅人，在这里一起起步 —— 新人也有属于自己的舞台。",
     unit: "pts",
     accent: "star",

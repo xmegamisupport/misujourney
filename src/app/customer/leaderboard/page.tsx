@@ -23,23 +23,17 @@ export default function LeaderboardPage() {
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(90%_100%_at_20%_0%,#fce9ef_0%,transparent_72%)]"
       />
 
-      <div className="relative flex flex-col gap-6">
-        <header className="misu-rise pt-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-deep">Leaderboard</p>
-          <h1 className="mt-1 text-xl font-bold tracking-tight text-ink">排行榜</h1>
-          <p className="mt-0.5 text-xs text-ink-soft">我们的旅程 —— 先看这周一起做什么，再看大家走到了哪。</p>
-        </header>
-
+      <div className="relative flex flex-col gap-6 pt-1">
         {/* 1 · GOAL — always visible, points at action */}
         {CHALLENGE && <WeeklyChallengeSection def={CHALLENGE} />}
 
         <div className="misu-rise flex items-center gap-3 px-1">
-          <span className="h-px flex-1 bg-line" />
-          <span className="shrink-0 text-[11px] font-semibold tracking-wide text-ink-faint">榜单 · 看看大家</span>
-          <span className="h-px flex-1 bg-line" />
+          <span className="h-px flex-1 bg-line-soft" />
+          <span className="shrink-0 text-[11px] font-medium tracking-wide text-ink-faint">榜单 · 看看大家</span>
+          <span className="h-px flex-1 bg-line-soft" />
         </div>
 
-        {/* 2 · RECOGNITION — one board at a time, tabbed */}
+        {/* 2 · RECOGNITION — one board at a time, tabbed (leads straight into the boards) */}
         <LeaderboardTabs />
 
         <p className="misu-rise px-2 text-center text-xs leading-relaxed text-ink-faint">
