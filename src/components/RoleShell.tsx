@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import type { Role } from "@/lib/types";
 import { roleNav, roleTheme, roleIcon } from "@/lib/nav";
+import { createClient } from "@/lib/supabase/client";
+import { getAvatarDef } from "@/lib/avatars";
 import { SidebarNavigation } from "@/components/ui/SidebarNavigation";
 import { BottomNavigation } from "@/components/ui/BottomNavigation";
 import { SignOutButton } from "@/components/SignOutButton";
@@ -26,6 +28,27 @@ export function RoleShell({ role, children }: RoleShellProps) {
   const items = roleNav[role].map((item) => ({ ...item, label: navKeys[item.key] ?? item.label }));
   const label = t.roleLabel[role];
   const theme = roleTheme[role];
+
+  // Personalize the shell's brand avatar with the customer's chosen Fabibee.
+  // Falls back to the fixed role icon for coaches/admins or legacy emoji avatars.
+  const [myAvatar, setMyAvatar] = useState<string | null>(null);
+  useEffect(() => {
+    if (role !== "customer" || !user?.id) return;
+    let cancelled = false;
+    createClient()
+      .from("profiles")
+      .select("avatar")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled) setMyAvatar(data?.avatar ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [role, user?.id]);
+  const avatarDef = getAvatarDef(myAvatar);
+  const iconSrc = role === "customer" && avatarDef ? avatarDef.file : roleIcon[role];
 
   // The switcher bridges the two trees only for a genuine dual-capability
   // account (a Customer who also has Coach access), and only inside those two
@@ -58,7 +81,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
       <SidebarNavigation
         items={items}
         roleLabel={label}
-        roleIcon={roleIcon[role]}
+        roleIcon={iconSrc}
         activeText={theme.activeText}
         activeBg={theme.activeBg}
         footer={<SignOutButton className="text-xs text-slate-400 hover:text-slate-600" />}
@@ -67,7 +90,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
         <div className={cn("sticky top-0 z-30 bg-white/90 backdrop-blur md:hidden", immersive && "hidden")}>
           <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
             <span className="relative block h-7 w-7 shrink-0 overflow-hidden rounded-full bg-slate-50">
-              <Image src={roleIcon[role]} alt="" fill sizes="28px" className="object-cover object-top" />
+              <Image src={iconSrc} alt="" fill sizes="28px" className="object-cover object-top" />
             </span>
             <span className="text-sm font-semibold text-slate-900">MISU Journey</span>
             <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", theme.chip)}>{label}</span>
