@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useAllCustomersForAdmin, useAllCoaches } from "@/lib/coach/hooks";
 import { setCustomerCoach } from "@/lib/coach/engine";
@@ -55,7 +56,7 @@ export default function CustomerCoachBindingPage() {
             return (
               <div key={c.id} className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-50 text-lg">{c.avatar ?? "🙂"}</span>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-50 text-lg"><Avatar value={c.avatar} /></span>
                   <div>
                     <p className="text-sm font-semibold text-slate-800">{c.name}</p>
                     <p className="text-xs text-slate-400">

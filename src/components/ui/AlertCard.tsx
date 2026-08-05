@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { AlertItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { Avatar } from "@/components/ui/Avatar";
 
 interface AlertCardProps {
   alert: AlertItem;
@@ -29,7 +30,7 @@ export function AlertCard({ alert, href }: AlertCardProps) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-lg">{alert.avatar}</span>
+          <span className="text-lg"><Avatar value={alert.avatar} /></span>
           <p className="truncate text-sm font-semibold text-slate-800">{alert.customerName}</p>
           <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium", style.badge)}>{style.text}</span>
         </div>

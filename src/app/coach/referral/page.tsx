@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Avatar } from "@/components/ui/Avatar";
 import { StatCard } from "@/components/ui/StatCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
@@ -34,7 +35,7 @@ export default function CoachReferralPage() {
 
       <div className="flex flex-col items-center gap-3 rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 to-emerald-50 p-6 text-center">
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-sm">
-          {coach?.avatar ?? "🌿"}
+          <Avatar value={coach?.avatar} fallback="🌿" />
         </span>
         <p className="text-sm text-slate-500">你的专属 Referral Code</p>
         <p className="text-2xl font-semibold tracking-widest text-slate-900">{coach?.referralCode ?? "—"}</p>
@@ -70,7 +71,7 @@ export default function CoachReferralPage() {
           <div className="flex flex-col gap-2">
             {recentJoins.map((c) => (
               <div key={c.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-50 text-lg">{c.avatar ?? "🙂"}</span>
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-50 text-lg"><Avatar value={c.avatar} /></span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-slate-800">{c.name}</p>
                   <p className="text-xs text-slate-400">{c.startDate ? `加入于 ${c.startDate}` : "加入日期未知"}</p>

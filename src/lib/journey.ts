@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { DEFAULT_AVATAR_ID } from "@/lib/avatars";
 import { getCurrentCustomerGoal, getCurrentGoalPlan } from "@/lib/goals/engine";
 import { getCheckInsForCustomer, todayDateStr } from "@/lib/inventory/engine";
 import type { DailyCheckIn } from "@/lib/inventory/types";
@@ -26,7 +27,7 @@ export interface JourneySummary {
   latestWeight: number | null;
 }
 
-const DEFAULT_AVATAR = "🙂";
+const DEFAULT_AVATAR = DEFAULT_AVATAR_ID;
 const DEFAULT_PLAN_LENGTH = 30;
 
 function toUtcDate(dateStr: string): Date {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { CustomerProfile } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { Avatar } from "@/components/ui/Avatar";
 
 interface CustomerCardProps {
   customer: CustomerProfile;
@@ -19,7 +20,7 @@ export function CustomerCard({ customer, href, footer }: CustomerCardProps) {
       <div className="flex items-center gap-3 p-4">
         <div className="relative shrink-0">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-2xl">
-            {customer.avatar}
+            <Avatar value={customer.avatar} />
           </span>
           {needsAttention && (
             <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-rose-400" />

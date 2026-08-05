@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { JourneyTaskCard } from "@/components/ui/JourneyTaskCard";
+import { Avatar } from "@/components/ui/Avatar";
 import { CoachContactSheet } from "@/components/CoachContactSheet";
 import { NotificationBell } from "@/components/customer/NotificationBell";
 import { JourneyBaselineReminder } from "@/components/customer/JourneyBaselineReminder";
@@ -242,7 +243,7 @@ export default function CustomerDashboardPage() {
             🌿
           </button>
           <Link href="/customer/profile" className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-tint text-xl shadow-elev1 transition duration-500 ease-soft hover:-translate-y-0.5">
-            {journey?.avatar ?? "🙂"}
+            <Avatar value={journey?.avatar} />
           </Link>
         </div>
       </header>

@@ -2,6 +2,7 @@
 
 import type { RankingBoard, RankRow } from "@/lib/leaderboard/engine";
 import type { LeaderboardSectionDef } from "@/lib/leaderboard/registry";
+import { Avatar } from "@/components/ui/Avatar";
 
 /**
  * A ranking board rendered as a PODIUM — recognition, not a data table.
@@ -65,7 +66,7 @@ export function PodiumBoard({ def, board }: { def: LeaderboardSectionDef; board:
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img className="lb-crown" src={CROWN_SRC[place]} alt="" aria-hidden />
-                <div className="lb-av">{row.avatar}</div>
+                <div className="lb-av"><Avatar value={row.avatar} /></div>
                 <div className="lb-pillar">
                   <div className="lb-name">
                     {row.name}
@@ -107,7 +108,7 @@ function ListRow({ row, def }: { row: RankRow; def: LeaderboardSectionDef }) {
   return (
     <div className={`lb-row${row.isMe ? " lb-me" : ""}`}>
       <span className="lb-rk">{row.rank}</span>
-      <span className="lb-ra">{row.avatar}</span>
+      <span className="lb-ra"><Avatar value={row.avatar} /></span>
       <span className="lb-rn">
         {row.name}
         {row.isMe && "（我）"}

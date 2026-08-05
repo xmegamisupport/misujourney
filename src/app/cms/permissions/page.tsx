@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { getCmsStaff, createStaffAccount, updateStaffRole } from "@/lib/cms/staff";
@@ -133,7 +134,7 @@ export default function CmsPermissionsPage() {
         <div className="flex flex-col gap-2">
           {staff.map((s) => (
             <div key={s.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-lg">{s.avatar ?? "🙂"}</span>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-lg"><Avatar value={s.avatar} /></span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-800">{s.name}</p>
                 <p className="truncate text-xs text-slate-400">{s.email ?? "—"}</p>

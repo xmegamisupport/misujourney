@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Avatar } from "@/components/ui/Avatar";
 import { StatCard } from "@/components/ui/StatCard";
 import { NutritionCard } from "@/components/ui/NutritionCard";
 import { TrendChart } from "@/components/ui/TrendChart";
@@ -201,7 +202,7 @@ export default function CustomerDetailPage() {
       <PageHeader title={profile.name} subtitle={`Day ${currentDay} / ${journey?.planLength ?? 30}`} backHref="/coach/customers" />
 
       <div className="flex items-start gap-4 rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 to-emerald-50 p-5">
-        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white text-3xl shadow-sm">{profile.avatar ?? "🙂"}</span>
+        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white text-3xl shadow-sm"><Avatar value={profile.avatar} /></span>
         <div className="min-w-0 flex-1">
           <p className="text-lg font-semibold text-slate-900">{profile.name}</p>
           <p className="text-sm text-slate-500">

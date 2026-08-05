@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useAllCustomersForAdmin } from "@/lib/coach/hooks";
 import { INVENTORY_ALERT_STATUS_LABELS, INVENTORY_ALERT_STATUS_STYLES } from "@/lib/inventory/constants";
@@ -44,7 +45,7 @@ export default function CustomerManagementPage() {
                 <tr key={c.id} className="border-b border-slate-50 last:border-b-0 hover:bg-slate-50/60">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 font-medium text-slate-800">
-                      <span className="text-base">{c.avatar ?? "🙂"}</span>
+                      <span className="text-base"><Avatar value={c.avatar} /></span>
                       {c.name}
                     </div>
                   </td>

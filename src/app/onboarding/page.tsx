@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { SignOutButton } from "@/components/SignOutButton";
+import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 import {
   calculateBMI,
@@ -416,7 +417,7 @@ function StepBasicInfo({ draft, update, referralCoach }: { draft: WizardDraft; u
       <h2 className="text-base font-semibold text-slate-900">Step 1 · 填写基础资料</h2>
       {referralCoach && (
         <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg">{referralCoach.avatar ?? "🌿"}</span>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg"><Avatar value={referralCoach.avatar} fallback="🌿" /></span>
           <p className="text-sm text-slate-700">
             你的专属 Coach：<span className="font-semibold text-emerald-700">{referralCoach.name}</span>
           </p>

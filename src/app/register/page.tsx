@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { Avatar } from "@/components/ui/Avatar";
+import { DEFAULT_AVATAR_ID } from "@/lib/avatars";
 import { initializeInventoryFromRegistration } from "@/lib/inventory/engine";
 import { parseNonNegativeInt } from "@/lib/inventory/validation";
 import { lookupCoachByReferral, normalizeReferralCode, isReferralCodeShape, type ReferralCoach } from "@/lib/referral";
@@ -86,7 +88,7 @@ function RoleChoice({ onChoose }: { onChoose: (mode: Mode) => void }) {
 function CoachBadge({ coach }: { coach: ReferralCoach }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg">{coach.avatar ?? "🌿"}</span>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg"><Avatar value={coach.avatar} fallback="🌿" /></span>
       <p className="text-sm text-slate-700">
         你的专属 Coach：<span className="font-semibold text-emerald-700">{coach.name}</span>
       </p>
@@ -213,7 +215,7 @@ function CustomerRegisterForm({ refParam, onBack }: { refParam: string | null; o
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { name: name.trim(), phone: phone.trim(), ...(referralCode ? { referral_code: referralCode } : {}) } },
+      options: { data: { name: name.trim(), phone: phone.trim(), avatar: DEFAULT_AVATAR_ID, ...(referralCode ? { referral_code: referralCode } : {}) } },
     });
 
     if (signUpError) {

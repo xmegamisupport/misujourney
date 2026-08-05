@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getWeeklyChallenge, type WeeklyChallenge, type Traveler } from "@/lib/leaderboard/engine";
 import type { LeaderboardSectionDef } from "@/lib/leaderboard/registry";
+import { Avatar } from "@/components/ui/Avatar";
 
 /**
  * 🎯 Weekly Challenge — a GOAL, and above all a feeling: "someone's always been
@@ -179,7 +180,7 @@ function TogetherStrip({ travelers }: { travelers: Traveler[] }) {
           >
             {/* only this inner span remounts on swap → gentle fade, no list movement */}
             <span key={s.nonce} className="together-fade inline-flex items-center gap-1.5">
-              <span className="text-sm">{s.t.avatar}</span>
+              <span className="text-sm"><Avatar value={s.t.avatar} /></span>
               {s.t.name}
             </span>
           </span>

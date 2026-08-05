@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Avatar } from "@/components/ui/Avatar";
 import type { CoachCustomerCard, CustomerCardStatus } from "@/lib/coach/workspace-types";
 
 const STATUS: Record<CustomerCardStatus, { label: string; className: string }> = {
@@ -28,7 +29,7 @@ export function CustomerWorkspaceCard({ card }: { card: CoachCustomerCard }) {
           card.overallTone === "support" ? "bg-amber-50" : "bg-emerald-50",
         )}
       >
-        {card.avatar ?? "🙂"}
+        <Avatar value={card.avatar} />
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-slate-800">{card.customerName}</p>

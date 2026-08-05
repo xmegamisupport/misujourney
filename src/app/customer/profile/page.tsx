@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { AccountSettingsSection } from "@/components/AccountSettingsSection";
@@ -7,9 +8,12 @@ import { SignOutButton } from "@/components/SignOutButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InventoryStatusCard } from "@/components/inventory/InventoryStatusCard";
 import { JourneyCoachCard } from "@/components/customer/JourneyCoachCard";
+import { Avatar } from "@/components/ui/Avatar";
+import { AvatarPicker } from "@/components/customer/AvatarPicker";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useJourneySummary } from "@/lib/journey";
 import { useHasInventoryRecords, useCustomerInventory } from "@/lib/inventory/hooks";
+import { createClient } from "@/lib/supabase/client";
 import type { ProductCode } from "@/lib/inventory/types";
 
 const inventoryProducts: ProductCode[] = ["MISU_N_PLUS", "MISU_DX_PLUS"];
@@ -36,14 +40,36 @@ export default function CustomerProfilePage() {
   const { data: hasInventory } = useHasInventoryRecords(customerId);
   const { data: inventoryRows } = useCustomerInventory(customerId);
 
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
+  const avatar = avatarOverride ?? journey?.avatar ?? null;
+
+  async function handlePick(id: string) {
+    setAvatarOverride(id); // optimistic
+    setPickerOpen(false);
+    try {
+      await createClient().rpc("set_my_avatar" as never, { p_avatar: id } as never);
+    } catch {
+      /* keep optimistic value; next load reflects the persisted state */
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5 px-4 pb-8 md:px-8">
       <PageHeader title="我的" />
 
       <div className="flex items-center gap-4 rounded-card border border-brand-soft/40 bg-gradient-to-br from-brand-tint to-[#f6f2f3] p-5 shadow-elev1">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-sm">
-          {journey?.avatar ?? "🙂"}
-        </span>
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-3xl shadow-sm ring-1 ring-brand-soft/40 transition hover:ring-brand-soft"
+          aria-label="更换头像"
+        >
+          <Avatar value={avatar} />
+          <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] text-white shadow-sm">
+            ✎
+          </span>
+        </button>
         <div>
           <p className="text-lg font-semibold text-ink">{journey?.name ?? ""}</p>
           <p className="text-sm text-ink-soft">
@@ -51,6 +77,8 @@ export default function CustomerProfilePage() {
           </p>
         </div>
       </div>
+
+      {pickerOpen && <AvatarPicker current={avatar} onPick={handlePick} onClose={() => setPickerOpen(false)} />}
 
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-lg border border-line bg-surface p-3 text-center shadow-sm">

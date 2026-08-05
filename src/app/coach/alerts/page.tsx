@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import type { FlagSeverity } from "@/lib/insights/types";
@@ -133,7 +134,7 @@ function FollowUpAlertsContent() {
                   href={`/coach/customers/${customer.id}`}
                   className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-emerald-200"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-lg">{customer.avatar ?? "🙂"}</span>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-lg"><Avatar value={customer.avatar} /></span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-slate-800">{customer.name}</p>
                     <p className="mt-0.5 text-sm text-slate-500">{flag.flagLabel}</p>
@@ -202,7 +203,7 @@ function RepurchaseAlertCard({
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-            <span>{customer?.avatar ?? "🙂"}</span>
+            <span><Avatar value={customer?.avatar} /></span>
             {customer?.name ?? alert.customerId}
             <span className="text-xs font-normal text-slate-400">
               {PRODUCT_ICONS[alert.productCode]} {PRODUCT_LABELS[alert.productCode]}

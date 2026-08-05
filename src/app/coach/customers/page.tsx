@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuthUser } from "@/lib/supabase/useAuthUser";
 import { useMyCustomers } from "@/lib/coach/hooks";
@@ -92,7 +93,7 @@ export default function CustomerListPage() {
           {rows.map(({ customer, latestWeight, journeyName, journeyDay, state, whatsappNumber }) => (
             <div key={customer.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
               <Link href={`/coach/customers/${customer.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">{customer.avatar ?? "🙂"}</span>
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl"><Avatar value={customer.avatar} /></span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-800">{customer.name}</p>
                   <p className="truncate text-xs text-slate-400">

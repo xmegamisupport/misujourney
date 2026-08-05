@@ -2,6 +2,7 @@
 
 import { PageHeader } from "@/components/ui/PageHeader";
 import { WhatsAppContactButton } from "@/components/WhatsAppContactButton";
+import { Avatar } from "@/components/ui/Avatar";
 import { currentCoach } from "@/lib/mock-data";
 import { useMyCoachContact } from "@/lib/coach-contact/hooks";
 
@@ -15,7 +16,7 @@ export default function CustomerCoachProfilePage() {
 
       <div className="flex flex-col items-center gap-2 rounded-card border border-brand-soft/40 bg-gradient-to-br from-brand-tint to-[#f1f4f7] p-6 text-center shadow-elev1">
         <span className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-4xl shadow-elev1">
-          {coach.avatar}
+          <Avatar value={coach.avatar} fallback="🌿" />
         </span>
         <p className="text-lg font-semibold text-ink">{coach.name}</p>
         <p className="text-sm text-ink-soft">{coach.title}</p>
