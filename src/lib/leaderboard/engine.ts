@@ -2,20 +2,36 @@
 
 import { createClient } from "@/lib/supabase/client";
 
+export type TrendDir = "up" | "down" | "same" | "new";
+export interface Trend {
+  dir: TrendDir;
+  delta: number;
+}
+
 /** One row on any ranking board — the ONLY fields the server exposes about
- *  another person: display name, avatar emoji, and the board's value. Never id,
- *  email, phone, or weight. Names + points are public by product decision. */
+ *  another person: display name, avatar emoji, the board's value, and how the
+ *  rank moved. Never id, email, phone, or weight. Names + points are public by
+ *  product decision. */
 export interface RankRow {
   rank: number;
   name: string;
   avatar: string;
   value: number;
   isMe: boolean;
+  trend: Trend;
+}
+
+export interface MyStanding {
+  rank: number;
+  value: number;
+  trend: Trend;
+  /** Points still needed to reach the Top-10 cutoff (0 if already in Top 10). */
+  toTop10: number;
 }
 
 export interface RankingBoard {
   /** The caller's own standing on this board, if they're eligible + ranked. */
-  me: { rank: number; value: number } | null;
+  me: MyStanding | null;
   rows: RankRow[];
 }
 
