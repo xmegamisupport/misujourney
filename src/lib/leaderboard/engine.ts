@@ -32,20 +32,27 @@ export async function getLeaderboard(type: string): Promise<RankingBoard> {
   return data as unknown as RankingBoard;
 }
 
+export interface Traveler {
+  name: string;
+  avatar: string;
+}
+
 export interface WeeklyChallenge {
   challenge: { icon: string; title: string; description: string; goalType: string; goalParams: Record<string, unknown> } | null;
-  participants: number;
-  completions: number;
+  /** How far into the challenge week we are, e.g. Day 3 / 7. */
+  dayProgress: { day: number; total: number };
   meCompleted: boolean;
-  completers: { name: string; avatar: string; isMe: boolean }[];
+  /** Pool of OTHER travelers active this week — the client shows a rotating
+   *  4–6 of them (padding with system travelers when the pool is small) to keep
+   *  the "someone's keeping at it with me" feeling, not a head-count. */
+  travelers: Traveler[];
 }
 
 const EMPTY_CHALLENGE: WeeklyChallenge = {
   challenge: null,
-  participants: 0,
-  completions: 0,
+  dayProgress: { day: 0, total: 7 },
   meCompleted: false,
-  completers: [],
+  travelers: [],
 };
 
 /** The current week's community challenge — participation-shaped, not a pure

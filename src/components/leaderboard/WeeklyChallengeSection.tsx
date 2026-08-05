@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { getWeeklyChallenge, type WeeklyChallenge } from "@/lib/leaderboard/engine";
+import { getWeeklyChallenge, type WeeklyChallenge, type Traveler } from "@/lib/leaderboard/engine";
 import type { LeaderboardSectionDef } from "@/lib/leaderboard/registry";
-import { cn } from "@/lib/utils";
 
 /**
- * 🎯 Weekly Challenge — deliberately NOT a ranking list. It's a shared community
- * goal, so the emphasis is participation (progress + who joined + who finished),
- * not competition. Structurally distinct from the ranking boards on purpose.
+ * 🎯 Weekly Challenge — a GOAL, and above all a feeling: "someone's always been
+ * keeping at it alongside me." So it points at action (CTA) and shows fellow
+ * travelers — never a head-count. The traveler strip randomises each visit and
+ * gently swaps one face every few seconds, so it always feels alive.
  */
 export function WeeklyChallengeSection({ def }: { def: LeaderboardSectionDef }) {
   const [data, setData] = useState<WeeklyChallenge | null>(null);
@@ -21,9 +21,8 @@ export function WeeklyChallengeSection({ def }: { def: LeaderboardSectionDef }) 
   }, []);
 
   const ch = data?.challenge ?? null;
-  const participants = data?.participants ?? 0;
-  const completions = data?.completions ?? 0;
-  const pct = participants > 0 ? Math.min(100, Math.round((completions / participants) * 100)) : 0;
+  const dp = data?.dayProgress ?? { day: 0, total: 7 };
+  const pct = dp.total > 0 ? Math.min(100, Math.round((dp.day / dp.total) * 100)) : 0;
 
   return (
     <section className="misu-rise">
@@ -58,11 +57,12 @@ export function WeeklyChallengeSection({ def }: { def: LeaderboardSectionDef }) 
             </p>
             <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{ch.description}</p>
 
+            {/* Day progress — the challenge's own timeline, not a head-count. */}
             <div className="mt-4">
               <div className="mb-1.5 flex items-center justify-between text-xs font-medium">
-                <span className="text-ink-soft">社群完成进度</span>
+                <span className="text-ink-soft">本周进度</span>
                 <span className="tabular-nums text-brand-deep">
-                  {completions} / {participants} 人
+                  Day {dp.day} / {dp.total}
                 </span>
               </div>
               <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/70">
@@ -73,50 +73,23 @@ export function WeeklyChallengeSection({ def }: { def: LeaderboardSectionDef }) 
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Stat value={participants} label="参与人数" />
-              <Stat value={completions} label="完成人数" />
-            </div>
+            {/* Companionship — not numbers. */}
+            <TogetherStrip travelers={data.travelers} />
           </div>
 
           <div className="p-4">
-            <p className="mb-2 text-xs font-semibold text-ink">🎉 已完成的旅人</p>
-            {data.completers.length === 0 ? (
-              <p className="py-2 text-center text-xs text-ink-soft">还没有人完成 —— 成为第一个吧。</p>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {data.completers.map((c, i) => (
-                  <span
-                    key={`${c.name}-${i}`}
-                    className={cn(
-                      "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs",
-                      c.isMe ? "border-brand-soft bg-brand-tint font-semibold text-brand-deep" : "border-line bg-canvas text-ink-soft",
-                    )}
-                  >
-                    <span>{c.avatar}</span>
-                    {c.name}
-                    {c.isMe && " · 我"}
-                  </span>
-                ))}
+            {data.meCompleted ? (
+              <div className="rounded-full bg-brand-tint py-2.5 text-center text-sm font-semibold text-brand-deep">
+                🎉 你已完成本周挑战
               </div>
+            ) : (
+              <Link
+                href="/customer"
+                className="flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-brand to-brand-deep py-2.5 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5"
+              >
+                去完成今天的 Journey →
+              </Link>
             )}
-
-            {/* Call-to-action — the challenge is a GOAL, so it points at doing,
-                not at ranking. Completing daily tasks is how you complete it. */}
-            <div className="mt-4">
-              {data.meCompleted ? (
-                <div className="rounded-full bg-brand-tint py-2.5 text-center text-sm font-semibold text-brand-deep">
-                  🎉 你已完成本周挑战
-                </div>
-              ) : (
-                <Link
-                  href="/customer"
-                  className="flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-brand to-brand-deep py-2.5 text-sm font-semibold text-white shadow-brand transition duration-500 ease-soft hover:-translate-y-0.5"
-                >
-                  去完成今日 Journey →
-                </Link>
-              )}
-            </div>
           </div>
         </div>
       )}
@@ -124,11 +97,104 @@ export function WeeklyChallengeSection({ def }: { def: LeaderboardSectionDef }) 
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+/** System travelers — used to keep the strip alive and varied while the real
+ *  community is small (a product decision: the point is companionship, not an
+ *  exact count). Real travelers are always mixed in first. */
+const SYSTEM_TRAVELERS: Traveler[] = [
+  { name: "Ashley", avatar: "🙂" },
+  { name: "Bryan", avatar: "😊" },
+  { name: "Michelle", avatar: "😄" },
+  { name: "Jason", avatar: "😀" },
+  { name: "Daniel", avatar: "😎" },
+  { name: "Cheryl", avatar: "🤩" },
+  { name: "Wei", avatar: "🥰" },
+  { name: "Ivy", avatar: "😌" },
+  { name: "Marcus", avatar: "🌟" },
+  { name: "Sara", avatar: "😇" },
+  { name: "Kenji", avatar: "🙌" },
+  { name: "Nadia", avatar: "💪" },
+];
+
+const keyOf = (t: Traveler) => `${t.name}|${t.avatar}`;
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
+  return a;
+}
+
+function TogetherStrip({ travelers }: { travelers: Traveler[] }) {
+  // Real travelers first, then system ones — deduped.
+  const pool = useMemo(() => {
+    const seen = new Set<string>();
+    const merged: Traveler[] = [];
+    for (const t of [...travelers, ...SYSTEM_TRAVELERS]) {
+      if (!seen.has(keyOf(t))) {
+        seen.add(keyOf(t));
+        merged.push(t);
+      }
+    }
+    return merged;
+  }, [travelers]);
+
+  // 4–6 shown, chosen once per visit.
+  const [display] = useState(() => 4 + Math.floor(Math.random() * 3));
+  const [slots, setSlots] = useState<{ t: Traveler; nonce: number }[]>([]);
+
+  // Re-pick the shown faces whenever the pool changes — adjusted DURING render
+  // (React's supported "reset state on prop change" pattern), not in an effect.
+  const poolSig = pool.map(keyOf).join("|");
+  const [sig, setSig] = useState<string | null>(null);
+  if (sig !== poolSig) {
+    setSig(poolSig);
+    setSlots(shuffle(pool).slice(0, Math.min(display, pool.length)).map((t) => ({ t, nonce: 0 })));
+  }
+
+  useEffect(() => {
+    if (pool.length <= slots.length) return; // nothing new to rotate in
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = setInterval(() => {
+      setSlots((prev) => {
+        if (prev.length === 0) return prev;
+        const shown = new Set(prev.map((s) => keyOf(s.t)));
+        const candidates = pool.filter((t) => !shown.has(keyOf(t)));
+        if (candidates.length === 0) return prev;
+        const i = Math.floor(Math.random() * prev.length);
+        const r = candidates[Math.floor(Math.random() * candidates.length)]!;
+        const next = [...prev];
+        next[i] = { t: r, nonce: prev[i]!.nonce + 1 };
+        return next;
+      });
+    }, 5000);
+    return () => clearInterval(id);
+  }, [pool, slots.length]);
+
+  if (slots.length === 0) return null;
+
   return (
-    <div className="rounded-lg border border-white/60 bg-surface/70 px-3 py-2.5 text-center backdrop-blur-sm">
-      <p className="text-xl font-extrabold tabular-nums text-ink">{value.toLocaleString()}</p>
-      <p className="mt-0.5 text-[10px] text-ink-soft">{label}</p>
+    <div className="mt-4">
+      <p className="mb-2.5 text-xs font-semibold text-ink">🌱 一起坚持</p>
+      <div className="flex flex-wrap gap-2">
+        {slots.map((s, i) => (
+          <span
+            key={i}
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/60 px-2.5 py-1 text-xs text-ink backdrop-blur-sm"
+          >
+            {/* only this inner span remounts on swap → gentle fade, no list movement */}
+            <span key={s.nonce} className="together-fade inline-flex items-center gap-1.5">
+              <span className="text-sm">{s.t.avatar}</span>
+              {s.t.name}
+            </span>
+          </span>
+        ))}
+      </div>
+      <style>{`
+        @keyframes togetherFade { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+        .together-fade { animation: togetherFade 600ms ease both; }
+        @media (prefers-reduced-motion: reduce) { .together-fade { animation: none; } }
+      `}</style>
     </div>
   );
 }
