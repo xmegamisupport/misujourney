@@ -125,27 +125,18 @@ export function MealScanner({ mealType }: { mealType: string }) {
     router.push("/customer/meals");
   }
 
-  /** Grab the current preview frame as a JPEG File, reproducing the object-cover
-   * crop so the saved image matches what the customer framed. Rear camera is
-   * never mirrored. */
+  /** Grab the FULL preview frame as a JPEG File. The preview uses object-contain
+   * (true camera field of view, no zoom/crop), so capturing the whole frame is
+   * exactly what the customer saw. Rear camera is never mirrored. */
   async function grabFrame(): Promise<File | null> {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return null;
-    const vw = video.videoWidth || 1080;
-    const vh = video.videoHeight || 1920;
-    const boxW = video.clientWidth || vw;
-    const boxH = video.clientHeight || vh;
-    const scale = Math.max(boxW / vw, boxH / vh);
-    const cropW = Math.min(vw, boxW / scale);
-    const cropH = Math.min(vh, boxH / scale);
-    const sx = (vw - cropW) / 2;
-    const sy = (vh - cropH) / 2;
-    canvas.width = Math.round(cropW);
-    canvas.height = Math.round(cropH);
+    canvas.width = video.videoWidth || 1080;
+    canvas.height = video.videoHeight || 1920;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
-    ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
     if (!blob) return null;
     return new File([blob], "scan.jpg", { type: "image/jpeg" });
@@ -267,7 +258,7 @@ export function MealScanner({ mealType }: { mealType: string }) {
     <div className="fixed inset-0 z-50 overflow-hidden bg-black">
       {/* Live preview (rear camera, not mirrored). Hidden when the camera is down. */}
       {!cameraDown && (
-        <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />
+        <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-contain" />
       )}
       {cameraDown && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-8 text-center">
@@ -324,13 +315,14 @@ export function MealScanner({ mealType }: { mealType: string }) {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             aria-label="从相册选择"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 active:bg-black/55"
+            className="flex h-9 items-center gap-1.5 rounded-full bg-black/35 px-3 text-xs font-medium active:bg-black/55"
           >
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <circle cx="8.5" cy="8.5" r="1.5" />
               <path d="M21 15l-5-5L5 21" />
             </svg>
+            相册
           </button>
         ) : (
           <span className="h-9 w-9" />
