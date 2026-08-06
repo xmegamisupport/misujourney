@@ -125,18 +125,28 @@ export function MealScanner({ mealType }: { mealType: string }) {
     router.push("/customer/meals");
   }
 
-  /** Grab the FULL preview frame as a JPEG File. The preview uses object-contain
-   * (true camera field of view, no zoom/crop), so capturing the whole frame is
-   * exactly what the customer saw. Rear camera is never mirrored. */
+  /** Grab the visible (object-cover cropped) region as a JPEG File, so the saved
+   * image matches exactly what the customer saw full-screen. Rear camera is
+   * never mirrored. */
   async function grabFrame(): Promise<File | null> {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return null;
-    canvas.width = video.videoWidth || 1080;
-    canvas.height = video.videoHeight || 1920;
+    const vw = video.videoWidth || 1080;
+    const vh = video.videoHeight || 1920;
+    const boxW = video.clientWidth || vw;
+    const boxH = video.clientHeight || vh;
+    // Reproduce object-cover: fill the box, cropping the overflow equally.
+    const scale = Math.max(boxW / vw, boxH / vh);
+    const cropW = Math.min(vw, boxW / scale);
+    const cropH = Math.min(vh, boxH / scale);
+    const sx = (vw - cropW) / 2;
+    const sy = (vh - cropH) / 2;
+    canvas.width = Math.round(cropW);
+    canvas.height = Math.round(cropH);
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
     if (!blob) return null;
     return new File([blob], "scan.jpg", { type: "image/jpeg" });
@@ -258,7 +268,7 @@ export function MealScanner({ mealType }: { mealType: string }) {
     <div className="fixed inset-0 z-50 overflow-hidden bg-black">
       {/* Live preview (rear camera, not mirrored). Hidden when the camera is down. */}
       {!cameraDown && (
-        <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-contain" />
+        <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />
       )}
       {cameraDown && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-8 text-center">
