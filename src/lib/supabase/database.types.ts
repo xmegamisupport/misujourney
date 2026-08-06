@@ -926,6 +926,7 @@ export type Database = {
           hint_advance_days: number
           icon: string
           id: string
+          mystery_hints: Json
           name: string
           rarity: string
           registry_version: string | null
@@ -944,6 +945,7 @@ export type Database = {
           hint_advance_days?: number
           icon: string
           id?: string
+          mystery_hints?: Json
           name: string
           rarity?: string
           registry_version?: string | null
@@ -962,6 +964,7 @@ export type Database = {
           hint_advance_days?: number
           icon?: string
           id?: string
+          mystery_hints?: Json
           name?: string
           rarity?: string
           registry_version?: string | null
@@ -1206,6 +1209,163 @@ export type Database = {
           },
         ]
       }
+      food_aliases: {
+        Row: {
+          alias: string
+          created_at: string
+          food_id: string
+          id: string
+          language: string
+          match_type: string
+          normalized_key: string
+          priority: number
+        }
+        Insert: {
+          alias: string
+          created_at?: string
+          food_id: string
+          id?: string
+          language?: string
+          match_type?: string
+          normalized_key: string
+          priority?: number
+        }
+        Update: {
+          alias?: string
+          created_at?: string
+          food_id?: string
+          id?: string
+          language?: string
+          match_type?: string
+          normalized_key?: string
+          priority?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_aliases_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_match_misses: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          normalized_name: string
+          occurrences: number
+          original_name: string
+          resolved_food_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          normalized_name: string
+          occurrences?: number
+          original_name: string
+          resolved_food_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          normalized_name?: string
+          occurrences?: number
+          original_name?: string
+          resolved_food_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_match_misses_resolved_food_id_fkey"
+            columns: ["resolved_food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_nutrition: {
+        Row: {
+          basis: string
+          calories: number
+          carbohydrate: number
+          created_at: string
+          fat: number
+          fiber: number
+          food_id: string
+          id: string
+          is_current: boolean
+          protein: number
+          raw_payload: Json | null
+          serving_g: number | null
+          sodium_mg: number | null
+          source_id: string
+          sugar_g: number | null
+          valid_from: string
+          version: number
+        }
+        Insert: {
+          basis: string
+          calories?: number
+          carbohydrate?: number
+          created_at?: string
+          fat?: number
+          fiber?: number
+          food_id: string
+          id?: string
+          is_current?: boolean
+          protein?: number
+          raw_payload?: Json | null
+          serving_g?: number | null
+          sodium_mg?: number | null
+          source_id: string
+          sugar_g?: number | null
+          valid_from?: string
+          version?: number
+        }
+        Update: {
+          basis?: string
+          calories?: number
+          carbohydrate?: number
+          created_at?: string
+          fat?: number
+          fiber?: number
+          food_id?: string
+          id?: string
+          is_current?: boolean
+          protein?: number
+          raw_payload?: Json | null
+          serving_g?: number | null
+          sodium_mg?: number | null
+          source_id?: string
+          sugar_g?: number | null
+          valid_from?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_nutrition_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrition_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "food_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_portions: {
         Row: {
           calories: number
@@ -1259,6 +1419,96 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      food_sources: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          license: string | null
+          name: string
+          priority: number
+          website: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          license?: string | null
+          name: string
+          priority?: number
+          website?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          license?: string | null
+          name?: string
+          priority?: number
+          website?: string | null
+        }
+        Relationships: []
+      }
+      foods: {
+        Row: {
+          brand: string | null
+          canonical_name: string
+          created_at: string
+          cuisine: string
+          id: string
+          kind: string
+          merged_into_id: string | null
+          plate_category: string | null
+          primary_nutrition_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          brand?: string | null
+          canonical_name: string
+          created_at?: string
+          cuisine?: string
+          id?: string
+          kind?: string
+          merged_into_id?: string | null
+          plate_category?: string | null
+          primary_nutrition_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string | null
+          canonical_name?: string
+          created_at?: string
+          cuisine?: string
+          id?: string
+          kind?: string
+          merged_into_id?: string | null
+          plate_category?: string | null
+          primary_nutrition_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foods_merged_into_id_fkey"
+            columns: ["merged_into_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foods_primary_nutrition_fk"
+            columns: ["primary_nutrition_id"]
+            isOneToOne: false
+            referencedRelation: "food_nutrition"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       goal_assessments: {
         Row: {
@@ -1533,6 +1783,56 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_settings: {
+        Row: {
+          key: string
+          label: string | null
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          label?: string | null
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          label?: string | null
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      leaderboard_snapshots: {
+        Row: {
+          board_type: string
+          customer_id: string
+          rank: number
+          taken_on: string
+        }
+        Insert: {
+          board_type: string
+          customer_id: string
+          rank: number
+          taken_on: string
+        }
+        Update: {
+          board_type?: string
+          customer_id?: string
+          rank?: number
+          taken_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leaderboard_snapshots_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meals: {
         Row: {
           ai_advice: string
@@ -1775,6 +2075,7 @@ export type Database = {
           activity_level: Database["public"]["Enums"]["activity_level"] | null
           age: number | null
           avatar: string | null
+          avatar_locked: boolean
           baseline_bedtime: string | null
           baseline_bowel_habit: string | null
           baseline_data_completed_at: string | null
@@ -1813,6 +2114,7 @@ export type Database = {
           activity_level?: Database["public"]["Enums"]["activity_level"] | null
           age?: number | null
           avatar?: string | null
+          avatar_locked?: boolean
           baseline_bedtime?: string | null
           baseline_bowel_habit?: string | null
           baseline_data_completed_at?: string | null
@@ -1851,6 +2153,7 @@ export type Database = {
           activity_level?: Database["public"]["Enums"]["activity_level"] | null
           age?: number | null
           avatar?: string | null
+          avatar_locked?: boolean
           baseline_bedtime?: string | null
           baseline_bowel_habit?: string | null
           baseline_data_completed_at?: string | null
@@ -2055,6 +2358,72 @@ export type Database = {
           },
         ]
       }
+      weekly_challenge_completions: {
+        Row: {
+          challenge_id: string
+          completed_at: string
+          customer_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string
+          customer_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string
+          customer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_challenge_completions_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_challenge_completions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_challenges: {
+        Row: {
+          created_at: string
+          description: string
+          goal_params: Json
+          goal_type: string
+          icon: string
+          id: string
+          title: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          goal_params?: Json
+          goal_type: string
+          icon?: string
+          id?: string
+          title: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          goal_params?: Json
+          goal_type?: string
+          icon?: string
+          id?: string
+          title?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       weight_goal_rules: {
         Row: {
           created_at: string
@@ -2257,6 +2626,7 @@ export type Database = {
           name: string
         }[]
       }
+      get_current_weekly_challenge: { Args: never; Returns: Json }
       get_hidden_discovery_snapshot: { Args: never; Returns: Json }
       get_hidden_discovery_snapshot_admin: {
         Args: { p_user_id: string }
@@ -2268,6 +2638,11 @@ export type Database = {
           p_remaining: number
         }
         Returns: string
+      }
+      get_journey_leaderboard: { Args: { p_limit?: number }; Returns: Json }
+      get_leaderboard: {
+        Args: { p_limit?: number; p_type: string }
+        Returns: Json
       }
       get_my_coach_applications: {
         Args: never
@@ -2468,6 +2843,7 @@ export type Database = {
         Args: { p_content_ids: string[]; p_day_number: number }
         Returns: undefined
       }
+      set_my_avatar: { Args: { p_avatar: string }; Returns: boolean }
       skip_morning_checkin: {
         Args: { p_customer_id: string; p_date: string }
         Returns: Json
