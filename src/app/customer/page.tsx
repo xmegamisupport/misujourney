@@ -397,11 +397,9 @@ export default function CustomerDashboardPage() {
             <JourneyTaskCard icon="📚" label="今日学习" status="locked" value={lockedHint} />
           )}
 
-          {/* 3. 饮水打卡 — CONTINUOUS: the largest interactive card, always open. */}
+          {/* 3. 饮水打卡 — CONTINUOUS: 全天可记，不依赖晨重，always open. */}
           <div className="col-span-2">
-            {!journeyActive ? (
-              <JourneyTaskCard icon="💧" label="饮水打卡" status="locked" value={lockedHint} variant="row" />
-            ) : (
+            {(
               <JourneyTaskCard
                 icon="💧"
                 label="饮水打卡"
@@ -461,10 +459,8 @@ export default function CustomerDashboardPage() {
             )}
           </div>
 
-          {/* 4. 饮食打卡 — CONTINUOUS: revisited all day, never compresses. */}
-          {!journeyActive ? (
-            <JourneyTaskCard icon="🍽️" label="饮食打卡" status="locked" value={lockedHint} />
-          ) : mealDone ? (
+          {/* 4. 饮食打卡 — CONTINUOUS: 全天可记，不依赖晨重，never compresses. */}
+          {mealDone ? (
             <JourneyTaskCard icon="🍽️" label="饮食打卡" status="completed" value={`${addedMeals.length} 餐 · 再记一餐 →`} href="/customer/meals" />
           ) : (
             <JourneyTaskCard icon="🍽️" label="饮食打卡" status="available" href="/customer/meals" actionLabel="开始 →" isNext={nextTask === "meal"} />
