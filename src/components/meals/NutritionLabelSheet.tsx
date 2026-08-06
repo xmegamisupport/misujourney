@@ -25,14 +25,20 @@ export function NutritionLabelSheet({
   category,
   onApply,
   onClose,
+  initialReading,
 }: {
   foodName: string;
   category: FoodCategory;
   onApply: (portion: SelectedPortion, productName: string) => void;
   onClose: () => void;
+  /** When the sheet is opened from the full-screen Scanner, the label photo was
+   * already read there — pass the reading straight in and the sheet skips to the
+   * "how much did you eat" step. Omitted for the in-confirm usage, where she
+   * takes the photo inside the sheet as before. */
+  initialReading?: NutritionLabelReading | null;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [reading, setReading] = useState<NutritionLabelReading | null>(null);
+  const [reading, setReading] = useState<NutritionLabelReading | null>(initialReading ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [choice, setChoice] = useState<LabelAmountChoice>("package");
