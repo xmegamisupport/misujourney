@@ -1250,43 +1250,180 @@ export type Database = {
           },
         ]
       }
+      food_audit_log: {
+        Row: {
+          action: string
+          actor: string | null
+          after: Json | null
+          at: string
+          before: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          after?: Json | null
+          at?: string
+          before?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          after?: Json | null
+          at?: string
+          before?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_audit_log_actor_fkey"
+            columns: ["actor"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_change_proposals: {
+        Row: {
+          id: string
+          payload: Json
+          proposal_type: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+          submitted_by: string
+          target_food_id: string | null
+        }
+        Insert: {
+          id?: string
+          payload?: Json
+          proposal_type: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          submitted_by: string
+          target_food_id?: string | null
+        }
+        Update: {
+          id?: string
+          payload?: Json
+          proposal_type?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          submitted_by?: string
+          target_food_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_change_proposals_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_change_proposals_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_change_proposals_target_food_id_fkey"
+            columns: ["target_food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_match_misses: {
         Row: {
+          claimed_at: string | null
+          claimed_by: string | null
           confidence: number | null
           created_at: string
           id: string
+          last_seen_at: string
           normalized_name: string
           occurrences: number
           original_name: string
+          priority_score: number
           resolved_food_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
           updated_at: string
         }
         Insert: {
+          claimed_at?: string | null
+          claimed_by?: string | null
           confidence?: number | null
           created_at?: string
           id?: string
+          last_seen_at?: string
           normalized_name: string
           occurrences?: number
           original_name: string
+          priority_score?: number
           resolved_food_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
+          claimed_at?: string | null
+          claimed_by?: string | null
           confidence?: number | null
           created_at?: string
           id?: string
+          last_seen_at?: string
           normalized_name?: string
           occurrences?: number
           original_name?: string
+          priority_score?: number
           resolved_food_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "food_match_misses_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "food_match_misses_resolved_food_id_fkey"
             columns: ["resolved_food_id"]
             isOneToOne: false
             referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_match_misses_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1305,6 +1442,7 @@ export type Database = {
           protein: number
           raw_payload: Json | null
           serving_g: number | null
+          serving_name: string | null
           sodium_mg: number | null
           source_id: string
           sugar_g: number | null
@@ -1324,6 +1462,7 @@ export type Database = {
           protein?: number
           raw_payload?: Json | null
           serving_g?: number | null
+          serving_name?: string | null
           sodium_mg?: number | null
           source_id: string
           sugar_g?: number | null
@@ -1343,6 +1482,7 @@ export type Database = {
           protein?: number
           raw_payload?: Json | null
           serving_g?: number | null
+          serving_name?: string | null
           sodium_mg?: number | null
           source_id?: string
           sugar_g?: number | null
@@ -1453,12 +1593,52 @@ export type Database = {
         }
         Relationships: []
       }
+      food_staff: {
+        Row: {
+          food_role: string
+          granted_at: string
+          granted_by: string | null
+          is_active: boolean
+          user_id: string
+        }
+        Insert: {
+          food_role: string
+          granted_at?: string
+          granted_by?: string | null
+          is_active?: boolean
+          user_id: string
+        }
+        Update: {
+          food_role?: string
+          granted_at?: string
+          granted_by?: string | null
+          is_active?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_staff_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_staff_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       foods: {
         Row: {
           brand: string | null
           canonical_name: string
           created_at: string
           cuisine: string
+          dietary_tags: string[]
           id: string
           kind: string
           merged_into_id: string | null
@@ -1472,6 +1652,7 @@ export type Database = {
           canonical_name: string
           created_at?: string
           cuisine?: string
+          dietary_tags?: string[]
           id?: string
           kind?: string
           merged_into_id?: string | null
@@ -1485,6 +1666,7 @@ export type Database = {
           canonical_name?: string
           created_at?: string
           cuisine?: string
+          dietary_tags?: string[]
           id?: string
           kind?: string
           merged_into_id?: string | null
@@ -2480,6 +2662,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      _food_audit: {
+        Args: {
+          p_action: string
+          p_after: Json
+          p_before: Json
+          p_entity_id: string
+          p_entity_type: string
+        }
+        Returns: undefined
+      }
       _hidden_discovery_snapshot: { Args: { p_user: string }; Returns: Json }
       ack_coach_welcome: { Args: never; Returns: undefined }
       acknowledge_discovery_reveals: {
@@ -2607,6 +2799,83 @@ export type Database = {
       demo_seed_discoveries: { Args: never; Returns: number }
       discovery_longest_streak: { Args: { p_dates: string[] }; Returns: number }
       evaluate_discoveries: { Args: never; Returns: Json }
+      food_add_alias: {
+        Args: {
+          p_alias: string
+          p_food_id: string
+          p_language?: string
+          p_match_type?: string
+        }
+        Returns: string
+      }
+      food_add_nutrition_draft: {
+        Args: {
+          p_basis: string
+          p_calories: number
+          p_carbohydrate: number
+          p_fat: number
+          p_fiber?: number
+          p_food_id: string
+          p_protein: number
+          p_serving_g?: number
+          p_serving_name?: string
+          p_sodium_mg?: number
+          p_source_code: string
+          p_sugar_g?: number
+        }
+        Returns: string
+      }
+      food_can_edit: { Args: never; Returns: boolean }
+      food_can_review: { Args: never; Returns: boolean }
+      food_create_draft: {
+        Args: {
+          p_brand?: string
+          p_canonical_name: string
+          p_cuisine?: string
+          p_dietary_tags?: string[]
+          p_kind?: string
+          p_plate_category?: string
+        }
+        Returns: string
+      }
+      food_grant_staff: {
+        Args: { p_role: string; p_user: string }
+        Returns: undefined
+      }
+      food_inbox_claim: { Args: { p_id: string }; Returns: undefined }
+      food_inbox_priority: {
+        Args: {
+          p_confidence: number
+          p_has_similar: boolean
+          p_last_seen: string
+          p_occurrences: number
+        }
+        Returns: number
+      }
+      food_inbox_recompute: { Args: never; Returns: number }
+      food_inbox_triage: {
+        Args: { p_action: string; p_id: string; p_payload?: Json }
+        Returns: string
+      }
+      food_is_admin: { Args: never; Returns: boolean }
+      food_normalize: { Args: { p: string }; Returns: string }
+      food_rename: {
+        Args: { p_canonical_name: string; p_food_id: string }
+        Returns: undefined
+      }
+      food_review_proposal: {
+        Args: { p_decision: string; p_id: string; p_note?: string }
+        Returns: undefined
+      }
+      food_revoke_staff: { Args: { p_user: string }; Returns: undefined }
+      food_submit_proposal: {
+        Args: { p_payload?: Json; p_target_food_id: string; p_type: string }
+        Returns: string
+      }
+      food_update_tags: {
+        Args: { p_dietary_tags: string[]; p_food_id: string }
+        Returns: undefined
+      }
       generate_journey_nutrition_target: {
         Args: {
           p_activity_level: Database["public"]["Enums"]["activity_level"]
@@ -2742,6 +3011,7 @@ export type Database = {
         Returns: undefined
       }
       mark_notification_read: { Args: { p_id: string }; Returns: undefined }
+      my_food_role: { Args: never; Returns: string }
       normalize_international_phone_number: {
         Args: { p_country_calling_code: string; p_local_phone_number: string }
         Returns: string
