@@ -1352,6 +1352,33 @@ export type Database = {
           },
         ]
       }
+      food_library_settings: {
+        Row: {
+          cleanup_inactive_days: number
+          high_confidence_threshold: number
+          id: boolean
+          representative_image_limit: number
+          updated_at: string
+          verified_image_limit: number
+        }
+        Insert: {
+          cleanup_inactive_days?: number
+          high_confidence_threshold?: number
+          id?: boolean
+          representative_image_limit?: number
+          updated_at?: string
+          verified_image_limit?: number
+        }
+        Update: {
+          cleanup_inactive_days?: number
+          high_confidence_threshold?: number
+          id?: boolean
+          representative_image_limit?: number
+          updated_at?: string
+          verified_image_limit?: number
+        }
+        Relationships: []
+      }
       food_match_misses: {
         Row: {
           claimed_at: string | null
@@ -1580,6 +1607,98 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      food_recognition_daily: {
+        Row: {
+          confidence_n: number
+          confidence_sum: number
+          day: string
+          estimates: number
+          food_id: string | null
+          hits: number
+          miss_norm: string | null
+        }
+        Insert: {
+          confidence_n?: number
+          confidence_sum?: number
+          day?: string
+          estimates?: number
+          food_id?: string | null
+          hits?: number
+          miss_norm?: string | null
+        }
+        Update: {
+          confidence_n?: number
+          confidence_sum?: number
+          day?: string
+          estimates?: number
+          food_id?: string | null
+          hits?: number
+          miss_norm?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_recognition_daily_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_recognition_images: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          food_id: string | null
+          id: string
+          is_representative: boolean
+          keep_score: number
+          miss_id: string | null
+          pending_delete: boolean
+          quality_score: number | null
+          storage_path: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          food_id?: string | null
+          id?: string
+          is_representative?: boolean
+          keep_score?: number
+          miss_id?: string | null
+          pending_delete?: boolean
+          quality_score?: number | null
+          storage_path: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          food_id?: string | null
+          id?: string
+          is_representative?: boolean
+          keep_score?: number
+          miss_id?: string | null
+          pending_delete?: boolean
+          quality_score?: number | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_recognition_images_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_recognition_images_miss_id_fkey"
+            columns: ["miss_id"]
+            isOneToOne: false
+            referencedRelation: "food_match_misses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       food_sources: {
         Row: {
@@ -2693,6 +2812,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      _food_rec_log: {
+        Args: {
+          p_conf: number
+          p_food_id: string
+          p_hit: boolean
+          p_norm: string
+        }
+        Returns: undefined
+      }
       _hidden_discovery_snapshot: { Args: { p_user: string }; Returns: Json }
       ack_coach_welcome: { Args: never; Returns: undefined }
       acknowledge_discovery_reveals: {
@@ -2848,6 +2976,14 @@ export type Database = {
       }
       food_can_edit: { Args: never; Returns: boolean }
       food_can_review: { Args: never; Returns: boolean }
+      food_cleanup_food_images: {
+        Args: { p_food_id: string }
+        Returns: string[]
+      }
+      food_confirm_image_deleted: {
+        Args: { p_paths: string[] }
+        Returns: number
+      }
       food_create_draft: {
         Args: {
           p_brand?: string
@@ -2862,6 +2998,10 @@ export type Database = {
       food_grant_staff: {
         Args: { p_role: string; p_user: string }
         Returns: undefined
+      }
+      food_image_keep_score: {
+        Args: { p_confidence: number; p_quality: number }
+        Returns: number
       }
       food_inbox_claim: { Args: { p_id: string }; Returns: undefined }
       food_inbox_priority: {
@@ -2878,12 +3018,27 @@ export type Database = {
         Returns: string
       }
       food_inbox_recompute: { Args: never; Returns: number }
+      food_inbox_representative_images: {
+        Args: { p_miss_id: string }
+        Returns: string[]
+      }
       food_inbox_triage: {
         Args: { p_action: string; p_id: string; p_payload?: Json }
         Returns: string
       }
       food_is_admin: { Args: never; Returns: boolean }
       food_normalize: { Args: { p: string }; Returns: string }
+      food_recognition_analytics: { Args: { p_limit?: number }; Returns: Json }
+      food_register_recognition_image: {
+        Args: {
+          p_confidence: number
+          p_food_id: string
+          p_miss_id: string
+          p_path: string
+          p_quality: number
+        }
+        Returns: string[]
+      }
       food_rename: {
         Args: { p_canonical_name: string; p_food_id: string }
         Returns: undefined

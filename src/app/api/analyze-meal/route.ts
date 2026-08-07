@@ -2,8 +2,13 @@ import { NextResponse } from "next/server";
 import { callOpenAiJsonSchema } from "@/lib/openai";
 import { FOOD_CATEGORY_OPTIONS } from "@/lib/food-portions/constants";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { FoodCategory } from "@/lib/food-portions/types";
 import type { Json } from "@/lib/supabase/database.types";
+
+const INBOX_IMAGE_BUCKET = "food-inbox-images";
+// Quality proxy: a larger (sharper) compressed photo scores higher. ~500KB ≈ 1.0.
+const QUALITY_REF_BYTES = 500 * 1024;
 
 export const runtime = "nodejs";
 
@@ -31,6 +36,7 @@ interface AiFoodItem {
 interface LibraryResolution {
   name: string;
   matched: boolean;
+  missId?: string;
   foodId?: string;
   canonicalName?: string;
   plateCategory?: string | null;
@@ -202,6 +208,41 @@ export async function POST(request: Request) {
     }
   } catch {
     // Library unavailable — fall back to the AI-only result (today's behaviour).
+  }
+
+  // Smart Image Retention (Stage 1–3): capture the photo ONLY for misses, as a
+  // review candidate, and immediately enforce the per-food cap. Entirely
+  // best-effort + service-role; a failure here never affects the meal flow.
+  try {
+    const misses = enriched
+      .map((f) => f.library)
+      .filter((r): r is LibraryResolution => !!r && r.matched === false && typeof r.missId === "string");
+    if (misses.length > 0) {
+      const admin = createAdminClient();
+      const buffer = Buffer.from(base64, "base64");
+      const quality = Math.min(1, photo.size / QUALITY_REF_BYTES);
+      const contentType = photo.type || "image/jpeg";
+      for (const r of misses) {
+        const path = `${r.missId}/${crypto.randomUUID()}.jpg`;
+        const up = await admin.storage.from(INBOX_IMAGE_BUCKET).upload(path, buffer, { contentType, upsert: false });
+        if (up.error) continue;
+        const confidence = enriched.find((f) => f.library?.missId === r.missId)?.confidence ?? null;
+        const { data: toDelete } = await admin.rpc("food_register_recognition_image", {
+          p_miss_id: r.missId!,
+          p_food_id: null,
+          p_path: path,
+          p_confidence: confidence,
+          p_quality: quality,
+        } as never);
+        const paths = (toDelete as string[] | null) ?? [];
+        if (paths.length > 0) {
+          await admin.storage.from(INBOX_IMAGE_BUCKET).remove(paths);
+          await admin.rpc("food_confirm_image_deleted", { p_paths: paths });
+        }
+      }
+    }
+  } catch {
+    // Image capture/retention is best-effort — never blocks recognition.
   }
 
   return NextResponse.json({ ...data, foodItems: enriched });
