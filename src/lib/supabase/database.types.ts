@@ -1358,16 +1358,23 @@ export type Database = {
           claimed_by: string | null
           confidence: number | null
           created_at: string
+          first_seen_source: string
           id: string
           last_seen_at: string
           normalized_name: string
           occurrences: number
           original_name: string
           priority_score: number
+          recognition_type: string | null
           resolved_food_id: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          suggested_aliases: string[] | null
+          suggested_components: Json | null
+          suggested_nutrition: Json | null
+          suggested_serving_g: number | null
+          suggested_serving_name: string | null
           updated_at: string
         }
         Insert: {
@@ -1375,16 +1382,23 @@ export type Database = {
           claimed_by?: string | null
           confidence?: number | null
           created_at?: string
+          first_seen_source?: string
           id?: string
           last_seen_at?: string
           normalized_name: string
           occurrences?: number
           original_name: string
           priority_score?: number
+          recognition_type?: string | null
           resolved_food_id?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          suggested_aliases?: string[] | null
+          suggested_components?: Json | null
+          suggested_nutrition?: Json | null
+          suggested_serving_g?: number | null
+          suggested_serving_name?: string | null
           updated_at?: string
         }
         Update: {
@@ -1392,16 +1406,23 @@ export type Database = {
           claimed_by?: string | null
           confidence?: number | null
           created_at?: string
+          first_seen_source?: string
           id?: string
           last_seen_at?: string
           normalized_name?: string
           occurrences?: number
           original_name?: string
           priority_score?: number
+          recognition_type?: string | null
           resolved_food_id?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          suggested_aliases?: string[] | null
+          suggested_components?: Json | null
+          suggested_nutrition?: Json | null
+          suggested_serving_g?: number | null
+          suggested_serving_name?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2851,6 +2872,10 @@ export type Database = {
           p_occurrences: number
         }
         Returns: number
+      }
+      food_inbox_publish: {
+        Args: { p_id: string; p_overrides?: Json }
+        Returns: string
       }
       food_inbox_recompute: { Args: never; Returns: number }
       food_inbox_triage: {

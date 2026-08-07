@@ -271,6 +271,12 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
                   onChange={(e) => renameFoodItem(item.id, e.target.value)}
                   className="min-w-0 flex-1 rounded-lg border border-transparent px-1.5 py-1 text-sm font-medium text-ink outline-none transition focus:border-brand-soft focus:bg-brand-tint/40"
                 />
+                {item.portion?.origin === "library" && (
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">🟢 MISU Verified</span>
+                )}
+                {item.portion?.origin === "ai_estimate" && (
+                  <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600">🟡 AI Estimate</span>
+                )}
                 <button
                   type="button"
                   onClick={() => removeFoodItem(item.id)}

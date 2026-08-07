@@ -18,18 +18,37 @@ interface LibraryResolution {
   portion?: { gram: number; portionLabel: string; calories: number; protein: number; carbohydrate: number; fat: number; fiber: number };
 }
 
+interface EstimatedNutrition {
+  calories: number;
+  protein: number;
+  carbohydrate: number;
+  fat: number;
+  fiber: number;
+  servingG: number;
+  servingName: string;
+}
+
 interface DetectionResponse {
   misuDetected: { productCode: "MISU_N_PLUS" | "MISU_DX_PLUS"; quantityGuess: number }[];
-  foodItems: { name: string; category: FoodCategory; library?: LibraryResolution }[];
+  foodItems: {
+    name: string;
+    category: FoodCategory;
+    dishName?: string;
+    library?: LibraryResolution;
+    estimatedNutrition?: EstimatedNutrition | null;
+  }[];
 }
 
 function isFoodCategory(v: string | null | undefined): v is FoodCategory {
   return !!v && (FOOD_CATEGORY_OPTIONS as readonly string[]).includes(v);
 }
 
-/** Turn an AI food item into a draft item, applying the Food Library match when
- * the adapter found one (fixed nutrition, skips the portion picker). A miss —
- * or an empty library — yields exactly the previous behaviour (name + category). */
+/** Turn an AI food item into a draft item, in priority order:
+ *   1. Food Library match  → 🟢 MISU Verified (fixed nutrition, skips picker)
+ *   2. AI nutrition estimate → 🟡 AI Estimate (fixed, but flagged as an estimate)
+ *   3. neither              → previous behaviour: name + category → portion picker
+ * So the customer can ALWAYS finish logging: an empty library or a missing
+ * estimate simply falls one rung down, never blocks. */
 function toDraftItem(f: DetectionResponse["foodItems"][number]): FoodItemDraft {
   const base: FoodItemDraft = { id: `food_${crypto.randomUUID()}`, name: f.name, category: f.category };
   const lib = f.library;
@@ -40,7 +59,27 @@ function toDraftItem(f: DetectionResponse["foodItems"][number]): FoodItemDraft {
       name: lib.canonicalName ?? f.name,
       category,
       foodId: lib.foodId,
-      portion: { category, ...lib.portion, isCustom: true, sourceNote: "来自 Food Library" },
+      portion: { category, ...lib.portion, isCustom: true, sourceNote: "来自 Food Library", origin: "library" },
+    };
+  }
+  const est = f.estimatedNutrition;
+  if (est && typeof est.calories === "number" && est.servingG > 0) {
+    return {
+      ...base,
+      name: f.dishName?.trim() || f.name,
+      portion: {
+        category: f.category,
+        portionLabel: est.servingName || "1 份",
+        gram: est.servingG,
+        calories: est.calories,
+        protein: est.protein,
+        carbohydrate: est.carbohydrate,
+        fat: est.fat,
+        fiber: est.fiber,
+        isCustom: true,
+        sourceNote: "AI 估算，仅供参考",
+        origin: "ai_estimate",
+      },
     };
   }
   return base;
