@@ -290,7 +290,7 @@ function ConfirmMealEditor({ initial }: { initial: MealDetectionDraft }) {
                     <p className="truncate text-xs font-medium text-brand-deep">
                       {item.portion.portionLabel} · {item.portion.calories} kcal
                     </p>
-                    <p className="mt-0.5 text-[11px] text-ink-soft">来自包装上的营养标签</p>
+                    <p className="mt-0.5 text-[11px] text-ink-soft">{item.portion.sourceNote ?? "来自包装上的营养标签"}</p>
                   </div>
                   <button
                     type="button"

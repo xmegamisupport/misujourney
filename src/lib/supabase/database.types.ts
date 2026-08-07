@@ -2863,6 +2863,7 @@ export type Database = {
         Args: { p_canonical_name: string; p_food_id: string }
         Returns: undefined
       }
+      food_resolve: { Args: { p_items: Json }; Returns: Json }
       food_review_proposal: {
         Args: { p_decision: string; p_id: string; p_note?: string }
         Returns: undefined

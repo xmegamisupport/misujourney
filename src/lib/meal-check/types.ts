@@ -13,6 +13,9 @@ export interface FoodItemDraft {
   name: string;
   category: FoodCategory;
   portion?: SelectedPortion;
+  /** Set when this item was matched to a canonical Food Library entry, for
+   * analytics/linking. The recorded meal still keeps a frozen nutrition snapshot. */
+  foodId?: string;
 }
 
 export interface NutritionTotals {

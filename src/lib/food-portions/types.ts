@@ -43,4 +43,7 @@ export interface SelectedPortion {
   fat: number;
   fiber: number;
   isCustom: boolean;
+  /** Where a fixed (isCustom) portion came from, for the Confirm subtitle —
+   * e.g. "来自包装上的营养标签" (default) or "来自 Food Library". */
+  sourceNote?: string;
 }

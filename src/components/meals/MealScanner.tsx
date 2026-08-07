@@ -5,13 +5,45 @@ import { useRouter } from "next/navigation";
 import { compressPhoto } from "@/lib/image-compress";
 import { NutritionLabelSheet } from "@/components/meals/NutritionLabelSheet";
 import { mealTypeLabel, mealTypeIcon } from "@/lib/meal-types";
-import type { MealDetectionDraft } from "@/lib/meal-check/types";
+import { FOOD_CATEGORY_OPTIONS } from "@/lib/food-portions/constants";
+import type { MealDetectionDraft, FoodItemDraft } from "@/lib/meal-check/types";
 import type { FoodCategory, SelectedPortion } from "@/lib/food-portions/types";
 import type { NutritionLabelReading } from "@/lib/nutrition-label/types";
 
+interface LibraryResolution {
+  matched: boolean;
+  foodId?: string;
+  canonicalName?: string;
+  plateCategory?: string | null;
+  portion?: { gram: number; portionLabel: string; calories: number; protein: number; carbohydrate: number; fat: number; fiber: number };
+}
+
 interface DetectionResponse {
   misuDetected: { productCode: "MISU_N_PLUS" | "MISU_DX_PLUS"; quantityGuess: number }[];
-  foodItems: { name: string; category: FoodCategory }[];
+  foodItems: { name: string; category: FoodCategory; library?: LibraryResolution }[];
+}
+
+function isFoodCategory(v: string | null | undefined): v is FoodCategory {
+  return !!v && (FOOD_CATEGORY_OPTIONS as readonly string[]).includes(v);
+}
+
+/** Turn an AI food item into a draft item, applying the Food Library match when
+ * the adapter found one (fixed nutrition, skips the portion picker). A miss —
+ * or an empty library — yields exactly the previous behaviour (name + category). */
+function toDraftItem(f: DetectionResponse["foodItems"][number]): FoodItemDraft {
+  const base: FoodItemDraft = { id: `food_${crypto.randomUUID()}`, name: f.name, category: f.category };
+  const lib = f.library;
+  if (lib?.matched && lib.portion) {
+    const category = isFoodCategory(lib.plateCategory) ? lib.plateCategory : f.category;
+    return {
+      ...base,
+      name: lib.canonicalName ?? f.name,
+      category,
+      foodId: lib.foodId,
+      portion: { category, ...lib.portion, isCustom: true, sourceNote: "来自 Food Library" },
+    };
+  }
+  return base;
 }
 
 type ScanMode = "meal" | "barcode" | "label";
@@ -180,11 +212,7 @@ export function MealScanner({ mealType }: { mealType: string }) {
         misuTags: (data.misuDetected ?? [])
           .filter((m) => m.quantityGuess > 0)
           .map((m) => ({ productCode: m.productCode, quantity: Math.round(m.quantityGuess) })),
-        foodItems: (data.foodItems ?? []).map((f) => ({
-          id: `food_${crypto.randomUUID()}`,
-          name: f.name,
-          category: f.category,
-        })),
+        foodItems: (data.foodItems ?? []).map(toDraftItem),
       };
       sessionStorage.setItem("misu-meal-detection", JSON.stringify(draft));
       router.push("/customer/meals/confirm");
